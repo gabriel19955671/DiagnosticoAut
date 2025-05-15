@@ -186,8 +186,7 @@ if aba == "Cliente":
             st.error("CNPJ ou senha inválidos.")
             st.stop()
 
-        diagnosticos = pd.read_csv(arquivo_csv) if os.path.exists(arquivo_csv) else pd.DataFrame()
-        if not diagnosticos[diagnosticos['CNPJ'] == cnpj].empty:
+        diagnosticos = pd.read_csv.empty:
             st.warning("✅ Diagnóstico já preenchido. Agradecemos!")
             st.stop()
 
