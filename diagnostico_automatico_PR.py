@@ -25,7 +25,24 @@ if not st.session_state.admin_logado:
 else:
     aba = "Administrador"
 
-# (demais blocos de admin mantidos sem alteração para foco na correção do cliente)
+if aba == "Administrador" and not st.session_state.admin_logado:
+    with st.form("form_admin"):
+        usuario = st.text_input("Usuário do Administrador")
+        senha = st.text_input("Senha", type="password")
+        entrar = st.form_submit_button("Entrar como Admin")
+
+    if entrar:
+        df_admin = pd.read_csv(admin_credenciais_csv)
+        if not df_admin[(df_admin['Usuario'] == usuario) & (df_admin['Senha'] == senha)].empty:
+            st.session_state.admin_logado = True
+            st.success("Login de administrador realizado com sucesso!")
+            st.rerun()
+        else:
+            st.error("Usuário ou senha inválidos.")
+
+if aba == "Administrador" and st.session_state.admin_logado:
+    st.success("🔓 Painel Administrativo Ativo")
+    st.markdown("(⚙️ Aqui vai o menu e funcionalidades do administrador)")
 
 if aba == "Cliente":
     with st.form("form_cliente"):
