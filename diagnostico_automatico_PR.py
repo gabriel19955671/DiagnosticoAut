@@ -235,7 +235,7 @@ if aba == "Cliente":
                 insights.append("Desempenho da equipe pode estar comprometido.")
 
             diagnostico_texto = "
-".join(insights) if insights else "Nenhuma área crítica identificada. Excelente desempenho geral."".join(insights) if insights else "Nenhuma área crítica identificada. Excelente desempenho geral."
+".join(insights) if insights else "Nenhuma área crítica identificada. Excelente desempenho geral.".join(insights) if insights else "Nenhuma área crítica identificada. Excelente desempenho geral."".join(insights) if insights else "Nenhuma área crítica identificada. Excelente desempenho geral."
             resposta = pd.DataFrame([{
                 "Data": datetime.now().strftime("%Y-%m-%d %H:%M"),
                 "CNPJ": cnpj,
