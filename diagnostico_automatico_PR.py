@@ -40,7 +40,7 @@ if aba == "Administrador" and not st.session_state.admin_logado:
         else:
             df_admins = pd.read_csv(admin_credenciais_csv)
             if not df_admins[(df_admins['Usuario'] == usuario) & (df_admins['Senha'] == senha)].empty:
-            st.session_state.admin_logado = True
+                st.session_state.admin_logado = True
             st.success("Login de administrador realizado com sucesso!")
             st.rerun()
         else:
