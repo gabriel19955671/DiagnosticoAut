@@ -199,7 +199,7 @@ if aba == "Cliente":
         """)
 
         logo_cliente = st.file_uploader("📎 Envie a logo da sua empresa (opcional)", type=["png", "jpg", "jpeg"])
-        nome_empresa_custom = st.text_input("📝 Nome da sua empresa", value=user.iloc[0]['Empresa'])
+        nome_empresa_custom = st.text_input("📝 Nome da sua empresa", value=user.iloc[0].get('Empresa', 'Nome da Empresa'))
 
         with st.form("form_diagnostico"):
             nome = st.text_input("Nome completo")
