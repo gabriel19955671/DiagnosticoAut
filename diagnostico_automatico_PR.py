@@ -42,7 +42,74 @@ if aba == "Administrador" and not st.session_state.admin_logado:
 
 if aba == "Administrador" and st.session_state.admin_logado:
     st.success("🔓 Painel Administrativo Ativo")
-    st.markdown("(⚙️ Aqui vai o menu e funcionalidades do administrador)")
+    menu_admin = st.selectbox("Selecione a funcionalidade administrativa:", [
+        "📊 Visualizar Diagnósticos",
+        "🔁 Reautorizar Cliente",
+        "👥 Gerenciar Usuários",
+        "🛡️ Gerenciar Administradores"])
+
+    if st.sidebar.button("🔓 Sair do Painel Admin"):
+        st.session_state.admin_logado = False
+        st.rerun()
+
+    if menu_admin == "📊 Visualizar Diagnósticos":
+        if os.path.exists(arquivo_csv):
+            df = pd.read_csv(arquivo_csv)
+            st.dataframe(df, use_container_width=True)
+            st.download_button("📥 Baixar Diagnósticos (CSV)", data=df.to_csv(index=False), file_name="diagnosticos.csv", mime="text/csv")
+        else:
+            st.info("Nenhum diagnóstico encontrado.")
+
+    elif menu_admin == "🔁 Reautorizar Cliente":
+        if os.path.exists(arquivo_csv):
+            df = pd.read_csv(arquivo_csv)
+            cnpjs = df['CNPJ'].unique().tolist()
+            cnpj_sel = st.selectbox("Selecione o CNPJ para liberar novo diagnóstico:", options=cnpjs)
+            if st.button("🔄 Reautorizar"):
+                df = df[df['CNPJ'] != cnpj_sel]
+                df.to_csv(arquivo_csv, index=False)
+                st.success(f"CNPJ {cnpj_sel} reautorizado com sucesso.")
+        else:
+            st.info("Nenhum diagnóstico para reautorizar.")
+
+    elif menu_admin == "👥 Gerenciar Usuários":
+        if os.path.exists(usuarios_csv):
+            df_usuarios = pd.read_csv(usuarios_csv)
+        else:
+            df_usuarios = pd.DataFrame(columns=["CNPJ", "Senha", "Empresa"])
+
+        st.subheader("Lista de Usuários")
+        st.dataframe(df_usuarios, use_container_width=True)
+
+        st.subheader("Adicionar Novo Usuário")
+        with st.form("novo_usuario"):
+            novo_cnpj = st.text_input("Novo CNPJ")
+            nova_senha = st.text_input("Senha")
+            nova_empresa = st.text_input("Empresa")
+            confirmar = st.form_submit_button("Adicionar")
+        if confirmar:
+            if novo_cnpj and nova_senha and nova_empresa:
+                novo = pd.DataFrame([[novo_cnpj, nova_senha, nova_empresa]], columns=["CNPJ", "Senha", "Empresa"])
+                df_usuarios = pd.concat([df_usuarios, novo], ignore_index=True)
+                df_usuarios.to_csv(usuarios_csv, index=False)
+                st.success("Usuário adicionado com sucesso!")
+
+    elif menu_admin == "🛡️ Gerenciar Administradores":
+        df_admin = pd.read_csv(admin_credenciais_csv)
+        st.subheader("Administradores Cadastrados")
+        st.dataframe(df_admin, use_container_width=True)
+
+        st.subheader("Adicionar Novo Administrador")
+        with st.form("novo_admin"):
+            novo_user = st.text_input("Usuário")
+            nova_senha = st.text_input("Senha")
+            confirmar = st.form_submit_button("Adicionar")
+        if confirmar:
+            if novo_user and nova_senha:
+                novo = pd.DataFrame([[novo_user, nova_senha]], columns=["Usuario", "Senha"])
+                df_admin = pd.concat([df_admin, novo], ignore_index=True)
+                df_admin.to_csv(admin_credenciais_csv, index=False)
+                st.success("Administrador adicionado com sucesso!")
 
 if aba == "Cliente":
     with st.form("form_cliente"):
