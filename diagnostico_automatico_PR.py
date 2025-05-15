@@ -115,12 +115,16 @@ if 'cliente_logado' not in st.session_state:
     st.session_state.cliente_logado = False
 
 if aba == "Cliente" and not st.session_state.cliente_logado:
+    if 'cliente_autenticado' in st.session_state and st.session_state.cliente_autenticado:
+        st.session_state.cliente_logado = True
+        st.rerun()
     with st.form("form_cliente"):
         cnpj = st.text_input("CNPJ")
         senha = st.text_input("Senha", type="password")
         acessar = st.form_submit_button("Entrar como Cliente")
 
     if acessar:
+        st.session_state.cliente_autenticado = False
         if not os.path.exists(usuarios_csv):
             st.error("Base de usuários não encontrada.")
             st.stop()
@@ -137,7 +141,10 @@ if aba == "Cliente" and not st.session_state.cliente_logado:
             st.warning("✅ Diagnóstico já preenchido. Agradecemos!")
             st.stop()
 
+        st.session_state.cliente_autenticado = True
+        st.session_state.cliente_logado = True
         st.success("Login realizado com sucesso!")
+        st.rerun()
 
         st.subheader("📌 Instruções do Diagnóstico")
         st.markdown("""
