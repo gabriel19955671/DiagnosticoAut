@@ -111,7 +111,10 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 df_admin.to_csv(admin_credenciais_csv, index=False)
                 st.success("Administrador adicionado com sucesso!")
 
-if aba == "Cliente":
+if 'cliente_logado' not in st.session_state:
+    st.session_state.cliente_logado = False
+
+if aba == "Cliente" and not st.session_state.cliente_logado:
     with st.form("form_cliente"):
         cnpj = st.text_input("CNPJ")
         senha = st.text_input("Senha", type="password")
@@ -157,6 +160,7 @@ if aba == "Cliente":
             enviado = st.form_submit_button("🚀 Enviar Diagnóstico")
 
         if enviado:
+            st.session_state.cliente_logado = True
             class PDF(FPDF):
                 def header(self):
                     if hasattr(self, 'logo_path') and self.logo_path:
