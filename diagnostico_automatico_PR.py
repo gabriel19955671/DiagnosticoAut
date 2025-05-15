@@ -115,9 +115,7 @@ if 'cliente_logado' not in st.session_state:
     st.session_state.cliente_logado = False
 
 if aba == "Cliente" and not st.session_state.cliente_logado:
-    if 'cliente_autenticado' in st.session_state and st.session_state.cliente_autenticado:
-        st.session_state.cliente_logado = True
-        st.rerun()
+    
     with st.form("form_cliente"):
         cnpj = st.text_input("CNPJ")
         senha = st.text_input("Senha", type="password")
