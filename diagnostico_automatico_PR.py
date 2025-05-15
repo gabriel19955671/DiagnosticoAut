@@ -31,17 +31,17 @@ if menu == "Cliente - Preencher Diagnóstico":
 
         insights = []
         if financeiro < 6:
-            insights.append("🔴 Controle financeiro necessita de atenção.")
+            insights.append("Controle financeiro necessita de atencao.")
         if processos < 6:
-            insights.append("🟠 Processos internos abaixo do ideal.")
+            insights.append("Processos internos abaixo do ideal.")
         if marketing < 6:
-            insights.append("🟡 Estratégia de marketing pode ser melhorada.")
+            insights.append("Estrategia de marketing pode ser melhorada.")
         if vendas < 6:
-            insights.append("🔵 Resultados comerciais abaixo da média.")
+            insights.append("Resultados comerciais abaixo da media.")
         if equipe < 6:
-            insights.append("🟣 Desempenho da equipe pode estar comprometido.")
+            insights.append("Desempenho da equipe pode estar comprometido.")
 
-        diagnostico_texto = "\n".join(insights) if insights else "✅ Nenhuma área crítica identificada. Excelente desempenho geral."
+        diagnostico_texto = "\n".join(insights) if insights else "Nenhuma area critica identificada. Excelente desempenho geral."
 
         resposta = pd.DataFrame([{
             "Data": datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -70,14 +70,14 @@ if menu == "Cliente - Preencher Diagnóstico":
         class PDF(FPDF):
             def header(self):
                 self.set_font("Arial", 'B', 16)
-                self.cell(0, 10, "Diagnóstico Empresarial", ln=True, align='C')
+                self.cell(0, 10, "Diagnostico Empresarial", ln=True, align='C')
                 self.ln(5)
 
             def footer(self):
                 self.set_y(-15)
                 self.set_font("Arial", "I", 8)
                 self.set_text_color(128)
-                self.cell(0, 10, f"Página {self.page_no()}", align='C')
+                self.cell(0, 10, f"Pagina {self.page_no()}", align='C')
 
         pdf = PDF()
         pdf.add_page()
@@ -87,7 +87,9 @@ if menu == "Cliente - Preencher Diagnóstico":
         pdf.cell(0, 10, f"E-mail: {email}", ln=True)
         pdf.cell(0, 10, f"Empresa: {empresa}", ln=True)
         pdf.ln(5)
-        pdf.multi_cell(0, 10, f"Financeiro: {financeiro}\nProcessos: {processos}\nMarketing: {marketing}\nVendas: {vendas}\nEquipe: {equipe}\n\nMédia Geral: {media_geral}\n\nObservações:\n{observacoes}\n\n📊 Diagnóstico Automático:\n{diagnostico_texto}")
+        texto_pdf = f"Financeiro: {financeiro}\nProcessos: {processos}\nMarketing: {marketing}\nVendas: {vendas}\nEquipe: {equipe}\n\nMedia Geral: {media_geral}\n\nObservacoes:\n{observacoes}\n\nDiagnostico Automatico:\n{diagnostico_texto}"
+        texto_pdf = texto_pdf.encode("latin-1", "ignore").decode("latin-1")
+        pdf.multi_cell(0, 10, texto_pdf)
 
         pdf_output = "diagnostico_gerado.pdf"
         pdf.output(pdf_output)
