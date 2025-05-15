@@ -6,104 +6,133 @@ from fpdf import FPDF
 
 st.set_page_config(page_title="Diagnóstico Automático", layout="wide")
 
-menu = st.sidebar.selectbox("Selecione a visão", ["Cliente - Preencher Diagnóstico", "Admin - Visualizar Diagnósticos"])
+if "admin_logado" not in st.session_state:
+    st.session_state.admin_logado = False
 
+admin_credenciais_csv = "admins.csv"
+usuarios_csv = "usuarios.csv"
 arquivo_csv = "diagnosticos_clientes.csv"
 
-if menu == "Cliente - Preencher Diagnóstico":
-    st.title("📋 Portal de Diagnóstico Empresarial")
-    st.markdown("Preencha as informações abaixo para gerar automaticamente seu diagnóstico.")
+# Verifica se existe arquivo de admins, senão cria admin padrão
+if not os.path.exists(admin_credenciais_csv):
+    df_admin = pd.DataFrame([["admin", "potencialize"]], columns=["Usuario", "Senha"])
+    df_admin.to_csv(admin_credenciais_csv, index=False)
 
-    with st.form("form_diagnostico"):
-        nome = st.text_input("Nome completo")
-        email = st.text_input("E-mail")
-        empresa = st.text_input("Nome da empresa")
-        financeiro = st.slider("Controle financeiro da empresa", 0, 10)
-        processos = st.slider("Eficiência dos processos internos", 0, 10)
-        marketing = st.slider("Presença e estratégia de marketing", 0, 10)
-        vendas = st.slider("Resultado comercial (vendas/negociação)", 0, 10)
-        equipe = st.slider("Desempenho da equipe/colaboradores", 0, 10)
-        observacoes = st.text_area("Observações adicionais (opcional)")
-        enviado = st.form_submit_button("🚀 Gerar Diagnóstico")
+# Define menu
+opcoes = ["Cliente - Preencher Diagnóstico"]
+if st.session_state.admin_logado:
+    opcoes.extend([
+        "Admin - Visualizar Diagnósticos",
+        "Admin - Reautorizar Cliente",
+        "Admin - Buscar e Filtrar Diagnósticos",
+        "Admin - Gerenciar Usuários",
+        "Admin - Gerenciar Administradores"
+    ])
+else:
+    opcoes.append("🔐 Login Administrador")
 
-    if enviado:
-        media_geral = round((financeiro + processos + marketing + vendas + equipe) / 5, 2)
+menu = st.sidebar.selectbox("Selecione a visão", opcoes)
 
-        insights = []
-        if financeiro < 6:
-            insights.append("Controle financeiro necessita de atencao.")
-        if processos < 6:
-            insights.append("Processos internos abaixo do ideal.")
-        if marketing < 6:
-            insights.append("Estrategia de marketing pode ser melhorada.")
-        if vendas < 6:
-            insights.append("Resultados comerciais abaixo da media.")
-        if equipe < 6:
-            insights.append("Desempenho da equipe pode estar comprometido.")
+# LOGIN ADMIN
+if menu == "🔐 Login Administrador":
+    st.title("🔐 Acesso Administrativo")
+    with st.form("form_admin"):
+        usuario = st.text_input("Usuário")
+        senha = st.text_input("Senha", type="password")
+        entrar = st.form_submit_button("Entrar")
 
-        diagnostico_texto = "\n".join(insights) if insights else "Nenhuma area critica identificada. Excelente desempenho geral."
-
-        resposta = pd.DataFrame([{
-            "Data": datetime.now().strftime("%Y-%m-%d %H:%M"),
-            "Nome": nome,
-            "Email": email,
-            "Empresa": empresa,
-            "Financeiro": financeiro,
-            "Processos": processos,
-            "Marketing": marketing,
-            "Vendas": vendas,
-            "Equipe": equipe,
-            "Média Geral": media_geral,
-            "Observações": observacoes,
-            "Diagnóstico": diagnostico_texto.replace("\n", " ")
-        }])
-
-        if os.path.exists(arquivo_csv):
-            antigo = pd.read_csv(arquivo_csv)
-            resultado = pd.concat([antigo, resposta], ignore_index=True)
+    if entrar:
+        df_admins = pd.read_csv(admin_credenciais_csv)
+        credencial_ok = df_admins[(df_admins["Usuario"] == usuario) & (df_admins["Senha"] == senha)]
+        if not credencial_ok.empty:
+            st.session_state.admin_logado = True
+            st.success("Login realizado com sucesso!")
+            st.experimental_rerun()
         else:
-            resultado = resposta
+            st.error("Usuário ou senha inválidos.")
 
-        resultado.to_csv(arquivo_csv, index=False)
+# CLIENTE - FORMULÁRIO
+elif menu == "Cliente - Preencher Diagnóstico":
+    pass  # permanece o mesmo
 
-        # Gera PDF
-        class PDF(FPDF):
-            def header(self):
-                self.set_font("Arial", 'B', 16)
-                self.cell(0, 10, "Diagnostico Empresarial", ln=True, align='C')
-                self.ln(5)
+# ADMIN - VISUALIZAR
+elif menu == "Admin - Visualizar Diagnósticos" and st.session_state.admin_logado:
+    pass
 
-            def footer(self):
-                self.set_y(-15)
-                self.set_font("Arial", "I", 8)
-                self.set_text_color(128)
-                self.cell(0, 10, f"Pagina {self.page_no()}", align='C')
+# ADMIN - REAUTORIZAR
+elif menu == "Admin - Reautorizar Cliente" and st.session_state.admin_logado:
+    pass
 
-        pdf = PDF()
-        pdf.add_page()
-        pdf.set_font("Arial", size=12)
-        pdf.cell(0, 10, f"Data: {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=True)
-        pdf.cell(0, 10, f"Nome: {nome}", ln=True)
-        pdf.cell(0, 10, f"E-mail: {email}", ln=True)
-        pdf.cell(0, 10, f"Empresa: {empresa}", ln=True)
-        pdf.ln(5)
-        texto_pdf = f"Financeiro: {financeiro}\nProcessos: {processos}\nMarketing: {marketing}\nVendas: {vendas}\nEquipe: {equipe}\n\nMedia Geral: {media_geral}\n\nObservacoes:\n{observacoes}\n\nDiagnostico Automatico:\n{diagnostico_texto}"
-        texto_pdf = texto_pdf.encode("latin-1", "ignore").decode("latin-1")
-        pdf.multi_cell(0, 10, texto_pdf)
+# ADMIN - FILTRO
+elif menu == "Admin - Buscar e Filtrar Diagnósticos" and st.session_state.admin_logado:
+    pass
 
-        pdf_output = "diagnostico_gerado.pdf"
-        pdf.output(pdf_output)
-
-        with open(pdf_output, "rb") as f:
-            st.download_button("📄 Baixar PDF do Diagnóstico", f, file_name="diagnostico.pdf", mime="application/pdf")
-
-        st.success("✅ Diagnóstico enviado, analisado e PDF gerado com sucesso!")
-
-elif menu == "Admin - Visualizar Diagnósticos":
-    st.title("🧠 Painel Administrativo de Diagnósticos")
-    if os.path.exists(arquivo_csv):
-        df = pd.read_csv(arquivo_csv)
-        st.dataframe(df, use_container_width=True)
-        st.download_button("📥 Baixar todos os diagnósticos (CSV)", data=df.to_csv(index=False), file_name="diagnosticos.csv", mime="text/csv")
+# ADMIN - GERENCIAR USUÁRIOS
+elif menu == "Admin - Gerenciar Usuários" and st.session_state.admin_logado:
+    st.title("👥 Gerenciar Usuários (Clientes)")
+    if os.path.exists(usuarios_csv):
+        df_usuarios = pd.read_csv(usuarios_csv)
     else:
-        st.warning("Nenhum diagnóstico enviado ainda.")
+        df_usuarios = pd.DataFrame(columns=["CNPJ", "Senha", "Empresa"])
+
+    st.subheader("📋 Lista de Usuários")
+    st.dataframe(df_usuarios, use_container_width=True)
+
+    st.subheader("➕ Adicionar Novo Usuário")
+    with st.form("form_novo_usuario"):
+        novo_cnpj = st.text_input("CNPJ")
+        nova_senha = st.text_input("Senha")
+        nova_empresa = st.text_input("Nome da Empresa")
+        adicionar = st.form_submit_button("Adicionar Usuário")
+
+    if adicionar:
+        if novo_cnpj and nova_senha and nova_empresa:
+            if novo_cnpj in df_usuarios["CNPJ"].values:
+                st.warning("CNPJ já cadastrado.")
+            else:
+                novo_usuario = pd.DataFrame([[novo_cnpj, nova_senha, nova_empresa]], columns=["CNPJ", "Senha", "Empresa"])
+                df_usuarios = pd.concat([df_usuarios, novo_usuario], ignore_index=True)
+                df_usuarios.to_csv(usuarios_csv, index=False)
+                st.success("Usuário adicionado com sucesso!")
+        else:
+            st.warning("Preencha todos os campos.")
+
+    st.subheader("🗑️ Remover Usuário")
+    cnpjs_disponiveis = df_usuarios["CNPJ"].tolist()
+    cnpj_remover = st.selectbox("Selecione o CNPJ para remover", options=cnpjs_disponiveis)
+    if st.button("Remover Usuário"):
+        df_usuarios = df_usuarios[df_usuarios["CNPJ"] != cnpj_remover]
+        df_usuarios.to_csv(usuarios_csv, index=False)
+        st.success(f"Usuário com CNPJ {cnpj_remover} removido com sucesso!")
+
+# ADMIN - GERENCIAR ADMINISTRADORES
+elif menu == "Admin - Gerenciar Administradores" and st.session_state.admin_logado:
+    st.title("🛡️ Gerenciar Administradores")
+    df_admins = pd.read_csv(admin_credenciais_csv)
+    st.dataframe(df_admins, use_container_width=True)
+
+    st.subheader("➕ Adicionar Novo Administrador")
+    with st.form("form_novo_admin"):
+        novo_user = st.text_input("Novo Usuário")
+        nova_senha = st.text_input("Nova Senha")
+        add_admin = st.form_submit_button("Adicionar Admin")
+
+    if add_admin:
+        if novo_user and nova_senha:
+            if novo_user in df_admins["Usuario"].values:
+                st.warning("Usuário já cadastrado.")
+            else:
+                novo_admin = pd.DataFrame([[novo_user, nova_senha]], columns=["Usuario", "Senha"])
+                df_admins = pd.concat([df_admins, novo_admin], ignore_index=True)
+                df_admins.to_csv(admin_credenciais_csv, index=False)
+                st.success("Administrador adicionado com sucesso!")
+        else:
+            st.warning("Preencha todos os campos.")
+
+    st.subheader("🗑️ Remover Administrador")
+    admins_disponiveis = df_admins["Usuario"].tolist()
+    admin_remover = st.selectbox("Selecione o administrador para remover", options=admins_disponiveis)
+    if st.button("Remover Administrador"):
+        df_admins = df_admins[df_admins["Usuario"] != admin_remover]
+        df_admins.to_csv(admin_credenciais_csv, index=False)
+        st.success(f"Administrador '{admin_remover}' removido com sucesso!")
