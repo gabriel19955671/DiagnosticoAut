@@ -201,7 +201,7 @@ if aba == "Cliente":
 
         logo_cliente = st.file_uploader("📎 Envie a logo da sua empresa (opcional)", type=["png", "jpg", "jpeg"])
         nome_empresa_custom = st.text_input("📝 Nome da sua empresa", value=user.iloc[0]['Empresa'])
-(arquivo_csv) if os.path.exists(arquivo_csv) else pd.DataFrame()
+diagnosticos = pd.read_csv(arquivo_csv) if os.path.exists(arquivo_csv) else pd.DataFrame()
         if not diagnosticos[diagnosticos['CNPJ'] == cnpj].empty:
             st.warning("✅ Diagnóstico já preenchido. Agradecemos!")
             st.stop()
@@ -236,7 +236,7 @@ if aba == "Cliente":
                 insights.append("Desempenho da equipe pode estar comprometido.")
 
             diagnostico_texto = "
-".join(insights) if insights else "Nenhuma area critica identificada. Excelente desempenho geral."
+".join(insights) if insights else "Nenhuma area critica identificada. Excelente desempenho geral."".join(insights) if insights else "Nenhuma area critica identificada. Excelente desempenho geral."
 
             resposta = pd.DataFrame([{
                 "Data": datetime.now().strftime("%Y-%m-%d %H:%M"),
