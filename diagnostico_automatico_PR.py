@@ -144,7 +144,6 @@ if aba == "Cliente" and not st.session_state.cliente_logado:
         st.session_state.cliente_autenticado = True
         st.session_state.cliente_logado = True
         st.success("Login realizado com sucesso!")
-        st.rerun()
 
         st.subheader("📌 Instruções do Diagnóstico")
         st.markdown("""
