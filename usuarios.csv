@@ -1,4 +1,5 @@
-CNPJ,Senha,Empresa
-12345678000199,senha123,Empresa Alpha LTDA
-98765432000100,acesso2024,Beta Soluções ME
-11222333000188,potencialize,Potencialize Resultados
+CNPJ,Senha,Empresa;;
+12345678000199,senha123,Empresa Alpha LTDA;;
+98765432000100,acesso2024,Beta Soluções ME;;
+11222333000188,potencialize,Potencialize Resultados;;
+555555555555;gabriel;gabriel
