@@ -53,13 +53,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
     if menu_admin == "📊 Visualizar Diagnósticos":
         if os.path.exists(arquivo_csv):
             if st.button("💾 Gerar Backup ZIP"):
-                import zipfile
-                from datetime import datetime
-                zip_nome = f"backup_diagnosticos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
-                with zipfile.ZipFile(zip_nome, 'w') as zipf:
-                    zipf.write(arquivo_csv)
-                with open(zip_nome, "rb") as f:
-                    st.download_button("⬇️ Baixar Backup ZIP", f, file_name=zip_nome, mime="application/zip")
+                
 
                 st.info("✉️ Você pode integrar envio por e-mail via SMTP aqui.")
                 # Exemplo de envio por e-mail (estrutura pronta, sem SMTP real)
