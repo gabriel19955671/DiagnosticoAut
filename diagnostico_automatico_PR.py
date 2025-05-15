@@ -52,6 +52,27 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
     if menu_admin == "📊 Visualizar Diagnósticos":
         if os.path.exists(arquivo_csv):
+            if st.button("💾 Gerar Backup ZIP"):
+                import zipfile
+                from datetime import datetime
+                zip_nome = f"backup_diagnosticos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+                with zipfile.ZipFile(zip_nome, 'w') as zipf:
+                    zipf.write(arquivo_csv)
+                with open(zip_nome, "rb") as f:
+                    st.download_button("⬇️ Baixar Backup ZIP", f, file_name=zip_nome, mime="application/zip")
+
+                st.info("✉️ Você pode integrar envio por e-mail via SMTP aqui.")
+                # Exemplo de envio por e-mail (estrutura pronta, sem SMTP real)
+                if st.button("Simular Envio por E-mail"):
+                    st.success(f"Backup '{zip_nome}' enviado com sucesso (simulado).")
+                import zipfile
+                from datetime import datetime
+                zip_nome = f"backup_diagnosticos_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+                with zipfile.ZipFile(zip_nome, 'w') as zipf:
+                    zipf.write(arquivo_csv)
+                with open(zip_nome, "rb") as f:
+                    st.download_button("⬇️ Baixar Backup ZIP", f, file_name=zip_nome, mime="application/zip")
+        if os.path.exists(arquivo_csv):
             df = pd.read_csv(arquivo_csv)
             st.dataframe(df, use_container_width=True)
             st.download_button("📥 Baixar todos os diagnósticos (CSV)", data=df.to_csv(index=False), file_name="diagnosticos.csv", mime="text/csv")
@@ -163,8 +184,8 @@ if aba == "Cliente":
             st.error("CNPJ ou senha inválidos.")
             st.stop()
 
-        diagnosticos = pd.read_csv(arquivo_csv) if os.path.exists(arquivo_csv) else pd.DataFrame()
-        if not diagnosticos[diagnosticos['CNPJ'] == cnpj].empty:
+        diagnosticos = pd.read_csv(arquivo_csv) if os.path.exists(arquivo_csv) else pd.DataFrame(columns=["CNPJ", "Nome", "Email", "Empresa", "Financeiro", "Processos", "Marketing", "Vendas", "Equipe", "Média Geral", "Observações", "Diagnóstico", "Data"])
+        if 'CNPJ' in diagnosticos.columns and not diagnosticos[diagnosticos['CNPJ'] == cnpj].empty:
             st.warning("✅ Diagnóstico já preenchido. Agradecemos!")
             st.stop()
 
