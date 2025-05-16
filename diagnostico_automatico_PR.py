@@ -57,11 +57,16 @@ div[data-testid="stHorizontalBlock"] > div:first-child {
 
 st.title("🔒 Portal de Acesso")
 
-# Escolha entre Admin e Cliente, exceto se já logado como admin
+# Define aba com base no login admin
 if not st.session_state.admin_logado:
     aba = st.radio("Você é:", ["Administrador", "Cliente"], horizontal=True)
 else:
     aba = "Administrador"
+
+# Prints de debug para verificar o estado
+st.write("Valor de aba:", aba)
+st.write("cliente_logado:", st.session_state.cliente_logado)
+st.write("admin_logado:", st.session_state.admin_logado)
 
 # Login Administrador
 if aba == "Administrador" and not st.session_state.admin_logado:
