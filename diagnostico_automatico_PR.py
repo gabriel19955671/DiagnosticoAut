@@ -120,6 +120,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         diagnostico_texto = "
 ".join(insights) if insights else "Nenhuma área crítica identificada. Excelente desempenho geral."
 ".join(insights) if insights else "Nenhuma área crítica identificada. Excelente desempenho geral."
+".join(insights) if insights else "Nenhuma área crítica identificada. Excelente desempenho geral."
 
         resposta = pd.DataFrame([{ "Data": datetime.now().strftime("%Y-%m-%d %H:%M"), "CNPJ": cnpj, "Nome": nome, "Email": email, "Empresa": nome_empresa_custom, "Financeiro": financeiro, "Processos": processos, "Marketing": marketing, "Vendas": vendas, "Equipe": equipe, "Média Geral": media_geral, "Observações": observacoes, "Diagnóstico": diagnostico_texto.replace("
 ", " ") }])
