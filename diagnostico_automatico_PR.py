@@ -84,4 +84,40 @@ if aba == "Administrador" and st.session_state.admin_logado:
         else:
             st.warning("Nenhum usuário cadastrado.")
 
-# (continua com o restante do código sem alteração)
+if aba == "Cliente" and not st.session_state.cliente_logado:
+    with st.form("form_cliente"):
+        cnpj = st.text_input("CNPJ")
+        senha = st.text_input("Senha", type="password")
+        acessar = st.form_submit_button("Entrar como Cliente")
+
+    if acessar:
+        if not os.path.exists(usuarios_csv):
+            st.error("Base de usuários não encontrada.")
+            st.stop()
+
+        usuarios = pd.read_csv(usuarios_csv)
+        bloqueados = pd.read_csv(usuarios_bloqueados_csv)
+
+        if cnpj in bloqueados['CNPJ'].values:
+            st.error("Este CNPJ está bloqueado. Solicite liberação ao administrador.")
+            st.stop()
+
+        user = usuarios[(usuarios['CNPJ'] == cnpj) & (usuarios['Senha'] == senha)]
+
+        if user.empty:
+            st.error("CNPJ ou senha inválidos.")
+            st.stop()
+
+        diagnosticos = pd.read_csv(arquivo_csv) if os.path.exists(arquivo_csv) else pd.DataFrame(columns=["CNPJ", "Nome", "Email", "Empresa", "Financeiro", "Processos", "Marketing", "Vendas", "Equipe", "Média Geral", "Observações", "Diagnóstico", "Data"])
+        if 'CNPJ' in diagnosticos.columns and not diagnosticos[diagnosticos['CNPJ'] == cnpj].empty:
+            # Bloqueia automaticamente após envio
+            bloqueados = pd.concat([bloqueados, pd.DataFrame([[cnpj]], columns=["CNPJ"])]).drop_duplicates()
+            bloqueados.to_csv(usuarios_bloqueados_csv, index=False)
+            st.warning("✅ Diagnóstico já preenchido. Agradecemos! Este acesso foi bloqueado para novos envios.")
+            st.stop()
+
+        st.session_state.cliente_logado = True
+        st.session_state.cnpj = cnpj
+        st.session_state.user = user
+        st.success("Login realizado com sucesso!")
+        st.rerun()
