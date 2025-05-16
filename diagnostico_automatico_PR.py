@@ -241,22 +241,20 @@ if aba == "Cliente":
 
         if st.session_state.diagnostico_enviado:
             st.success("✅ Diagnóstico já enviado. Obrigado!")
-            if os.path.exists(f"diagnostico_{cnpj}.pdf"):
-                with open(f"diagnostico_{cnpj}.pdf", "rb") as f:
-                    st.download_button(
-                        "📄 Baixar PDF do Diagnóstico",
-                        f,
-                        file_name="diagnostico.pdf",
-                        mime="application/pdf",
-                        key="download_pdf",
-                    )
-
-            if st.session_state.get("download_pdf"):
+            with open(f"diagnostico_{cnpj}.pdf", "rb") as f:
+                download_clicked = st.download_button(
+                    "📄 Baixar PDF do Diagnóstico",
+                    f,
+                    file_name="diagnostico.pdf",
+                    mime="application/pdf",
+                    key="download_pdf",
+                )
+            if download_clicked:
                 st.session_state.cliente_logado = False
                 st.session_state.diagnostico_enviado = False
                 st.session_state.cnpj = None
                 st.session_state.user = None
-                streamlit_js_eval(js_expressions="parent.window.location.reload()")
+                streamlit_js_eval.js_expressions = "parent.window.location.reload()"
             st.stop()
 
         st.subheader("📌 Instruções do Diagnóstico")
@@ -275,8 +273,7 @@ if aba == "Cliente":
             nome_empresa_custom = st.text_input(
                 "📝 Nome da sua empresa", value=user.iloc[0].get("Empresa", "Nome da Empresa")
             )
-            nome = st.text_input("Nome do Responsável pelo preenchimento")
-            Telefone = st.text_input("Telefone Whatsapp")
+            nome = st.text_input("Nome completo")
             email = st.text_input("E-mail")
             financeiro = st.slider("Controle financeiro da empresa", 0, 10)
             processos = st.slider("Eficiência dos processos internos", 0, 10)
@@ -396,13 +393,3 @@ Diagnóstico Automático:
             pdf.multi_cell(0, 10, texto_pdf)
             pdf_output = f"diagnostico_{cnpj}.pdf"
             pdf.output(pdf_output)
-
-            with open(pdf_output, "rb") as f:
-                st.download_button(
-                    "📄 Baixar PDF do Diagnóstico",
-                    f,
-                    file_name="diagnostico.pdf",
-                    mime="application/pdf",
-                )
-
-            st.success("✅ Diagnóstico enviado, analisado e PDF gerado com sucesso!")
