@@ -97,7 +97,11 @@ if aba == "Cliente":
             </style>
             """,
             unsafe_allow_html=True,
-      
+        )
+
+        st.markdown('<div class="login-container">', unsafe_allow_html=True)
+        st.markdown("<h2 style='margin-bottom:20px;'>Login Cliente</h2>", unsafe_allow_html=True)
+
         with st.form("form_cliente"):
             cnpj = st.text_input("CNPJ")
             senha = st.text_input("Senha", type="password")
