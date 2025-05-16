@@ -19,23 +19,19 @@ if "cliente_logado" not in st.session_state:
 if "diagnostico_enviado" not in st.session_state:
     st.session_state.diagnostico_enviado = False
 
-# Criar arquivos vazios se não existirem
-if not os.path.exists(usuarios_bloqueados_csv):
-    pd.DataFrame(columns=["CNPJ"]).to_csv(usuarios_bloqueados_csv, index=False)
-if not os.path.exists(admin_credenciais_csv):
-    df_admin = pd.DataFrame([["admin", "potencialize"]], columns=["Usuario", "Senha"])
-    df_admin.to_csv(admin_credenciais_csv, index=False)
-if not os.path.exists(usuarios_csv):
-    df_usuarios = pd.DataFrame(columns=["CNPJ", "Senha", "Empresa"])
-    df_usuarios.to_csv(usuarios_csv, index=False)
-if not os.path.exists(arquivo_csv):
-    df_diagnosticos = pd.DataFrame(
-        columns=[
-            "Data", "CNPJ", "Nome", "Email", "Empresa", "Financeiro", "Processos",
-            "Marketing", "Vendas", "Equipe", "Média Geral", "Observações", "Diagnóstico"
-        ]
-    )
-    df_diagnosticos.to_csv(arquivo_csv, index=False)
+# Cria arquivos se não existirem
+for arquivo, colunas in [
+    (usuarios_bloqueados_csv, ["CNPJ"]),
+    (admin_credenciais_csv, ["Usuario", "Senha"]),
+    (usuarios_csv, ["CNPJ", "Senha", "Empresa"]),
+    (arquivo_csv, [
+        "Data", "CNPJ", "Nome", "Email", "Empresa", "Financeiro",
+        "Processos", "Marketing", "Vendas", "Equipe", "Média Geral",
+        "Observações", "Diagnóstico"
+    ])
+]:
+    if not os.path.exists(arquivo):
+        pd.DataFrame(columns=colunas).to_csv(arquivo, index=False)
 
 st.markdown("""
 <style>
@@ -52,13 +48,11 @@ if not st.session_state.admin_logado:
 else:
     aba = "Administrador"
 
-# --- LOGIN ADMINISTRADOR ---
 if aba == "Administrador" and not st.session_state.admin_logado:
     with st.form("form_admin"):
         usuario = st.text_input("Usuário do Administrador")
         senha = st.text_input("Senha", type="password")
         entrar = st.form_submit_button("Entrar como Admin")
-
     if entrar:
         df_admin = pd.read_csv(admin_credenciais_csv)
         if not df_admin[(df_admin["Usuario"] == usuario) & (df_admin["Senha"] == senha)].empty:
@@ -68,10 +62,8 @@ if aba == "Administrador" and not st.session_state.admin_logado:
         else:
             st.error("Usuário ou senha inválidos.")
 
-# --- PAINEL ADMINISTRATIVO ---
 if aba == "Administrador" and st.session_state.admin_logado:
     st.success("\U0001F513 Painel Administrativo Ativo")
-
     menu_admin = st.selectbox(
         "Selecione a funcionalidade administrativa:",
         [
@@ -82,7 +74,6 @@ if aba == "Administrador" and st.session_state.admin_logado:
             "\U0001F6E1️ Gerenciar Administradores"
         ],
     )
-
     if st.sidebar.button("\U0001F513 Sair do Painel Admin"):
         st.session_state.admin_logado = False
         st.experimental_rerun()
@@ -160,7 +151,6 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 df_admin.to_csv(admin_credenciais_csv, index=False)
                 st.success("Administrador adicionado com sucesso!")
 
-# --- LOGIN CLIENTE E DIAGNÓSTICO ---
 if aba == "Cliente":
     if not st.session_state.cliente_logado:
         st.markdown("""
@@ -351,5 +341,5 @@ Diagnóstico Automático:
             pdf_output = f"diagnostico_{cnpj}.pdf"
             pdf.output(pdf_output)
 
-            # Só chama o rerun aqui, dentro do evento do envio
+            # Só chame o rerun dentro deste if, pois é ação do usuário
             st.experimental_rerun()
