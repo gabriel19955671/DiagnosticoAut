@@ -242,13 +242,22 @@ if aba == "Cliente":
         if st.session_state.diagnostico_enviado:
             st.success("✅ Diagnóstico já enviado. Obrigado!")
             with open(f"diagnostico_{cnpj}.pdf", "rb") as f:
-                download_clicked = st.download_button(
-                    "📄 Baixar PDF do Diagnóstico",
-                    f,
-                    file_name="diagnostico.pdf",
-                    mime="application/pdf",
-                    key="download_pdf",
-                )
+                col1, col2 = st.columns(2)
+                with col1:
+                    download_clicked = st.download_button(
+                        "📄 Baixar PDF do Diagnóstico",
+                        f,
+                        file_name="diagnostico.pdf",
+                        mime="application/pdf",
+                        key="download_pdf",
+                    )
+                with col2:
+                    if st.button("Finalização do processo"):
+                        st.session_state.cliente_logado = False
+                        st.session_state.diagnostico_enviado = False
+                        st.session_state.cnpj = None
+                        st.session_state.user = None
+                        streamlit_js_eval.js_expressions = "parent.window.location.reload()"
             if download_clicked:
                 st.session_state.cliente_logado = False
                 st.session_state.diagnostico_enviado = False
