@@ -288,7 +288,6 @@ if aba == "Cliente":
 
         if enviado:
             st.session_state.diagnostico_enviado = True
-            st.experimental_rerun()
 
             class PDF(FPDF):
                 def header(self):
@@ -397,3 +396,5 @@ Diagnóstico Automático:
             pdf.multi_cell(0, 10, texto_pdf)
             pdf_output = f"diagnostico_{cnpj}.pdf"
             pdf.output(pdf_output)
+
+            st.experimental_rerun()
