@@ -6,7 +6,6 @@ from fpdf import FPDF
 import tempfile
 from streamlit_js_eval import streamlit_js_eval
 
-# Configuração básica da página sem título para evitar espaço extra
 st.set_page_config(page_title="Portal de Diagnóstico", layout="centered")
 
 admin_credenciais_csv = "admins.csv"
@@ -14,25 +13,6 @@ usuarios_csv = "usuarios.csv"
 arquivo_csv = "diagnosticos_clientes.csv"
 usuarios_bloqueados_csv = "usuarios_bloqueados.csv"
 
-# Remover margens e padding padrão do Streamlit para evitar espaços em branco no topo
-st.markdown(
-    """
-    <style>
-    /* Remove padding/margem do container principal */
-    .css-1d391kg {
-        padding-top: 0rem;
-        padding-bottom: 0rem;
-    }
-    .css-18e3th9 {
-        padding-top: 0rem;
-        padding-bottom: 0rem;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-# Inicializar session_state
 if "admin_logado" not in st.session_state:
     st.session_state.admin_logado = False
 if "cliente_logado" not in st.session_state:
@@ -40,7 +20,6 @@ if "cliente_logado" not in st.session_state:
 if "diagnostico_enviado" not in st.session_state:
     st.session_state.diagnostico_enviado = False
 
-# Criar arquivo bloqueados se não existir
 if not os.path.exists(usuarios_bloqueados_csv):
     pd.DataFrame(columns=["CNPJ"]).to_csv(usuarios_bloqueados_csv, index=False)
 
@@ -48,10 +27,9 @@ if not os.path.exists(admin_credenciais_csv):
     df_admin = pd.DataFrame([["admin", "potencialize"]], columns=["Usuario", "Senha"])
     df_admin.to_csv(admin_credenciais_csv, index=False)
 
-# Título simples, sem usar st.title para evitar espaçamento extra
+# Título simples, sem st.title para evitar espaçamento extra
 st.markdown("## \U0001F512 Portal de Acesso")
 
-# Escolha da aba
 if not st.session_state.admin_logado:
     aba = st.radio("Você é:", ["Administrador", "Cliente"], horizontal=True)
 else:
@@ -73,7 +51,8 @@ if aba == "Administrador" and not st.session_state.admin_logado:
         else:
             st.error("Usuário ou senha inválidos.")
 
-# Painel administrador
+# Painel administrador (adicione aqui suas funcionalidades administrativas)
+
 if aba == "Administrador" and st.session_state.admin_logado:
     st.success("\U0001F513 Painel Administrativo Ativo")
     menu_admin = st.selectbox(
@@ -96,10 +75,17 @@ if aba == "Administrador" and st.session_state.admin_logado:
 # LOGIN CLIENTE SEM ESPAÇO EXTRA
 if aba == "Cliente":
     if not st.session_state.cliente_logado:
-        # Container estilizado para o login do cliente
+
+        # CSS para remover espaço em branco acima do login cliente
         st.markdown(
             """
             <style>
+            div[data-testid="stHorizontalBlock"] > div:first-child {
+                display: none !important;
+                height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
             .login-container {
                 background-color: #f0f2f6;
                 padding: 40px;
@@ -112,8 +98,8 @@ if aba == "Cliente":
             """,
             unsafe_allow_html=True,
         )
-        st.markdown('<div class="login-container">', unsafe_allow_html=True)
 
+        st.markdown('<div class="login-container">', unsafe_allow_html=True)
         st.markdown("<h2 style='margin-bottom:20px;'>Login Cliente</h2>", unsafe_allow_html=True)
 
         with st.form("form_cliente"):
@@ -146,6 +132,7 @@ if aba == "Cliente":
             st.rerun()
 
         st.markdown("</div>", unsafe_allow_html=True)
+
     else:
         # Cliente logado - formulário diagnóstico
         cnpj = st.session_state.cnpj
