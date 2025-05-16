@@ -50,7 +50,7 @@ if aba == "Administrador" and not st.session_state.admin_logado:
         if not df_admin[(df_admin['Usuario'] == usuario) & (df_admin['Senha'] == senha)].empty:
             st.session_state.admin_logado = True
             st.success("Login de administrador realizado com sucesso!")
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Usuário ou senha inválidos.")
 
@@ -67,7 +67,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
     if st.sidebar.button("\U0001F513 Sair do Painel Admin"):
         st.session_state.admin_logado = False
-        st.experimental_rerun()
+        st.rerun()
 
     if menu_admin == "\U0001F4CA Visualizar Diagnósticos":
         if os.path.exists(arquivo_csv):
@@ -132,7 +132,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             bloqueados = bloqueados[bloqueados['CNPJ'] != desbloquear]
             bloqueados.to_csv(usuarios_bloqueados_csv, index=False)
             st.success(f"CNPJ {desbloquear} desbloqueado com sucesso.")
-            st.experimental_rerun()
+            st.rerun()
 
         st.subheader("Bloquear novo CNPJ")
         bloquear = st.selectbox("Selecionar CNPJ para bloquear:", options=[c for c in cnpjs if c not in bloqueados['CNPJ'].tolist()] if cnpjs else [])
@@ -140,7 +140,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             bloqueados = pd.concat([bloqueados, pd.DataFrame([[bloquear]], columns=["CNPJ"])]).drop_duplicates()
             bloqueados.to_csv(usuarios_bloqueados_csv, index=False)
             st.success(f"CNPJ {bloquear} bloqueado com sucesso.")
-            st.experimental_rerun()
+            st.rerun()
 
     elif menu_admin == "\U0001F6E1️ Gerenciar Administradores":
         df_admin = pd.read_csv(admin_credenciais_csv)
@@ -189,7 +189,7 @@ if aba == "Cliente" and not st.session_state.cliente_logado:
         st.session_state.cnpj = cnpj
         st.session_state.user = user
         st.success("Login realizado com sucesso!")
-        st.experimental_rerun()
+        st.rerun()
 
 # Formulário diagnóstico (aparece só se cliente estiver logado)
 if aba == "Cliente" and st.session_state.cliente_logado:
