@@ -19,7 +19,7 @@ if "cliente_logado" not in st.session_state:
 if "diagnostico_enviado" not in st.session_state:
     st.session_state.diagnostico_enviado = False
 
-# Inicializa arquivos se não existirem
+# Criar arquivos vazios se não existirem
 if not os.path.exists(usuarios_bloqueados_csv):
     pd.DataFrame(columns=["CNPJ"]).to_csv(usuarios_bloqueados_csv, index=False)
 if not os.path.exists(admin_credenciais_csv):
@@ -52,7 +52,7 @@ if not st.session_state.admin_logado:
 else:
     aba = "Administrador"
 
-# Login do Administrador
+# --- LOGIN ADMINISTRADOR ---
 if aba == "Administrador" and not st.session_state.admin_logado:
     with st.form("form_admin"):
         usuario = st.text_input("Usuário do Administrador")
@@ -64,11 +64,11 @@ if aba == "Administrador" and not st.session_state.admin_logado:
         if not df_admin[(df_admin["Usuario"] == usuario) & (df_admin["Senha"] == senha)].empty:
             st.session_state.admin_logado = True
             st.success("Login de administrador realizado com sucesso!")
-            st.rerun()
+            st.experimental_rerun()
         else:
             st.error("Usuário ou senha inválidos.")
 
-# Painel Administrativo
+# --- PAINEL ADMINISTRATIVO ---
 if aba == "Administrador" and st.session_state.admin_logado:
     st.success("\U0001F513 Painel Administrativo Ativo")
 
@@ -85,7 +85,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
     if st.sidebar.button("\U0001F513 Sair do Painel Admin"):
         st.session_state.admin_logado = False
-        st.rerun()
+        st.experimental_rerun()
 
     if menu_admin == "\U0001F4CA Visualizar Diagnósticos":
         df = pd.read_csv(arquivo_csv)
@@ -160,7 +160,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 df_admin.to_csv(admin_credenciais_csv, index=False)
                 st.success("Administrador adicionado com sucesso!")
 
-# Login Cliente e diagnóstico
+# --- LOGIN CLIENTE E DIAGNÓSTICO ---
 if aba == "Cliente":
     if not st.session_state.cliente_logado:
         st.markdown("""
@@ -211,7 +211,7 @@ if aba == "Cliente":
             st.session_state.cnpj = cnpj
             st.session_state.user = user
             st.success("Login realizado com sucesso!")
-            st.rerun()
+            st.experimental_rerun()
 
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -351,5 +351,5 @@ Diagnóstico Automático:
             pdf_output = f"diagnostico_{cnpj}.pdf"
             pdf.output(pdf_output)
 
-            # Chamada de rerun apenas aqui dentro do if enviado
+            # Só chama o rerun aqui, dentro do evento do envio
             st.experimental_rerun()
