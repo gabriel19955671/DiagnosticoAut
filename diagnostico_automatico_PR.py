@@ -71,6 +71,7 @@ if not st.session_state.admin_logado:
 else:
     aba = "Administrador"
 
+# Login Administrador
 if aba == "Administrador" and not st.session_state.admin_logado:
     with st.form("form_admin"):
         usuario = st.text_input("Usuário do Administrador")
@@ -86,6 +87,7 @@ if aba == "Administrador" and not st.session_state.admin_logado:
         else:
             st.error("Usuário ou senha inválidos.")
 
+# Painel Admin
 if aba == "Administrador" and st.session_state.admin_logado:
     st.success("\U0001F513 Painel Administrativo Ativo")
 
@@ -177,6 +179,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 df_admin.to_csv(admin_credenciais_csv, index=False)
                 st.success("Administrador adicionado com sucesso!")
 
+# Login Cliente e diagnóstico
 if aba == "Cliente":
     if not st.session_state.cliente_logado:
         st.markdown(
