@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 from fpdf import FPDF
 import tempfile
+from streamlit_js_eval import streamlit_js_eval
 
 st.set_page_config(page_title="Portal de Diagnóstico", layout="centered")
 
@@ -138,6 +139,8 @@ if aba == "Cliente" and not st.session_state.cliente_logado:
             st.warning("✅ Diagnóstico já preenchido. Agradecemos!")
             st.session_state.diagnostico_enviado = True
             st.session_state.cliente_logado = True
+            st.session_state.cnpj = cnpj
+            st.session_state.user = user
             st.stop()
 
         st.session_state.cliente_logado = True
@@ -154,7 +157,15 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         st.success("✅ Diagnóstico já enviado. Obrigado!")
         if os.path.exists(f"diagnostico_{cnpj}.pdf"):
             with open(f"diagnostico_{cnpj}.pdf", "rb") as f:
-                st.download_button("📄 Baixar PDF do Diagnóstico", f, file_name="diagnostico.pdf", mime="application/pdf")
+                st.download_button("📄 Baixar PDF do Diagnóstico", f, file_name="diagnostico.pdf", mime="application/pdf", key="download_pdf")
+
+        if st.session_state.get("download_pdf"):
+            st.session_state.cliente_logado = False
+            st.session_state.diagnostico_enviado = False
+            st.session_state.cnpj = None
+            st.session_state.user = None
+            streamlit_js_eval(js_expressions="parent.window.location.reload()")
+
         st.stop()
 
     st.subheader("📌 Instruções do Diagnóstico")
@@ -242,6 +253,6 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         pdf.output(pdf_output)
 
         with open(pdf_output, "rb") as f:
-            st.download_button("📄 Baixar PDF do Diagnóstico", f, file_name="diagnostico.pdf", mime="application/pdf")
+            st.download_button("📄 Baixar PDF do Diagnóstico", f, file_name="diagnostico.pdf", mime="application/pdf", key="download_pdf")
 
         st.success("✅ Diagnóstico enviado, analisado e PDF gerado com sucesso!")
