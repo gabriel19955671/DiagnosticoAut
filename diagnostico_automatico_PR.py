@@ -104,18 +104,18 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                 self.set_text_color(128)
                 self.cell(0, 10, f"Potencialize Resultados - Diagnóstico Automático | Página {self.page_no()}", align='C')
 
-        media_geral = round((financeiro + processos + marketing + vendas + equipe) / 5, 2)
-        insights = []
-        if financeiro < 6:
-            insights.append("Controle financeiro necessita de atenção.")
-        if processos < 6:
-            insights.append("Processos internos abaixo do ideal.")
-        if marketing < 6:
-            insights.append("Estratégia de marketing pode ser melhorada.")
-        if vendas < 6:
-            insights.append("Resultados comerciais abaixo da média.")
-        if equipe < 6:
-            insights.append("Desempenho da equipe pode estar comprometido.")
+       media_geral = round((financeiro + processos + marketing + vendas + equipe) / 5, 2)
+insights = []
+if financeiro < 6:
+    insights.append("Controle financeiro necessita de atenção.")
+if processos < 6:
+    insights.append("Processos internos abaixo do ideal.")
+if marketing < 6:
+    insights.append("Estratégia de marketing pode ser melhorada.")
+if vendas < 6:
+    insights.append("Resultados comerciais abaixo da média.")
+if equipe < 6:
+    insights.append("Desempenho da equipe pode estar comprometido.")
 
-        diagnostico_texto = "
-".join(insights) if insights else "Nenhuma área crítica identificada. Excelente desempenho geral."
+diagnostico_texto = "\n".join(insights) if insights else "Nenhuma área crítica identificada. Excelente desempenho geral."
+
