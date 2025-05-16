@@ -264,7 +264,8 @@ if aba == "Cliente":
                 st.session_state.diagnostico_enviado = False
                 st.session_state.cnpj = None
                 st.session_state.user = None
-                streamlit_js_eval.js_expressions = "parent.window.location.reload()"
+                st.experimental_rerun()
+
             st.stop()
 
         st.subheader("📌 Instruções do Diagnóstico")
@@ -295,6 +296,7 @@ if aba == "Cliente":
 
         if enviado:
             st.session_state.diagnostico_enviado = True
+            st.experimental_rerun()
 
             class PDF(FPDF):
                 def header(self):
