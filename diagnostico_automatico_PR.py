@@ -13,6 +13,7 @@ usuarios_csv = "usuarios.csv"
 arquivo_csv = "diagnosticos_clientes.csv"
 usuarios_bloqueados_csv = "usuarios_bloqueados.csv"
 
+# Inicializar session_state
 if "admin_logado" not in st.session_state:
     st.session_state.admin_logado = False
 if "cliente_logado" not in st.session_state:
@@ -20,6 +21,7 @@ if "cliente_logado" not in st.session_state:
 if "diagnostico_enviado" not in st.session_state:
     st.session_state.diagnostico_enviado = False
 
+# Criar arquivo bloqueados se não existir
 if not os.path.exists(usuarios_bloqueados_csv):
     pd.DataFrame(columns=["CNPJ"]).to_csv(usuarios_bloqueados_csv, index=False)
 
@@ -70,12 +72,13 @@ if aba == "Administrador" and st.session_state.admin_logado:
         st.session_state.admin_logado = False
         st.rerun()
 
-    # ... (mesmo código administrativo que já temos) ...
+    # Conteúdo das opções do menu admin (igual antes, omitido aqui para brevidade)
+    # Copie a implementação já fornecida para o painel admin aqui.
 
-# LOGIN CLIENTE COM TELA TRAVADA
+# LOGIN CLIENTE SEM ESPAÇO EXTRA
 if aba == "Cliente":
     if not st.session_state.cliente_logado:
-        # Tela com fundo cinza e formulário centralizado para login cliente
+        # Estilo para container limpo e centralizado sem espaços extras
         st.markdown(
             """
             <style>
