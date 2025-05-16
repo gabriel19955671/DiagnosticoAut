@@ -4,7 +4,6 @@ from datetime import datetime
 import os
 from fpdf import FPDF
 import tempfile
-from streamlit_js_eval import streamlit_js_eval
 
 st.set_page_config(page_title="Portal de Diagnóstico", layout="centered")
 
@@ -244,7 +243,7 @@ if aba == "Cliente":
             with open(f"diagnostico_{cnpj}.pdf", "rb") as f:
                 col1, col2 = st.columns(2)
                 with col1:
-                    download_clicked = st.download_button(
+                    st.download_button(
                         "📄 Baixar PDF do Diagnóstico",
                         f,
                         file_name="diagnostico.pdf",
@@ -258,13 +257,6 @@ if aba == "Cliente":
                         st.session_state.cnpj = None
                         st.session_state.user = None
                         st.experimental_rerun()
-
-            if download_clicked:
-                st.session_state.cliente_logado = False
-                st.session_state.diagnostico_enviado = False
-                st.session_state.cnpj = None
-                st.session_state.user = None
-                st.experimental_rerun()
 
             st.stop()
 
