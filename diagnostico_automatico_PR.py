@@ -21,7 +21,7 @@ if 'cliente_logado' not in st.session_state:
 if 'diagnostico_enviado' not in st.session_state:
     st.session_state.diagnostico_enviado = False
 
-# Criar arquivo de bloqueio se não existir
+# Inicializar arquivo de bloqueio se não existir
 if not os.path.exists(usuarios_bloqueados_csv):
     pd.DataFrame(columns=["CNPJ"]).to_csv(usuarios_bloqueados_csv, index=False)
 
@@ -31,7 +31,7 @@ if not os.path.exists(admin_credenciais_csv):
 
 st.title("\U0001F512 Portal de Acesso")
 
-# Escolha aba
+# Escolha da aba
 if not st.session_state.admin_logado:
     aba = st.radio("Você é:", ["Administrador", "Cliente"], horizontal=True)
 else:
@@ -40,6 +40,7 @@ else:
 # Login administrador
 if aba == "Administrador" and not st.session_state.admin_logado:
     with st.form("form_admin"):
+        st.markdown("## Login Administrador")
         usuario = st.text_input("Usuário do Administrador")
         senha = st.text_input("Senha", type="password")
         entrar = st.form_submit_button("Entrar como Admin")
@@ -49,7 +50,7 @@ if aba == "Administrador" and not st.session_state.admin_logado:
         if not df_admin[(df_admin['Usuario'] == usuario) & (df_admin['Senha'] == senha)].empty:
             st.session_state.admin_logado = True
             st.success("Login de administrador realizado com sucesso!")
-            st.rerun()
+            st.experimental_rerun()
         else:
             st.error("Usuário ou senha inválidos.")
 
@@ -66,7 +67,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
     if st.sidebar.button("\U0001F513 Sair do Painel Admin"):
         st.session_state.admin_logado = False
-        st.rerun()
+        st.experimental_rerun()
 
     if menu_admin == "\U0001F4CA Visualizar Diagnósticos":
         if os.path.exists(arquivo_csv):
@@ -158,9 +159,10 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 df_admin.to_csv(admin_credenciais_csv, index=False)
                 st.success("Administrador adicionado com sucesso!")
 
-# Login cliente (mostra formulário só se não estiver logado)
+# Login cliente (mostra formulário se não logado)
 if aba == "Cliente" and not st.session_state.cliente_logado:
     with st.form("form_cliente"):
+        st.markdown("## Login Cliente")
         cnpj = st.text_input("CNPJ")
         senha = st.text_input("Senha", type="password")
         acessar = st.form_submit_button("Entrar como Cliente")
@@ -187,9 +189,9 @@ if aba == "Cliente" and not st.session_state.cliente_logado:
         st.session_state.cnpj = cnpj
         st.session_state.user = user
         st.success("Login realizado com sucesso!")
-        st.rerun()
+        st.experimental_rerun()
 
-# Formulário diagnóstico (só aparece se cliente estiver logado)
+# Formulário diagnóstico (aparece só se cliente estiver logado)
 if aba == "Cliente" and st.session_state.cliente_logado:
     cnpj = st.session_state.cnpj
     user = st.session_state.user
