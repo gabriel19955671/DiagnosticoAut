@@ -119,3 +119,4 @@ if aba == "Cliente" and st.session_state.cliente_logado:
 
         diagnostico_texto = "
 ".join(insights) if insights else "Nenhuma área crítica identificada. Excelente desempenho geral."
+".join(insights) if insights else "Nenhuma área crítica identificada. Excelente desempenho geral."
