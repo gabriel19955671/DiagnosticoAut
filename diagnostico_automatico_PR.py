@@ -21,7 +21,7 @@ if 'cliente_logado' not in st.session_state:
 if 'diagnostico_enviado' not in st.session_state:
     st.session_state.diagnostico_enviado = False
 
-# Inicializar arquivo de bloqueio se não existir
+# Criar arquivo de bloqueio se não existir
 if not os.path.exists(usuarios_bloqueados_csv):
     pd.DataFrame(columns=["CNPJ"]).to_csv(usuarios_bloqueados_csv, index=False)
 
@@ -31,7 +31,7 @@ if not os.path.exists(admin_credenciais_csv):
 
 st.title("\U0001F512 Portal de Acesso")
 
-# Escolha da aba
+# Escolha aba
 if not st.session_state.admin_logado:
     aba = st.radio("Você é:", ["Administrador", "Cliente"], horizontal=True)
 else:
@@ -158,7 +158,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 df_admin.to_csv(admin_credenciais_csv, index=False)
                 st.success("Administrador adicionado com sucesso!")
 
-# Login cliente
+# Login cliente (mostra formulário só se não estiver logado)
 if aba == "Cliente" and not st.session_state.cliente_logado:
     with st.form("form_cliente"):
         cnpj = st.text_input("CNPJ")
@@ -189,7 +189,7 @@ if aba == "Cliente" and not st.session_state.cliente_logado:
         st.success("Login realizado com sucesso!")
         st.rerun()
 
-# Formulário diagnóstico para cliente logado
+# Formulário diagnóstico (só aparece se cliente estiver logado)
 if aba == "Cliente" and st.session_state.cliente_logado:
     cnpj = st.session_state.cnpj
     user = st.session_state.user
