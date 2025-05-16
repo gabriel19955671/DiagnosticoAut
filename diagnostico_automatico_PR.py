@@ -6,12 +6,31 @@ from fpdf import FPDF
 import tempfile
 from streamlit_js_eval import streamlit_js_eval
 
+# Configuração básica da página sem título para evitar espaço extra
 st.set_page_config(page_title="Portal de Diagnóstico", layout="centered")
 
 admin_credenciais_csv = "admins.csv"
 usuarios_csv = "usuarios.csv"
 arquivo_csv = "diagnosticos_clientes.csv"
 usuarios_bloqueados_csv = "usuarios_bloqueados.csv"
+
+# Remover margens e padding padrão do Streamlit para evitar espaços em branco no topo
+st.markdown(
+    """
+    <style>
+    /* Remove padding/margem do container principal */
+    .css-1d391kg {
+        padding-top: 0rem;
+        padding-bottom: 0rem;
+    }
+    .css-18e3th9 {
+        padding-top: 0rem;
+        padding-bottom: 0rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 # Inicializar session_state
 if "admin_logado" not in st.session_state:
@@ -29,7 +48,8 @@ if not os.path.exists(admin_credenciais_csv):
     df_admin = pd.DataFrame([["admin", "potencialize"]], columns=["Usuario", "Senha"])
     df_admin.to_csv(admin_credenciais_csv, index=False)
 
-st.title("\U0001F512 Portal de Acesso")
+# Título simples, sem usar st.title para evitar espaçamento extra
+st.markdown("## \U0001F512 Portal de Acesso")
 
 # Escolha da aba
 if not st.session_state.admin_logado:
@@ -40,7 +60,6 @@ else:
 # Login administrador
 if aba == "Administrador" and not st.session_state.admin_logado:
     with st.form("form_admin"):
-        st.markdown("## Login Administrador")
         usuario = st.text_input("Usuário do Administrador")
         senha = st.text_input("Senha", type="password")
         entrar = st.form_submit_button("Entrar como Admin")
@@ -72,13 +91,12 @@ if aba == "Administrador" and st.session_state.admin_logado:
         st.session_state.admin_logado = False
         st.rerun()
 
-    # Conteúdo das opções do menu admin (igual antes, omitido aqui para brevidade)
-    # Copie a implementação já fornecida para o painel admin aqui.
+    # Aqui você insere o código que já tinha para cada menu do admin
 
 # LOGIN CLIENTE SEM ESPAÇO EXTRA
 if aba == "Cliente":
     if not st.session_state.cliente_logado:
-        # Estilo para container limpo e centralizado sem espaços extras
+        # Container estilizado para o login do cliente
         st.markdown(
             """
             <style>
@@ -87,7 +105,7 @@ if aba == "Cliente":
                 padding: 40px;
                 border-radius: 8px;
                 max-width: 400px;
-                margin: 80px auto;
+                margin: 40px auto;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             }
             </style>
@@ -96,8 +114,9 @@ if aba == "Cliente":
         )
         st.markdown('<div class="login-container">', unsafe_allow_html=True)
 
+        st.markdown("<h2 style='margin-bottom:20px;'>Login Cliente</h2>", unsafe_allow_html=True)
+
         with st.form("form_cliente"):
-            st.markdown("## Login Cliente")
             cnpj = st.text_input("CNPJ")
             senha = st.text_input("Senha", type="password")
             acessar = st.form_submit_button("Entrar como Cliente")
