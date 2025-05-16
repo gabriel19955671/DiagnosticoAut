@@ -19,7 +19,7 @@ if "cliente_logado" not in st.session_state:
 if "diagnostico_enviado" not in st.session_state:
     st.session_state.diagnostico_enviado = False
 
-# Inicializa arquivos caso não existam
+# Inicializa arquivos se não existirem
 if not os.path.exists(usuarios_bloqueados_csv):
     pd.DataFrame(columns=["CNPJ"]).to_csv(usuarios_bloqueados_csv, index=False)
 if not os.path.exists(admin_credenciais_csv):
@@ -37,28 +37,12 @@ if not os.path.exists(arquivo_csv):
     )
     df_diagnosticos.to_csv(arquivo_csv, index=False)
 
-# Esconde padding e espaço extra no layout
 st.markdown("""
-    <style>
-    .css-1d391kg, .css-18e3th9 {
-        padding-top: 0rem !important;
-        padding-bottom: 0rem !important;
-    }
-    div[data-testid="stHorizontalBlock"] > div:first-child {
-        display: none !important;
-        height: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    .login-container {
-        background-color: #f0f2f6;
-        padding: 40px;
-        border-radius: 8px;
-        max-width: 400px;
-        margin: 40px auto;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    </style>
+<style>
+.css-1d391kg, .css-18e3th9 { padding-top: 0rem !important; padding-bottom: 0rem !important; }
+div[data-testid="stHorizontalBlock"] > div:first-child { display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; }
+.login-container { background-color: #f0f2f6; padding: 40px; border-radius: 8px; max-width: 400px; margin: 40px auto; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+</style>
 """, unsafe_allow_html=True)
 
 st.markdown("## \U0001F512 Portal de Acesso")
@@ -68,7 +52,7 @@ if not st.session_state.admin_logado:
 else:
     aba = "Administrador"
 
-# Login Administrador
+# Login do Administrador
 if aba == "Administrador" and not st.session_state.admin_logado:
     with st.form("form_admin"):
         usuario = st.text_input("Usuário do Administrador")
@@ -179,27 +163,24 @@ if aba == "Administrador" and st.session_state.admin_logado:
 # Login Cliente e diagnóstico
 if aba == "Cliente":
     if not st.session_state.cliente_logado:
-        st.markdown(
-            """
-            <style>
-            .login-container {
-                background-color: #f0f2f6;
-                padding: 40px;
-                border-radius: 8px;
-                max-width: 400px;
-                margin: 40px auto;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            }
-            div[data-testid="stHorizontalBlock"] > div:first-child {
-                display: none !important;
-                height: 0 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.markdown("""
+        <style>
+        .login-container {
+            background-color: #f0f2f6;
+            padding: 40px;
+            border-radius: 8px;
+            max-width: 400px;
+            margin: 40px auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        div[data-testid="stHorizontalBlock"] > div:first-child {
+            display: none !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
         st.markdown('<div class="login-container">', unsafe_allow_html=True)
         st.markdown("<h2 style='margin-bottom:20px;'>Login Cliente</h2>", unsafe_allow_html=True)
 
@@ -261,21 +242,15 @@ if aba == "Cliente":
             st.stop()
 
         st.subheader("📌 Instruções do Diagnóstico")
-        st.markdown(
-            """
-            - Avalie cada item com uma nota de 0 a 10.
-            - Seja honesto em suas respostas para que o diagnóstico seja o mais fiel possível.
-            - Após o preenchimento, você poderá baixar um PDF com o resultado.
-            """
-        )
+        st.markdown("""
+        - Avalie cada item com uma nota de 0 a 10.
+        - Seja honesto em suas respostas para que o diagnóstico seja o mais fiel possível.
+        - Após o preenchimento, você poderá baixar um PDF com o resultado.
+        """)
 
         with st.form("form_diagnostico"):
-            logo_cliente = st.file_uploader(
-                "📎 Envie a logo da sua empresa (opcional)", type=["png", "jpg", "jpeg"]
-            )
-            nome_empresa_custom = st.text_input(
-                "📝 Nome da sua empresa", value=user.iloc[0].get("Empresa", "Nome da Empresa")
-            )
+            logo_cliente = st.file_uploader("📎 Envie a logo da sua empresa (opcional)", type=["png", "jpg", "jpeg"])
+            nome_empresa_custom = st.text_input("📝 Nome da sua empresa", value=user.iloc[0].get("Empresa", "Nome da Empresa"))
             nome = st.text_input("Nome completo")
             email = st.text_input("E-mail")
             financeiro = st.slider("Controle financeiro da empresa", 0, 10)
@@ -294,29 +269,16 @@ if aba == "Cliente":
                     if hasattr(self, "logo_path") and self.logo_path:
                         self.image(self.logo_path, x=10, y=8, w=30)
                     self.set_font("Arial", "B", 16)
-                    self.cell(
-                        0,
-                        10,
-                        "Diagnóstico Empresarial - Potencialize Resultados",
-                        ln=True,
-                        align="C",
-                    )
+                    self.cell(0, 10, "Diagnóstico Empresarial - Potencialize Resultados", ln=True, align="C")
                     self.ln(10)
 
                 def footer(self):
                     self.set_y(-15)
                     self.set_font("Arial", "I", 8)
                     self.set_text_color(128)
-                    self.cell(
-                        0,
-                        10,
-                        f"Potencialize Resultados - Diagnóstico Automático | Página {self.page_no()}",
-                        align="C",
-                    )
+                    self.cell(0, 10, f"Potencialize Resultados - Diagnóstico Automático | Página {self.page_no()}", align="C")
 
-            media_geral = round(
-                (financeiro + processos + marketing + vendas + equipe) / 5, 2
-            )
+            media_geral = round((financeiro + processos + marketing + vendas + equipe) / 5, 2)
             insights = []
             if financeiro < 6:
                 insights.append("Controle financeiro necessita de atenção.")
@@ -329,31 +291,23 @@ if aba == "Cliente":
             if equipe < 6:
                 insights.append("Desempenho da equipe pode estar comprometido.")
 
-            diagnostico_texto = (
-                "\n".join(insights)
-                if insights
-                else "Nenhuma área crítica identificada. Excelente desempenho geral."
-            )
+            diagnostico_texto = "\n".join(insights) if insights else "Nenhuma área crítica identificada. Excelente desempenho geral."
 
-            resposta = pd.DataFrame(
-                [
-                    {
-                        "Data": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                        "CNPJ": cnpj,
-                        "Nome": nome,
-                        "Email": email,
-                        "Empresa": nome_empresa_custom,
-                        "Financeiro": financeiro,
-                        "Processos": processos,
-                        "Marketing": marketing,
-                        "Vendas": vendas,
-                        "Equipe": equipe,
-                        "Média Geral": media_geral,
-                        "Observações": observacoes,
-                        "Diagnóstico": diagnostico_texto.replace("\n", " "),
-                    }
-                ]
-            )
+            resposta = pd.DataFrame([{
+                "Data": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                "CNPJ": cnpj,
+                "Nome": nome,
+                "Email": email,
+                "Empresa": nome_empresa_custom,
+                "Financeiro": financeiro,
+                "Processos": processos,
+                "Marketing": marketing,
+                "Vendas": vendas,
+                "Equipe": equipe,
+                "Média Geral": media_geral,
+                "Observações": observacoes,
+                "Diagnóstico": diagnostico_texto.replace("\n", " "),
+            }])
 
             if os.path.exists(arquivo_csv):
                 antigo = pd.read_csv(arquivo_csv)
@@ -397,4 +351,5 @@ Diagnóstico Automático:
             pdf_output = f"diagnostico_{cnpj}.pdf"
             pdf.output(pdf_output)
 
+            # Chamada de rerun apenas aqui dentro do if enviado
             st.experimental_rerun()
