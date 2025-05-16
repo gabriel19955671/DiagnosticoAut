@@ -275,7 +275,8 @@ if aba == "Cliente":
             nome_empresa_custom = st.text_input(
                 "📝 Nome da sua empresa", value=user.iloc[0].get("Empresa", "Nome da Empresa")
             )
-            nome = st.text_input("Nome completo")
+            nome = st.text_input("Nome do Responsável pelo preenchimento")
+            Telefone para contato = st.text_input("Telefone - Whatsapp")
             email = st.text_input("E-mail")
             financeiro = st.slider("Controle financeiro da empresa", 0, 10)
             processos = st.slider("Eficiência dos processos internos", 0, 10)
