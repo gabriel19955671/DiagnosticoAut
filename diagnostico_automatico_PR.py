@@ -13,7 +13,6 @@ usuarios_csv = "usuarios.csv"
 arquivo_csv = "diagnosticos_clientes.csv"
 usuarios_bloqueados_csv = "usuarios_bloqueados.csv"
 
-# Inicializar session_state
 if "admin_logado" not in st.session_state:
     st.session_state.admin_logado = False
 if "cliente_logado" not in st.session_state:
@@ -21,7 +20,6 @@ if "cliente_logado" not in st.session_state:
 if "diagnostico_enviado" not in st.session_state:
     st.session_state.diagnostico_enviado = False
 
-# Criar arquivos csv caso não existam
 if not os.path.exists(usuarios_bloqueados_csv):
     pd.DataFrame(columns=["CNPJ"]).to_csv(usuarios_bloqueados_csv, index=False)
 
@@ -42,7 +40,6 @@ if not os.path.exists(arquivo_csv):
     )
     df_diagnosticos.to_csv(arquivo_csv, index=False)
 
-# Remove espaçamento extra padrão do Streamlit
 st.markdown(
     """
     <style>
@@ -75,7 +72,6 @@ if not st.session_state.admin_logado:
 else:
     aba = "Administrador"
 
-# Login administrador
 if aba == "Administrador" and not st.session_state.admin_logado:
     with st.form("form_admin"):
         usuario = st.text_input("Usuário do Administrador")
@@ -87,11 +83,10 @@ if aba == "Administrador" and not st.session_state.admin_logado:
         if not df_admin[(df_admin["Usuario"] == usuario) & (df_admin["Senha"] == senha)].empty:
             st.session_state.admin_logado = True
             st.success("Login de administrador realizado com sucesso!")
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Usuário ou senha inválidos.")
 
-# Painel Administrativo
 if aba == "Administrador" and st.session_state.admin_logado:
     st.success("\U0001F513 Painel Administrativo Ativo")
 
@@ -108,7 +103,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
     if st.sidebar.button("\U0001F513 Sair do Painel Admin"):
         st.session_state.admin_logado = False
-        st.experimental_rerun()
+        st.rerun()
 
     if menu_admin == "\U0001F4CA Visualizar Diagnósticos":
         df = pd.read_csv(arquivo_csv)
@@ -120,7 +115,6 @@ if aba == "Administrador" and st.session_state.admin_logado:
         cnpjs = df["CNPJ"].unique().tolist()
         cnpj_sel = st.selectbox("Selecione o CNPJ para liberar novo diagnóstico:", options=cnpjs)
         if st.button("🔄 Reautorizar"):
-            # Remove diagnósticos do CNPJ selecionado para permitir novo diagnóstico
             df = df[df["CNPJ"] != cnpj_sel]
             df.to_csv(arquivo_csv, index=False)
             st.success(f"CNPJ {cnpj_sel} reautorizado com sucesso.")
@@ -184,7 +178,6 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 df_admin.to_csv(admin_credenciais_csv, index=False)
                 st.success("Administrador adicionado com sucesso!")
 
-# LOGIN CLIENTE (sem mudanças aqui)
 if aba == "Cliente":
     if not st.session_state.cliente_logado:
         st.markdown(
@@ -243,7 +236,6 @@ if aba == "Cliente":
         st.markdown("</div>", unsafe_allow_html=True)
 
     else:
-        # Formulário diagnóstico do cliente (igual ao seu código atual)
         cnpj = st.session_state.cnpj
         user = st.session_state.user
 
