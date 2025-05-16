@@ -117,4 +117,5 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         if equipe < 6:
             insights.append("Desempenho da equipe pode estar comprometido.")
 
-        diagnostico_texto = "\n".join(insights) if insights else "Nenhuma área crítica identificada. Excelente desempenho geral."
+        diagnostico_texto = "
+".join(insights) if insights else "Nenhuma área crítica identificada. Excelente desempenho geral."
