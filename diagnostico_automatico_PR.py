@@ -273,7 +273,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
             "Equipe": equipe, 
             "Média Geral": media_geral, 
             "Observações": observacoes, 
-            "Diagnóstico": diagnostico_texto.replace(\"\\n\", \" \") 
+            "Diagnóstico": diagnostico_texto.replace("\n", " ")
         }])
         
         if os.path.exists(arquivo_csv):
