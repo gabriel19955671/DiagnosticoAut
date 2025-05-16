@@ -7,13 +7,11 @@ import tempfile
 
 st.set_page_config(page_title="Portal de Diagnóstico", layout="centered")
 
-# Arquivos base
 admin_credenciais_csv = "admins.csv"
 usuarios_csv = "usuarios.csv"
 arquivo_csv = "diagnosticos_clientes.csv"
 usuarios_bloqueados_csv = "usuarios_bloqueados.csv"
 
-# Inicializa sessão
 if "admin_logado" not in st.session_state:
     st.session_state.admin_logado = False
 if "cliente_logado" not in st.session_state:
@@ -21,7 +19,7 @@ if "cliente_logado" not in st.session_state:
 if "diagnostico_enviado" not in st.session_state:
     st.session_state.diagnostico_enviado = False
 
-# Criar arquivos vazios se não existirem
+# Criar arquivos base caso não existam
 for arquivo, colunas in [
     (usuarios_bloqueados_csv, ["CNPJ"]),
     (admin_credenciais_csv, ["Usuario", "Senha"]),
@@ -29,51 +27,49 @@ for arquivo, colunas in [
     (
         arquivo_csv,
         [
-            "Data",
-            "CNPJ",
-            "Nome",
-            "Email",
-            "Empresa",
-            "Financeiro",
-            "Processos",
-            "Marketing",
-            "Vendas",
-            "Equipe",
-            "Média Geral",
-            "Observações",
-            "Diagnóstico",
+            "Data", "CNPJ", "Nome", "Email", "Empresa", "Financeiro",
+            "Processos", "Marketing", "Vendas", "Equipe", "Média Geral",
+            "Observações", "Diagnóstico",
         ],
     ),
 ]:
     if not os.path.exists(arquivo):
         pd.DataFrame(columns=colunas).to_csv(arquivo, index=False)
 
-# CSS para limpar espaços e estilo login
-st.markdown(
-    """
+st.markdown("""
 <style>
-.css-1d391kg, .css-18e3th9 { padding-top: 0rem !important; padding-bottom: 0rem !important; }
-div[data-testid="stHorizontalBlock"] > div:first-child { display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; }
-.login-container { background-color: #f0f2f6; padding: 40px; border-radius: 8px; max-width: 400px; margin: 40px auto; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.login-container {
+    background-color: #f0f2f6;
+    padding: 40px;
+    border-radius: 8px;
+    max-width: 400px;
+    margin: 40px auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+div[data-testid="stHorizontalBlock"] > div:first-child {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
 </style>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
-st.markdown("## \U0001F512 Portal de Acesso")
+st.title("🔒 Portal de Acesso")
 
-# Define aba com base no login admin
+# Escolha entre Admin e Cliente, exceto se já logado como admin
 if not st.session_state.admin_logado:
     aba = st.radio("Você é:", ["Administrador", "Cliente"], horizontal=True)
 else:
     aba = "Administrador"
 
-# --- LOGIN ADMIN ---
+# Login Administrador
 if aba == "Administrador" and not st.session_state.admin_logado:
     with st.form("form_admin"):
         usuario = st.text_input("Usuário do Administrador")
         senha = st.text_input("Senha", type="password")
         entrar = st.form_submit_button("Entrar como Admin")
+
     if entrar:
         df_admin = pd.read_csv(admin_credenciais_csv)
         if not df_admin[(df_admin["Usuario"] == usuario) & (df_admin["Senha"] == senha)].empty:
@@ -83,44 +79,38 @@ if aba == "Administrador" and not st.session_state.admin_logado:
         else:
             st.error("Usuário ou senha inválidos.")
 
-# --- PAINEL ADMIN ---
+# Painel Admin
 if aba == "Administrador" and st.session_state.admin_logado:
-    st.success("\U0001F513 Painel Administrativo Ativo")
+    st.success("Painel Administrativo Ativo")
     menu_admin = st.selectbox(
         "Selecione a funcionalidade administrativa:",
         [
-            "\U0001F4CA Visualizar Diagnósticos",
-            "\U0001F501 Reautorizar Cliente",
-            "\U0001F465 Gerenciar Usuários",
-            "🔒 Gerenciar Bloqueios",
-            "\U0001F6E1️ Gerenciar Administradores",
+            "Visualizar Diagnósticos",
+            "Reautorizar Cliente",
+            "Gerenciar Usuários",
+            "Gerenciar Bloqueios",
+            "Gerenciar Administradores"
         ],
     )
-
-    if st.sidebar.button("\U0001F513 Sair do Painel Admin"):
+    if st.sidebar.button("Sair do Painel Admin"):
         st.session_state.admin_logado = False
         st.experimental_rerun()
 
-    if menu_admin == "\U0001F4CA Visualizar Diagnósticos":
+    if menu_admin == "Visualizar Diagnósticos":
         df = pd.read_csv(arquivo_csv)
         st.dataframe(df, use_container_width=True)
-        st.download_button(
-            "📥 Baixar Diagnósticos (CSV)",
-            df.to_csv(index=False),
-            file_name="diagnosticos.csv",
-            mime="text/csv",
-        )
+        st.download_button("Baixar Diagnósticos (CSV)", df.to_csv(index=False), file_name="diagnosticos.csv", mime="text/csv")
 
-    elif menu_admin == "\U0001F501 Reautorizar Cliente":
+    elif menu_admin == "Reautorizar Cliente":
         df = pd.read_csv(arquivo_csv)
         cnpjs = df["CNPJ"].unique().tolist()
         cnpj_sel = st.selectbox("Selecione o CNPJ para liberar novo diagnóstico:", options=cnpjs)
-        if st.button("🔄 Reautorizar"):
+        if st.button("Reautorizar"):
             df = df[df["CNPJ"] != cnpj_sel]
             df.to_csv(arquivo_csv, index=False)
             st.success(f"CNPJ {cnpj_sel} reautorizado com sucesso.")
 
-    elif menu_admin == "\U0001F465 Gerenciar Usuários":
+    elif menu_admin == "Gerenciar Usuários":
         df_usuarios = pd.read_csv(usuarios_csv)
         st.subheader("Lista de Usuários")
         st.dataframe(df_usuarios, use_container_width=True)
@@ -138,7 +128,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 df_usuarios.to_csv(usuarios_csv, index=False)
                 st.success("Usuário adicionado com sucesso!")
 
-    elif menu_admin == "🔒 Gerenciar Bloqueios":
+    elif menu_admin == "Gerenciar Bloqueios":
         df_bloqueados = pd.read_csv(usuarios_bloqueados_csv)
         st.subheader("Usuários Bloqueados")
         st.dataframe(df_bloqueados, use_container_width=True)
@@ -162,7 +152,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             df_bloqueados.to_csv(usuarios_bloqueados_csv, index=False)
             st.success(f"CNPJ {cnpj_desbloq} desbloqueado com sucesso!")
 
-    elif menu_admin == "\U0001F6E1️ Gerenciar Administradores":
+    elif menu_admin == "Gerenciar Administradores":
         df_admin = pd.read_csv(admin_credenciais_csv)
         st.subheader("Administradores Cadastrados")
         st.dataframe(df_admin, use_container_width=True)
@@ -179,33 +169,10 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 df_admin.to_csv(admin_credenciais_csv, index=False)
                 st.success("Administrador adicionado com sucesso!")
 
-# --- LOGIN E DIAGNÓSTICO CLIENTE ---
+# Login e diagnóstico do cliente
 if aba == "Cliente":
     if not st.session_state.cliente_logado:
-        st.markdown(
-            """
-            <style>
-            .login-container {
-                background-color: #f0f2f6;
-                padding: 40px;
-                border-radius: 8px;
-                max-width: 400px;
-                margin: 40px auto;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            }
-            div[data-testid="stHorizontalBlock"] > div:first-child {
-                display: none !important;
-                height: 0 !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
         st.markdown('<div class="login-container">', unsafe_allow_html=True)
-        st.markdown("<h2 style='margin-bottom:20px;'>Login Cliente</h2>", unsafe_allow_html=True)
-
         with st.form("form_cliente"):
             cnpj = st.text_input("CNPJ")
             senha = st.text_input("Senha", type="password")
@@ -234,7 +201,6 @@ if aba == "Cliente":
             st.session_state.user = user
             st.success("Login realizado com sucesso!")
             st.experimental_rerun()
-
         st.markdown("</div>", unsafe_allow_html=True)
 
     else:
@@ -264,19 +230,15 @@ if aba == "Cliente":
             st.stop()
 
         st.subheader("📌 Instruções do Diagnóstico")
-        st.markdown(
-            """
-            - Avalie cada item com uma nota de 0 a 10.
-            - Seja honesto em suas respostas para que o diagnóstico seja o mais fiel possível.
-            - Após o preenchimento, você poderá baixar um PDF com o resultado.
-            """
-        )
+        st.markdown("""
+        - Avalie cada item com uma nota de 0 a 10.
+        - Seja honesto em suas respostas para que o diagnóstico seja o mais fiel possível.
+        - Após o preenchimento, você poderá baixar um PDF com o resultado.
+        """)
 
         with st.form("form_diagnostico"):
             logo_cliente = st.file_uploader("📎 Envie a logo da sua empresa (opcional)", type=["png", "jpg", "jpeg"])
-            nome_empresa_custom = st.text_input(
-                "📝 Nome da sua empresa", value=user.iloc[0].get("Empresa", "Nome da Empresa")
-            )
+            nome_empresa_custom = st.text_input("📝 Nome da sua empresa", value=user.iloc[0].get("Empresa", "Nome da Empresa"))
             nome = st.text_input("Nome completo")
             email = st.text_input("E-mail")
             financeiro = st.slider("Controle financeiro da empresa", 0, 10)
@@ -302,12 +264,7 @@ if aba == "Cliente":
                     self.set_y(-15)
                     self.set_font("Arial", "I", 8)
                     self.set_text_color(128)
-                    self.cell(
-                        0,
-                        10,
-                        f"Potencialize Resultados - Diagnóstico Automático | Página {self.page_no()}",
-                        align="C",
-                    )
+                    self.cell(0, 10, f"Potencialize Resultados - Diagnóstico Automático | Página {self.page_no()}", align="C")
 
             media_geral = round((financeiro + processos + marketing + vendas + equipe) / 5, 2)
             insights = []
@@ -324,25 +281,21 @@ if aba == "Cliente":
 
             diagnostico_texto = "\n".join(insights) if insights else "Nenhuma área crítica identificada. Excelente desempenho geral."
 
-            resposta = pd.DataFrame(
-                [
-                    {
-                        "Data": datetime.now().strftime("%Y-%m-%d %H:%M"),
-                        "CNPJ": cnpj,
-                        "Nome": nome,
-                        "Email": email,
-                        "Empresa": nome_empresa_custom,
-                        "Financeiro": financeiro,
-                        "Processos": processos,
-                        "Marketing": marketing,
-                        "Vendas": vendas,
-                        "Equipe": equipe,
-                        "Média Geral": media_geral,
-                        "Observações": observacoes,
-                        "Diagnóstico": diagnostico_texto.replace("\n", " "),
-                    }
-                ]
-            )
+            resposta = pd.DataFrame([{
+                "Data": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                "CNPJ": cnpj,
+                "Nome": nome,
+                "Email": email,
+                "Empresa": nome_empresa_custom,
+                "Financeiro": financeiro,
+                "Processos": processos,
+                "Marketing": marketing,
+                "Vendas": vendas,
+                "Equipe": equipe,
+                "Média Geral": media_geral,
+                "Observações": observacoes,
+                "Diagnóstico": diagnostico_texto.replace("\n", " "),
+            }])
 
             if os.path.exists(arquivo_csv):
                 antigo = pd.read_csv(arquivo_csv)
