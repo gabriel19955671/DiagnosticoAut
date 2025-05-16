@@ -19,17 +19,15 @@ if "cliente_logado" not in st.session_state:
 if "diagnostico_enviado" not in st.session_state:
     st.session_state.diagnostico_enviado = False
 
+# Inicializa arquivos caso não existam
 if not os.path.exists(usuarios_bloqueados_csv):
     pd.DataFrame(columns=["CNPJ"]).to_csv(usuarios_bloqueados_csv, index=False)
-
 if not os.path.exists(admin_credenciais_csv):
     df_admin = pd.DataFrame([["admin", "potencialize"]], columns=["Usuario", "Senha"])
     df_admin.to_csv(admin_credenciais_csv, index=False)
-
 if not os.path.exists(usuarios_csv):
     df_usuarios = pd.DataFrame(columns=["CNPJ", "Senha", "Empresa"])
     df_usuarios.to_csv(usuarios_csv, index=False)
-
 if not os.path.exists(arquivo_csv):
     df_diagnosticos = pd.DataFrame(
         columns=[
@@ -39,8 +37,8 @@ if not os.path.exists(arquivo_csv):
     )
     df_diagnosticos.to_csv(arquivo_csv, index=False)
 
-st.markdown(
-    """
+# Esconde padding e espaço extra no layout
+st.markdown("""
     <style>
     .css-1d391kg, .css-18e3th9 {
         padding-top: 0rem !important;
@@ -61,8 +59,7 @@ st.markdown(
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
     </style>
-    """, unsafe_allow_html=True
-)
+""", unsafe_allow_html=True)
 
 st.markdown("## \U0001F512 Portal de Acesso")
 
@@ -87,7 +84,7 @@ if aba == "Administrador" and not st.session_state.admin_logado:
         else:
             st.error("Usuário ou senha inválidos.")
 
-# Painel Admin
+# Painel Administrativo
 if aba == "Administrador" and st.session_state.admin_logado:
     st.success("\U0001F513 Painel Administrativo Ativo")
 
