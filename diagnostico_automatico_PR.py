@@ -79,7 +79,60 @@ if not st.session_state.admin_logado:
 else:
     aba = "Administrador"
 
-# ... (login e painel admin já existentes)
+# LOGIN ADMINISTRADOR
+if aba == "Administrador" and not st.session_state.admin_logado:
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    st.markdown('<h2 class="login-title">Login Administrador</h2>', unsafe_allow_html=True)
+    with st.form("form_admin"):
+        usuario = st.text_input("Usuário")
+        senha = st.text_input("Senha", type="password")
+        entrar = st.form_submit_button("Entrar")
+    if entrar:
+        df_admin = pd.read_csv(admin_credenciais_csv)
+        if not df_admin[(df_admin["Usuario"] == usuario) & (df_admin["Senha"] == senha)].empty:
+            st.session_state.admin_logado = True
+            st.success("Login de administrador realizado com sucesso!")
+            st.stop()
+        else:
+            st.error("Usuário ou senha inválidos.")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# LOGIN CLIENTE
+if aba == "Cliente" and not st.session_state.cliente_logado:
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    st.markdown('<h2 class="login-title">Login Cliente</h2>', unsafe_allow_html=True)
+    with st.form("form_cliente"):
+        cnpj = st.text_input("CNPJ")
+        senha = st.text_input("Senha", type="password")
+        acessar = st.form_submit_button("Entrar")
+    if acessar:
+        if not os.path.exists(usuarios_csv):
+            st.error("Base de usuários não encontrada.")
+            st.stop()
+
+        usuarios = pd.read_csv(usuarios_csv)
+        bloqueados = pd.read_csv(usuarios_bloqueados_csv)
+
+        if cnpj in bloqueados["CNPJ"].values:
+            st.error("Este CNPJ está bloqueado. Solicite liberação ao administrador.")
+            st.stop()
+
+        user = usuarios[(usuarios["CNPJ"] == cnpj) & (usuarios["Senha"] == senha)]
+
+        if user.empty:
+            st.error("CNPJ ou senha inválidos.")
+            st.stop()
+
+        st.session_state.cliente_logado = True
+        st.session_state.cnpj = cnpj
+        st.session_state.user = user
+        st.session_state.inicio_sessao_cliente = time.time()
+        registrar_acao(cnpj, "Login", "Usuário realizou login no sistema.")
+        st.success("Login realizado com sucesso!")
+        st.stop()
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# Painel Administrativo continuará abaixo
 
 # Painel Cliente - diagnóstico
 if aba == "Cliente" and st.session_state.cliente_logado:
