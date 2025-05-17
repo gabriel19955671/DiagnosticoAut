@@ -286,15 +286,14 @@ if st.session_state.admin_logado:
 
     if menu_admin == "Visualizar Diagnósticos":
     try:
-    import matplotlib.pyplot as plt    import seaborn as sns
+        import matplotlib.pyplot as plt
+        import seaborn as sns
     except ModuleNotFoundError:
-    st.warning("Bibliotecas de gráficos não estão disponíveis no ambiente atual.")
-    plt = None
-    sns = None
         st.warning("Bibliotecas de gráficos não estão disponíveis no ambiente atual.")
         plt = None
         sns = None
-        st.subheader("📊 Diagnósticos Recebidos")
+
+    st.subheader("📊 Diagnósticos Recebidos")
         if os.path.exists(arquivo_csv):
             df = pd.read_csv(arquivo_csv)
             if df.empty:
