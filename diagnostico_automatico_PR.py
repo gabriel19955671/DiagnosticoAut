@@ -183,9 +183,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 st.markdown("Você poderá configurar a Matriz GUT baseada em outras perguntas do formulário após cadastro.")
 
             if st.button("Adicionar Pergunta", key="adicionar_pergunta"):
-                
-                :
-            if nova_pergunta.strip():
+    if nova_pergunta.strip():
                 df = pd.read_csv(perguntas_csv)
                 nova = pd.DataFrame([[nova_pergunta + f" [{tipo_pergunta}]"]], columns=["Pergunta"])
                 df = pd.concat([df, nova], ignore_index=True)
