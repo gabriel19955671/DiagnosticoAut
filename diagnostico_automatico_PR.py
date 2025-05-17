@@ -282,6 +282,10 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         st.experimental_rerun()  # Redirecionar após envio
 
 # Painel Administrativo
+if st.sidebar.button("🚪 Sair do Sistema"):
+    st.session_state.admin_logado = False
+    st.experimental_rerun()
+
 if aba == "Administrador" and st.session_state.admin_logado:
     if st.sidebar.button("🔄 Atualizar Página"):
         st.experimental_rerun()
