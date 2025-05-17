@@ -417,6 +417,16 @@ if aba == "Administrador" and st.session_state.admin_logado:
                         st.warning("Digite uma pergunta antes de adicionar.")
 
     if menu_admin == "Visualizar Diagnósticos":
+        st.subheader("📈 Evolução Mensal dos Diagnósticos")
+        if os.path.exists(arquivo_csv):
+            df_diag = pd.read_csv(arquivo_csv)
+            if not df_diag.empty:
+                df_diag["Data"] = pd.to_datetime(df_diag["Data"], errors="coerce")
+                df_diag = df_diag.dropna(subset=["Data"])
+                df_diag["Mês"] = df_diag["Data"].dt.strftime("%b/%y")
+                resumo = df_diag.groupby("Mês").agg({"CNPJ": "count", "Média Geral": "mean", "GUT Média": "mean"}).reset_index()
+                st.bar_chart(resumo.set_index("Mês")["CNPJ"])
+                st.line_chart(resumo.set_index("Mês")[["Média Geral", "GUT Média"]])
         st.subheader("📊 Indicadores Gerais")
         if os.path.exists(arquivo_csv):
             df_diag = pd.read_csv(arquivo_csv)
