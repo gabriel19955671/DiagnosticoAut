@@ -417,6 +417,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                         st.warning("Digite uma pergunta antes de adicionar.")
 
     if menu_admin == "Visualizar Diagnósticos":
+        st.download_button("⬇️ Exportar Diagnósticos em Excel", diagnosticos.to_csv(index=False).encode('utf-8'), file_name="diagnosticos_completos.csv", mime="text/csv")
         st.subheader("📈 Evolução Mensal dos Diagnósticos")
         if os.path.exists(arquivo_csv):
             df_diag = pd.read_csv(arquivo_csv)
