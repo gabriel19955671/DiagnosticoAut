@@ -51,6 +51,12 @@ def registrar_acao(cnpj, acao, descricao):
     historico = pd.concat([historico, nova], ignore_index=True)
     historico.to_csv(historico_csv, index=False)
 
+# Determina a aba com base na sessão ou na seleção do usuário
+if not st.session_state.admin_logado:
+    aba = st.radio("Você é:", ["Administrador", "Cliente"], horizontal=True)
+else:
+    aba = "Administrador"
+
 # ... (login e painel admin já existentes)
 
 # Painel Cliente - diagnóstico
