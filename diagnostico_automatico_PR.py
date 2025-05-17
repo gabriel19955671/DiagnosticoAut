@@ -275,23 +275,28 @@ if aba == "Cliente" and st.session_state.cliente_logado:
     respondidas = 0
     for i, row in perguntas.iterrows():
         texto = row["Pergunta"]
+
         if "Pontuação (0-5) + Matriz GUT" in texto:
             respostas[texto] = st.slider(texto, 0, 5, key=f"q_{i}")
-        respondidas += 1 if respostas[texto] != 0 else 0
+            respondidas += 1 if respostas[texto] != 0 else 0
+
         elif "Pontuação (0-10)" in texto:
             respostas[texto] = st.slider(texto, 0, 10, key=f"q_{i}")
-        respondidas += 1 if respostas[texto] != 0 else 0
-        respondidas += 1 if respostas[texto] != 0 else 0
+            respondidas += 1 if respostas[texto] != 0 else 0
+
         elif "Texto Aberto" in texto:
             respostas[texto] = st.text_area(texto, key=f"q_{i}")
-        respondidas += 1 if respostas[texto].strip() != "" else 0
+            respondidas += 1 if respostas[texto].strip() != "" else 0
+
         elif "Escala" in texto:
             respostas[texto] = st.selectbox(texto, ["Muito Baixo", "Baixo", "Médio", "Alto", "Muito Alto"], key=f"q_{i}")
-        respondidas += 1 if respostas[texto] != "" else 0
+            respondidas += 1 if respostas[texto] != "" else 0
+
         else:
             respostas[texto] = st.slider(texto, 0, 10, key=f"q_{i}")
+            respondidas += 1 if respostas[texto] != 0 else 0
 
-    st.info(f"📊 Progresso: {respondidas} de {total_perguntas} perguntas respondidas ({round((respondidas/total_perguntas)*100)}%)")
+    st.info(f"📊 Progresso: {respondidas} de {total_perguntas} perguntas respondidas ({round((respondidas/total_perguntas)*100)}%)")*100)}%)")
     observacoes = st.text_area("Observações Gerais")
     diagnostico_texto = st.text_area("Resumo do Diagnóstico (para PDF)")
 
