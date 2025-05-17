@@ -244,7 +244,7 @@ if aba == "Cliente" and st.session_state.cliente_logado and st.session_state.get
         pdf.cell(200, 10, txt=f"CNPJ: {st.session_state.cnpj}", ln=True)
         pdf.cell(200, 10, txt=f"Média Geral: {media}", ln=True)
         pdf.cell(200, 10, txt=f"GUT Média: {gut_media}", ln=True)
-        pdf.multi_cell(0, 10, txt=f"Resumo do Diagnóstico:\\n{diagnostico_texto}")
+        pdf.multi_cell(0, 10, txt=f"Resumo do Diagnóstico:\n{diagnostico_texto}")
 
         for k, v in respostas.items():
             if isinstance(v, (int, float, str)):
@@ -285,8 +285,13 @@ if st.session_state.admin_logado:
     st.success("Painel Administrativo Ativo")
 
     if menu_admin == "Visualizar Diagnósticos":
-        import matplotlib.pyplot as plt
-        import seaborn as sns
+        try:
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+except ModuleNotFoundError:
+    st.warning("Bibliotecas de gráficos não estão disponíveis no ambiente atual.")
+    plt = None
+    sns = None
         st.subheader("📊 Diagnósticos Recebidos")
         if os.path.exists(arquivo_csv):
             df = pd.read_csv(arquivo_csv)
