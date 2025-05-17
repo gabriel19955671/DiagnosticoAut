@@ -244,7 +244,8 @@ if aba == "Cliente" and st.session_state.cliente_logado and st.session_state.get
         pdf.cell(200, 10, txt=f"CNPJ: {st.session_state.cnpj}", ln=True)
         pdf.cell(200, 10, txt=f"Média Geral: {media}", ln=True)
         pdf.cell(200, 10, txt=f"GUT Média: {gut_media}", ln=True)
-        pdf.multi_cell(0, 10, txt=f"Resumo do Diagnóstico:\n{diagnostico_texto}")
+        pdf.multi_cell(0, 10, txt=f"Resumo do Diagnóstico:
+{diagnostico_texto}")
 
         for k, v in respostas.items():
             if isinstance(v, (int, float, str)):
@@ -324,7 +325,7 @@ if st.session_state.admin_logado:
                         st.markdown(f"**{row['Data']}** — Média Geral: {row['Média Geral']}, GUT: {row['GUT Média']}")
                         st.markdown(f"> {row['Diagnóstico']}")
                         st.markdown(f"*Obs:* {row['Observações']}")
-                        st.markdown("---")(resumo.set_index("Mês")[["Média Geral", "GUT Média"]], height=300, use_container_width=True)
+                        st.markdown("---")
 
     elif menu_admin == "Gerenciar Perguntas":
         st.subheader("📝 Perguntas do Diagnóstico")
