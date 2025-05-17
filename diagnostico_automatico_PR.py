@@ -264,18 +264,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                 respostas[texto] = st.slider(texto, 0, 5, key=f"q_{i}")
             elif "Pontuação (0-10)" in texto:
                 respostas[texto] = st.slider(texto, 0, 10, key=f"q_{i}")
-            elif "Texto Aberto" in texto:
-                respostas[texto] = st.text_area(texto, key=f"q_{i}")
-            elif "Escala" in texto:
-                respostas[texto] = st.selectbox(texto, ["Muito Baixo", "Baixo", "Médio", "Alto", "Muito Alto"], key=f"q_{i}")
-            else:
                 respostas[texto] = st.slider(texto, 0, 10, key=f"q_{i}")
-        elif "Texto Aberto" in texto:
-            respostas[texto] = st.text_area(texto, key=f"q_{i}")
-        elif "Escala" in texto:
-            respostas[texto] = st.selectbox(texto, ["Muito Baixo", "Baixo", "Médio", "Alto", "Muito Alto"], key=f"q_{i}")
-        else:
-            respostas[texto] = st.slider(texto, 0, 10, key=f"q_{i}")
 
         observacoes = st.text_area("Observações adicionais (opcional)")
         enviar = st.form_submit_button("🚀 Enviar Diagnóstico")
