@@ -244,8 +244,8 @@ if aba == "Cliente" and st.session_state.cliente_logado and st.session_state.get
         pdf.cell(200, 10, txt=f"CNPJ: {st.session_state.cnpj}", ln=True)
         pdf.cell(200, 10, txt=f"Média Geral: {media}", ln=True)
         pdf.cell(200, 10, txt=f"GUT Média: {gut_media}", ln=True)
-        pdf.multi_cell(0, 10, txt=f"Resumo do Diagnóstico:
-{diagnostico_texto}")
+        pdf.multi_cell(0, 10, txt=f"Resumo do Diagnóstico:\n{diagnostico_texto}")
+
 
         for k, v in respostas.items():
             if isinstance(v, (int, float, str)):
