@@ -340,7 +340,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
     if menu_admin == "Visualizar Diagnósticos":
         if os.path.exists(arquivo_csv):
-        st.subheader("📊 Diagnósticos Enviados")
+            st.subheader("📊 Diagnósticos Enviados")
         diagnosticos = pd.read_csv(arquivo_csv)
         st.dataframe(diagnosticos.sort_values(by="Data", ascending=False))
         st.subheader("🔍 Filtrar por CNPJ")
