@@ -176,22 +176,22 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
         with tabs_perguntas[1]:
             st.subheader("➕ Adicionar Nova Pergunta")
-    nova_pergunta = st.text_input("Texto da Pergunta", key="nova_pergunta")
-    tipo_pergunta = st.selectbox("Tipo de Pergunta", ["Pontuação (0-10)", "Texto Aberto", "Escala", "Matriz GUT"], key="tipo_pergunta")
+            nova_pergunta = st.text_input("Texto da Pergunta", key="nova_pergunta")
+            tipo_pergunta = st.selectbox("Tipo de Pergunta", ["Pontuação (0-10)", "Texto Aberto", "Escala", "Pontuação (0-5) + Matriz GUT"], key="tipo_pergunta")
 
-    if tipo_pergunta == "Matriz GUT":
-        st.markdown("Você poderá configurar a Matriz GUT baseada em outras perguntas do formulário após cadastro.")
+            if tipo_pergunta == "Pontuação (0-5) + Matriz GUT":
+    st.markdown("Essa pergunta utilizará uma escala de 0 a 5 e será analisada com base em Gravidade, Urgência e Tendência da Matriz GUT.")
 
-    if st.button("Adicionar Pergunta", key="adicionar_pergunta"):
-        if nova_pergunta.strip():
-            df = pd.read_csv(perguntas_csv)
-            nova = pd.DataFrame([[nova_pergunta + f" [{tipo_pergunta}]"]], columns=["Pergunta"])
-            df = pd.concat([df, nova], ignore_index=True)
-            df.to_csv(perguntas_csv, index=False)
-            st.success("Pergunta adicionada com sucesso!")
-            st.experimental_rerun()
-        else:
-            st.warning("Digite uma pergunta antes de adicionar.")
+            if st.button("Adicionar Pergunta", key="adicionar_pergunta"):
+                if nova_pergunta.strip():
+                    df = pd.read_csv(perguntas_csv)
+                    nova = pd.DataFrame([[nova_pergunta + f" [{tipo_pergunta}]"]], columns=["Pergunta"])
+                    df = pd.concat([df, nova], ignore_index=True)
+                    df.to_csv(perguntas_csv, index=False)
+                    st.success("Pergunta adicionada com sucesso!")
+                    st.experimental_rerun()
+                else:
+                    st.warning("Digite uma pergunta antes de adicionar.")
 
     elif menu_admin == "Gerenciar Usuários":
         st.subheader("👥 Gerenciar Usuários Clientes")
@@ -259,7 +259,17 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         email = st.text_input("E-mail")
 
         for i, row in perguntas.iterrows():
-            respostas[row["Pergunta"]] = st.slider(row["Pergunta"], 0, 10, key=f"q_{i}")
+        texto = row["Pergunta"]
+        if "Pontuação (0-5) + Matriz GUT" in texto:
+            respostas[texto] = st.slider(texto, 0, 5, key=f"q_{i}")
+        elif "Pontuação (0-10)" in texto:
+            respostas[texto] = st.slider(texto, 0, 10, key=f"q_{i}")
+        elif "Texto Aberto" in texto:
+            respostas[texto] = st.text_area(texto, key=f"q_{i}")
+        elif "Escala" in texto:
+            respostas[texto] = st.selectbox(texto, ["Muito Baixo", "Baixo", "Médio", "Alto", "Muito Alto"], key=f"q_{i}")
+        else:
+            respostas[texto] = st.slider(texto, 0, 10, key=f"q_{i}")
 
         observacoes = st.text_area("Observações adicionais (opcional)")
         enviar = st.form_submit_button("🚀 Enviar Diagnóstico")
