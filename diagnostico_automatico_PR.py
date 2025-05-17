@@ -279,7 +279,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
             st.download_button("📄 Baixar PDF do Diagnóstico", f, file_name=f"diagnostico_{empresa}.pdf")
         registrar_acao(st.session_state.cnpj, "Envio", "Cliente enviou diagnóstico.")
         st.session_state.diagnostico_enviado = True
-        st.experimental_rerun()  # Redirecionar após envio
+        st.stop()  # Redirecionar de forma segura
 
 # Painel Administrativo
 if st.sidebar.button("🚪 Sair do Sistema"):
