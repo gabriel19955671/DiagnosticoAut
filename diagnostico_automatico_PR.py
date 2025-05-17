@@ -8,6 +8,28 @@ import tempfile
 
 st.set_page_config(page_title="Portal de Diagnóstico", layout="centered")
 
+# CSS restaurado para a logo e container de login
+st.markdown("""
+<style>
+.login-container {
+    max-width: 400px;
+    margin: 60px auto 0 auto;
+    padding: 40px;
+    border-radius: 8px;
+    background-color: #f0f2f6;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+h2.login-title {
+    text-align: center;
+    margin-bottom: 30px;
+    font-weight: 700;
+    font-size: 28px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.title("🔒 Portal de Acesso")
+
 admin_credenciais_csv = "admins.csv"
 usuarios_csv = "usuarios.csv"
 arquivo_csv = "diagnosticos_clientes.csv"
