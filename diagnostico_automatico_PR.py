@@ -164,24 +164,34 @@ if aba == "Administrador" and st.session_state.admin_logado:
         st.dataframe(historico.sort_values(by="Data", ascending=False))
 
     elif menu_admin == "Gerenciar Perguntas do Formulário":
-        st.subheader("📝 Gerenciar Perguntas do Diagnóstico")
-    perguntas = pd.read_csv(perguntas_csv)
+    tabs_perguntas = st.tabs(["📋 Perguntas Atuais", "➕ Adicionar Nova Pergunta"])
 
-    st.markdown("### Perguntas atuais")
-    for i, row in perguntas.iterrows():
-        st.text_input(f"Pergunta {i+1}", value=row["Pergunta"], key=f"pergunta_existente_{i}", disabled=True)
-
-    st.markdown("### Adicionar nova pergunta")
-    nova_pergunta = st.text_input("Nova Pergunta")
-    if st.button("Adicionar Pergunta"):
-        if nova_pergunta.strip() != "":
-            nova_linha = pd.DataFrame([[nova_pergunta]], columns=["Pergunta"])
-            perguntas = pd.concat([perguntas, nova_linha], ignore_index=True)
-            perguntas.to_csv(perguntas_csv, index=False)
-            st.success("Pergunta adicionada com sucesso!")
-            st.experimental_rerun()
+    with tabs_perguntas[0]:
+        st.subheader("📋 Perguntas Atuais")
+        perguntas = pd.read_csv(perguntas_csv)
+        if perguntas.empty:
+            st.info("Nenhuma pergunta cadastrada ainda.")
         else:
-            st.warning("Digite uma pergunta antes de adicionar.")
+            st.dataframe(perguntas)
+
+    with tabs_perguntas[1]:
+        st.subheader("➕ Adicionar Nova Pergunta")
+        nova_pergunta = st.text_input("Texto da Pergunta")
+        tipo_pergunta = st.selectbox("Tipo de Pergunta", ["Pontuação (0-10)", "Texto Aberto", "Escala", "Matriz GUT"])
+
+        if tipo_pergunta == "Matriz GUT":
+            st.markdown("Você poderá configurar a Matriz GUT baseada em outras perguntas do formulário após cadastro.")
+
+        if st.button("Adicionar Pergunta"):
+            if nova_pergunta.strip():
+                df = pd.read_csv(perguntas_csv)
+                nova = pd.DataFrame([[nova_pergunta + f" [{tipo_pergunta}]"]], columns=["Pergunta"])
+                df = pd.concat([df, nova], ignore_index=True)
+                df.to_csv(perguntas_csv, index=False)
+                st.success("Pergunta adicionada com sucesso!")
+                st.experimental_rerun()
+            else:
+                st.warning("Digite uma pergunta antes de adicionar.")
 
     elif menu_admin == "Gerenciar Usuários":
         st.subheader("👥 Gerenciar Usuários Clientes")
