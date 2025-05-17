@@ -141,6 +141,23 @@ if aba == "Cliente" and not st.session_state.cliente_logado:
         st.stop()
     st.markdown('</div>', unsafe_allow_html=True)
 
+# Instruções do Cliente antes do Diagnóstico
+if aba == "Cliente" and st.session_state.cliente_logado:
+    st.subheader("📌 Instruções Gerais Antes de Começar")
+    with st.expander("📖 Leia atentamente as instruções abaixo"):
+        st.markdown("""
+        - Responda cada pergunta com sinceridade.
+        - Utilize a escala corretamente conforme o tipo da pergunta.
+        - As análises e planos de ação serão gerados com base em suas respostas.
+        - Após o envio, o diagnóstico será salvo e poderá ser visualizado no histórico.
+        """)
+    aceite = st.checkbox("✅ Estou ciente de todas as instruções passadas aqui.")
+    if aceite:
+        if st.button("Ir para Diagnóstico"):
+            st.session_state.pular_para_diagnostico = True
+    else:
+        st.warning("Você precisa confirmar ciência das instruções para acessar o diagnóstico.")
+
 # Histórico de diagnósticos anteriores do cliente
 if aba == "Cliente" and st.session_state.cliente_logado:
     if st.session_state.get("diagnostico_enviado", False):
@@ -219,6 +236,8 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         st.dataframe(comparativo)
 
 # Painel Cliente - Diagnóstico
+if st.session_state.get("pular_para_diagnostico") != True:
+    st.stop()
 if aba == "Cliente" and st.session_state.cliente_logado:
     st.subheader("📋 Formulário de Diagnóstico")
     perguntas = pd.read_csv(perguntas_csv)
