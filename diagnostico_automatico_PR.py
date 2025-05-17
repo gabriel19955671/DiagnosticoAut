@@ -175,7 +175,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 st.dataframe(perguntas)
 
         with tabs_perguntas[1]:
-    st.subheader("➕ Adicionar Nova Pergunta")
+            st.subheader("➕ Adicionar Nova Pergunta")
     nova_pergunta = st.text_input("Texto da Pergunta", key="nova_pergunta")
     tipo_pergunta = st.selectbox("Tipo de Pergunta", ["Pontuação (0-10)", "Texto Aberto", "Escala", "Matriz GUT"], key="tipo_pergunta")
 
