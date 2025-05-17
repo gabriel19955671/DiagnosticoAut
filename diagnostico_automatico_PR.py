@@ -36,7 +36,7 @@ for arquivo, colunas in [
     if not os.path.exists(arquivo):
         pd.DataFrame(columns=colunas).to_csv(arquivo, index=False)
 
-# CSS para estilos similares para ambos os logins
+# CSS
 st.markdown("""
 <style>
 .login-container {
@@ -58,13 +58,13 @@ h2.login-title {
 
 st.title("🔒 Portal de Acesso")
 
-# Escolher aba (Admin ou Cliente)
+# Aba
 if not st.session_state.admin_logado:
     aba = st.radio("Você é:", ["Administrador", "Cliente"], horizontal=True)
 else:
     aba = "Administrador"
 
-# LOGIN ADMINISTRADOR
+# Login Administrador
 if aba == "Administrador" and not st.session_state.admin_logado:
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
     st.markdown('<h2 class="login-title">Login Administrador</h2>', unsafe_allow_html=True)
@@ -77,12 +77,12 @@ if aba == "Administrador" and not st.session_state.admin_logado:
         if not df_admin[(df_admin["Usuario"] == usuario) & (df_admin["Senha"] == senha)].empty:
             st.session_state.admin_logado = True
             st.success("Login de administrador realizado com sucesso!")
-            st.experimental_rerun()
+            st.stop()
         else:
             st.error("Usuário ou senha inválidos.")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# LOGIN CLIENTE com layout idêntico ao admin
+# Login Cliente
 if aba == "Cliente" and not st.session_state.cliente_logado:
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
     st.markdown('<h2 class="login-title">Login Cliente</h2>', unsafe_allow_html=True)
@@ -112,10 +112,10 @@ if aba == "Cliente" and not st.session_state.cliente_logado:
         st.session_state.cnpj = cnpj
         st.session_state.user = user
         st.success("Login realizado com sucesso!")
-        st.experimental_rerun()
+        st.stop()
     st.markdown('</div>', unsafe_allow_html=True)
 
-# PAINEL ADMIN
+# Painel Admin
 if aba == "Administrador" and st.session_state.admin_logado:
     st.success("Painel Administrativo Ativo")
     menu_admin = st.selectbox(
@@ -132,10 +132,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         st.session_state.admin_logado = False
         st.experimental_rerun()
 
-    # ... (mesma lógica do painel admin que você já conhece)
-    # Para não estender demais aqui, posso regravar se quiser.
-
-# PAINEL CLIENTE e DIAGNÓSTICO
+# Painel Cliente
 if aba == "Cliente" and st.session_state.cliente_logado:
     cnpj = st.session_state.cnpj
     user = st.session_state.user
@@ -159,7 +156,6 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                     st.session_state.cnpj = None
                     st.session_state.user = None
                     st.experimental_rerun()
-
         st.stop()
 
     st.subheader("📌 Instruções do Diagnóstico")
