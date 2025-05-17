@@ -175,14 +175,25 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 st.dataframe(perguntas)
 
         with tabs_perguntas[1]:
-            st.subheader("➕ Adicionar Nova Pergunta")
-        nova_pergunta = st.text_input("Texto da Pergunta", key="nova_pergunta")
-        tipo_pergunta = st.selectbox("Tipo de Pergunta", ["Pontuação (0-10)", "Texto Aberto", "Escala", "Pontuação (0-5) + Matriz GUT"], key="tipo_pergunta")
+            with st.form("form_nova_pergunta"):
+                st.subheader("➕ Adicionar Nova Pergunta")
+                nova_pergunta = st.text_input("Texto da Pergunta", key="nova_pergunta")
+                tipo_pergunta = st.selectbox("Tipo de Pergunta", ["Pontuação (0-10)", "Texto Aberto", "Escala", "Pontuação (0-5) + Matriz GUT"], key="tipo_pergunta")
 
-        if tipo_pergunta == "Pontuação (0-5) + Matriz GUT":
-            st.markdown("Essa pergunta utilizará uma escala de 0 a 5 e será analisada com base em Gravidade, Urgência e Tendência da Matriz GUT.")
+                if tipo_pergunta == "Pontuação (0-5) + Matriz GUT":
+                    st.markdown("Essa pergunta utilizará uma escala de 0 a 5 e será analisada com base em Gravidade, Urgência e Tendência da Matriz GUT.")
 
-        if st.button("Adicionar Pergunta", key="adicionar_pergunta"):
+                adicionar = st.form_submit_button("Adicionar Pergunta")
+                if adicionar:
+                    if nova_pergunta.strip():
+                        df = pd.read_csv(perguntas_csv)
+                        nova = pd.DataFrame([[nova_pergunta + f" [{tipo_pergunta}]"]], columns=["Pergunta"])
+                        df = pd.concat([df, nova], ignore_index=True)
+                        df.to_csv(perguntas_csv, index=False)
+                        st.success("Pergunta adicionada com sucesso!")
+                        st.experimental_rerun()
+                    else:
+                        st.warning("Digite uma pergunta antes de adicionar.")
                 if nova_pergunta.strip():
                     df = pd.read_csv(perguntas_csv)
                     nova = pd.DataFrame([[nova_pergunta + f" [{tipo_pergunta}]"]], columns=["Pergunta"])
