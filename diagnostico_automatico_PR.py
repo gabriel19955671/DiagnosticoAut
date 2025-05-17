@@ -260,8 +260,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         pdf.multi_cell(0, 10, f"CNPJ: {st.session_state.cnpj}")
         pdf.multi_cell(0, 10, f"Média Geral: {media}")
         pdf.multi_cell(0, 10, f"GUT Média: {gut_media}")
-        pdf.multi_cell(0, 10, f"Resumo do Diagnóstico:
-{diagnostico_texto}")
+        pdf.multi_cell(0, 10, f"Resumo do Diagnóstico:\n{diagnostico_texto}")
 
         for k, v in respostas.items():
             if isinstance(v, (int, float, str)):
