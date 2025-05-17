@@ -16,14 +16,43 @@ st.markdown("""
     margin: 60px auto 0 auto;
     padding: 40px;
     border-radius: 8px;
-    background-color: #f0f2f6;
+    background-color: #ffffff;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    font-family: 'Segoe UI', sans-serif;
 }
-h2.login-title {
+.login-container h2 {
     text-align: center;
     margin-bottom: 30px;
-    font-weight: 700;
-    font-size: 28px;
+    font-weight: 600;
+    font-size: 26px;
+    color: #2563eb;
+}
+.stButton>button {
+    border-radius: 6px;
+    background-color: #2563eb;
+    color: white;
+    font-weight: 500;
+    padding: 0.5rem 1.2rem;
+    margin-top: 0.5rem;
+}
+.stDownloadButton>button {
+    background-color: #10b981;
+    color: white;
+    font-weight: 600;
+    border-radius: 6px;
+    margin-top: 10px;
+    padding: 0.5rem 1.2rem;
+}
+.stTextInput>div>input, .stTextArea>div>textarea {
+    border-radius: 6px;
+    padding: 0.4rem;
+    border: 1px solid #d1d5db;
+    background-color: #f9fafb;
+}
+.stTabs [data-baseweb="tab"] {
+    font-size: 16px;
+    font-weight: 600;
+    padding: 10px 20px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -242,19 +271,27 @@ if aba == "Cliente" and st.session_state.cliente_logado:
     st.subheader("📋 Formulário de Diagnóstico")
     perguntas = pd.read_csv(perguntas_csv)
     respostas = {}
+    total_perguntas = len(perguntas)
+    respondidas = 0
     for i, row in perguntas.iterrows():
         texto = row["Pergunta"]
         if "Pontuação (0-5) + Matriz GUT" in texto:
             respostas[texto] = st.slider(texto, 0, 5, key=f"q_{i}")
+        respondidas += 1 if respostas[texto] != 0 else 0
         elif "Pontuação (0-10)" in texto:
             respostas[texto] = st.slider(texto, 0, 10, key=f"q_{i}")
+        respondidas += 1 if respostas[texto] != 0 else 0
+        respondidas += 1 if respostas[texto] != 0 else 0
         elif "Texto Aberto" in texto:
             respostas[texto] = st.text_area(texto, key=f"q_{i}")
+        respondidas += 1 if respostas[texto].strip() != "" else 0
         elif "Escala" in texto:
             respostas[texto] = st.selectbox(texto, ["Muito Baixo", "Baixo", "Médio", "Alto", "Muito Alto"], key=f"q_{i}")
+        respondidas += 1 if respostas[texto] != "" else 0
         else:
             respostas[texto] = st.slider(texto, 0, 10, key=f"q_{i}")
 
+    st.info(f"📊 Progresso: {respondidas} de {total_perguntas} perguntas respondidas ({round((respondidas/total_perguntas)*100)}%)")
     observacoes = st.text_area("Observações Gerais")
     diagnostico_texto = st.text_area("Resumo do Diagnóstico (para PDF)")
 
