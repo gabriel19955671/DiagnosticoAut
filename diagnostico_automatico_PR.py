@@ -132,7 +132,45 @@ if aba == "Cliente" and not st.session_state.cliente_logado:
         st.stop()
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Painel Administrativo continuará abaixo
+# Painel Administrativo
+if aba == "Administrador" and st.session_state.admin_logado:
+    if st.sidebar.button("Sair do Painel Admin"):
+        st.session_state.admin_logado = False
+        st.experimental_rerun()
+
+    menu_admin = st.sidebar.selectbox(
+        "Selecione a funcionalidade administrativa:",
+        [
+            "Visualizar Diagnósticos",
+            "Histórico de Usuários",
+            "Gerenciar Perguntas do Formulário"
+        ],
+    )
+
+    st.success("Painel Administrativo Ativo")
+
+    if menu_admin == "Visualizar Diagnósticos":
+        if os.path.exists(arquivo_csv):
+            st.subheader("📊 Diagnósticos Enviados")
+            diagnosticos = pd.read_csv(arquivo_csv)
+            st.dataframe(diagnosticos.sort_values(by="Data", ascending=False))
+        else:
+            st.info("Nenhum diagnóstico encontrado.")
+
+    elif menu_admin == "Histórico de Usuários":
+        st.subheader("📜 Histórico de Ações dos Clientes")
+        historico = pd.read_csv(historico_csv)
+        st.dataframe(historico.sort_values(by="Data", ascending=False))
+
+    elif menu_admin == "Gerenciar Perguntas do Formulário":
+        st.subheader("📝 Gerenciar Perguntas do Diagnóstico")
+        perguntas = pd.read_csv(perguntas_csv)
+        for i, row in perguntas.iterrows():
+            nova = st.text_input(f"Pergunta {i+1}", value=row["Pergunta"], key=f"pergunta_{i}")
+            perguntas.at[i, "Pergunta"] = nova
+        if st.button("Salvar Perguntas"):
+            perguntas.to_csv(perguntas_csv, index=False)
+            st.success("Perguntas atualizadas com sucesso!")
 
 # Painel Cliente - diagnóstico
 if aba == "Cliente" and st.session_state.cliente_logado:
