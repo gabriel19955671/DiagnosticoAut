@@ -64,22 +64,44 @@ USERS_FILE = "usuarios.csv"
 ADMINS_FILE = "admins.csv"
 PERGUNTAS_FILE = "perguntas_formulario.csv"
 DIAGNOSTICOS_FILE = "diagnosticos_clientes.csv"
+HISTORICO_FILE = "historico_clientes.csv"
 
 # Garante que os arquivos existam
 for file, cols in [
     (USERS_FILE, ["CNPJ", "Senha", "Empresa"]),
     (ADMINS_FILE, ["Usuario", "Senha"]),
     (PERGUNTAS_FILE, ["Pergunta"]),
-    (DIAGNOSTICOS_FILE, ["Data", "CNPJ", "Empresa", "Diagnóstico", "Média", "Observações"])
+    (DIAGNOSTICOS_FILE, ["Data", "CNPJ", "Empresa", "Diagnóstico", "Média", "Observações"]),
+    (HISTORICO_FILE, ["Data", "CNPJ", "Ação", "Descrição"])
 ]:
     if not os.path.exists(file):
         pd.DataFrame(columns=cols).to_csv(file, index=False)
 
+# Função para registrar ações
+def registrar_acao(cnpj, acao, descricao):
+    historico = pd.read_csv(HISTORICO_FILE)
+    nova = pd.DataFrame([{ "Data": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "CNPJ": cnpj, "Ação": acao, "Descrição": descricao }])
+    historico = pd.concat([historico, nova], ignore_index=True)
+    historico.to_csv(HISTORICO_FILE, index=False)
+
 # Estado de sessão
-if "admin_logado" not in st.session_state:
-    st.session_state.admin_logado = False
-if "cliente_logado" not in st.session_state:
-    st.session_state.cliente_logado = False
+for key, default in [
+    ("admin_logado", False),
+    ("cliente_logado", False),
+    ("cnpj", None),
+    ("empresa", None),
+    ("trigger_cliente_rerun", False),
+    ("trigger_admin_rerun", False)
+]:
+    if key not in st.session_state:
+        st.session_state[key] = default
+
+if st.session_state.trigger_cliente_rerun:
+    st.session_state.trigger_cliente_rerun = False
+    st.experimental_rerun()
+if st.session_state.trigger_admin_rerun:
+    st.session_state.trigger_admin_rerun = False
+    st.experimental_rerun()
 
 # LOGIN
 aba = st.radio("Você é:", ["Administrador", "Cliente"], horizontal=True)
@@ -94,7 +116,9 @@ if aba == "Administrador" and not st.session_state.admin_logado:
             df_admin = pd.read_csv(ADMINS_FILE)
             if not df_admin[(df_admin.Usuario == usuario) & (df_admin.Senha == senha)].empty:
                 st.session_state.admin_logado = True
+                st.session_state.trigger_admin_rerun = True
                 st.success("Administrador logado com sucesso.")
+                st.stop()
             else:
                 st.error("Usuário ou senha incorretos.")
     st.markdown('</div>', unsafe_allow_html=True)
@@ -112,7 +136,10 @@ elif aba == "Cliente" and not st.session_state.cliente_logado:
                 st.session_state.cliente_logado = True
                 st.session_state.cnpj = cnpj
                 st.session_state.empresa = user.iloc[0]["Empresa"]
+                registrar_acao(cnpj, "Login", "Cliente logado")
+                st.session_state.trigger_cliente_rerun = True
                 st.success("Cliente logado com sucesso.")
+                st.stop()
             else:
                 st.error("CNPJ ou senha inválidos.")
     st.markdown('</div>', unsafe_allow_html=True)
@@ -139,9 +166,9 @@ if st.session_state.cliente_logado:
         df_antigo = pd.read_csv(DIAGNOSTICOS_FILE)
         df = pd.concat([df_antigo, novo], ignore_index=True)
         df.to_csv(DIAGNOSTICOS_FILE, index=False)
+        registrar_acao(st.session_state.cnpj, "Diagnóstico", "Diagnóstico enviado")
         st.success("Diagnóstico enviado com sucesso!")
 
-        # Gerar PDF com FPDF
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", size=12)
@@ -161,11 +188,11 @@ if st.session_state.cliente_logado:
 # PAINEL ADMINISTRATIVO
 if st.session_state.admin_logado:
     st.header("📊 Painel Administrativo")
-    op = st.selectbox("Escolha uma funcionalidade:", ["Visualizar Diagnósticos", "Cadastrar Pergunta"])
+    op = st.selectbox("Escolha uma funcionalidade:", ["Visualizar Diagnósticos", "Cadastrar Pergunta", "Histórico de Ações"])
 
     if op == "Visualizar Diagnósticos":
         df = pd.read_csv(DIAGNOSTICOS_FILE)
-        st.dataframe(df)
+        st.dataframe(df.sort_values(by="Data", ascending=False))
 
     elif op == "Cadastrar Pergunta":
         with st.form("form_nova"):
@@ -176,3 +203,7 @@ if st.session_state.admin_logado:
                     df.loc[len(df)] = [nova.strip()]
                     df.to_csv(PERGUNTAS_FILE, index=False)
                     st.success("Pergunta adicionada com sucesso!")
+
+    elif op == "Histórico de Ações":
+        historico = pd.read_csv(HISTORICO_FILE)
+        st.dataframe(historico.sort_values(by="Data", ascending=False))
