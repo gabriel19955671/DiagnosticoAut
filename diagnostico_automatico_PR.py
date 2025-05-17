@@ -417,6 +417,20 @@ if aba == "Administrador" and st.session_state.admin_logado:
                         st.warning("Digite uma pergunta antes de adicionar.")
 
     if menu_admin == "Visualizar Diagnósticos":
+        st.subheader("📊 Indicadores Gerais")
+        if os.path.exists(arquivo_csv):
+            df_diag = pd.read_csv(arquivo_csv)
+            if not df_diag.empty:
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("📦 Total de Diagnósticos", len(df_diag))
+                with col2:
+                    media_geral = round(df_diag["Média Geral"].mean(), 2)
+                    st.metric("📈 Média Geral", media_geral)
+                with col3:
+                    if "GUT Média" in df_diag.columns:
+                        gut_media = round(df_diag["GUT Média"].mean(), 2)
+                        st.metric("🔥 GUT Média", gut_media)
         if os.path.exists(arquivo_csv):
             st.subheader("📊 Diagnósticos Enviados")
         diagnosticos = pd.read_csv(arquivo_csv)
