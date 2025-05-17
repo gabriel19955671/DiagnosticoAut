@@ -143,7 +143,8 @@ if aba == "Administrador" and st.session_state.admin_logado:
         [
             "Visualizar Diagnósticos",
             "Histórico de Usuários",
-            "Gerenciar Perguntas do Formulário"
+            "Gerenciar Perguntas do Formulário",
+            "Gerenciar Usuários"
         ],
     )
 
@@ -163,14 +164,45 @@ if aba == "Administrador" and st.session_state.admin_logado:
         st.dataframe(historico.sort_values(by="Data", ascending=False))
 
     elif menu_admin == "Gerenciar Perguntas do Formulário":
-        st.subheader("📝 Gerenciar Perguntas do Diagnóstico")
-        perguntas = pd.read_csv(perguntas_csv)
-        for i, row in perguntas.iterrows():
-            nova = st.text_input(f"Pergunta {i+1}", value=row["Pergunta"], key=f"pergunta_{i}")
-            perguntas.at[i, "Pergunta"] = nova
-        if st.button("Salvar Perguntas"):
+    st.subheader("📝 Gerenciar Perguntas do Diagnóstico")
+    perguntas = pd.read_csv(perguntas_csv)
+
+    st.markdown("### Perguntas atuais")
+    for i, row in perguntas.iterrows():
+        st.text_input(f"Pergunta {i+1}", value=row["Pergunta"], key=f"pergunta_existente_{i}", disabled=True)
+
+    st.markdown("### Adicionar nova pergunta")
+    nova_pergunta = st.text_input("Nova Pergunta")
+    if st.button("Adicionar Pergunta"):
+        if nova_pergunta.strip() != "":
+            nova_linha = pd.DataFrame([[nova_pergunta]], columns=["Pergunta"])
+            perguntas = pd.concat([perguntas, nova_linha], ignore_index=True)
             perguntas.to_csv(perguntas_csv, index=False)
-            st.success("Perguntas atualizadas com sucesso!")
+            st.success("Pergunta adicionada com sucesso!")
+            st.experimental_rerun()
+        else:
+            st.warning("Digite uma pergunta antes de adicionar.")
+
+    elif menu_admin == "Gerenciar Usuários":
+        st.subheader("👥 Gerenciar Usuários Clientes")
+        usuarios_df = pd.read_csv(usuarios_csv)
+        st.dataframe(usuarios_df)
+
+        st.markdown("### Adicionar novo usuário")
+        with st.form("form_novo_usuario"):
+            novo_cnpj = st.text_input("CNPJ do cliente")
+            nova_senha = st.text_input("Senha do cliente", type="password")
+            nova_empresa = st.text_input("Nome da empresa")
+            adicionar = st.form_submit_button("Adicionar Cliente")
+        if adicionar:
+            if novo_cnpj and nova_senha and nova_empresa:
+                novo_usuario = pd.DataFrame([[novo_cnpj, nova_senha, nova_empresa]], columns=["CNPJ", "Senha", "Empresa"])
+                usuarios_df = pd.concat([usuarios_df, novo_usuario], ignore_index=True)
+                usuarios_df.to_csv(usuarios_csv, index=False)
+                st.success("Cliente adicionado com sucesso!")
+                st.experimental_rerun()
+            else:
+                st.warning("Preencha todos os campos para adicionar um novo cliente.")
 
 # Painel Cliente - diagnóstico
 if aba == "Cliente" and st.session_state.cliente_logado:
