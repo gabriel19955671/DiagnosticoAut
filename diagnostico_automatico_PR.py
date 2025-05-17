@@ -166,15 +166,32 @@ if aba == "Administrador" and st.session_state.admin_logado:
     elif menu_admin == "Gerenciar Perguntas do Formulário":
         tabs_perguntas = st.tabs(["📋 Perguntas Atuais", "➕ Adicionar Nova Pergunta"])
 
-    with tabs_perguntas[0]:
-        st.subheader("📋 Perguntas Atuais")
-        perguntas = pd.read_csv(perguntas_csv)
-        if perguntas.empty:
-            st.info("Nenhuma pergunta cadastrada ainda.")
-        else:
-            st.dataframe(perguntas)
+        with tabs_perguntas[0]:
+            st.subheader("📋 Perguntas Atuais")
+            perguntas = pd.read_csv(perguntas_csv)
+            if perguntas.empty:
+                st.info("Nenhuma pergunta cadastrada ainda.")
+            else:
+                st.dataframe(perguntas)
 
-    with tabs_perguntas[1]:
+        with tabs_perguntas[1]:
+            st.subheader("➕ Adicionar Nova Pergunta")
+            nova_pergunta = st.text_input("Texto da Pergunta")
+            tipo_pergunta = st.selectbox("Tipo de Pergunta", ["Pontuação (0-10)", "Texto Aberto", "Escala", "Matriz GUT"])
+
+            if tipo_pergunta == "Matriz GUT":
+                st.markdown("Você poderá configurar a Matriz GUT baseada em outras perguntas do formulário após cadastro.")
+
+            if st.button("Adicionar Pergunta"):
+                if nova_pergunta.strip():
+                    df = pd.read_csv(perguntas_csv)
+                    nova = pd.DataFrame([[nova_pergunta + f" [{tipo_pergunta}]"]], columns=["Pergunta"])
+                    df = pd.concat([df, nova], ignore_index=True)
+                    df.to_csv(perguntas_csv, index=False)
+                    st.success("Pergunta adicionada com sucesso!")
+                    st.experimental_rerun()
+                else:
+                    st.warning("Digite uma pergunta antes de adicionar.")
         st.subheader("➕ Adicionar Nova Pergunta")
         nova_pergunta = st.text_input("Texto da Pergunta")
         tipo_pergunta = st.selectbox("Tipo de Pergunta", ["Pontuação (0-10)", "Texto Aberto", "Escala", "Matriz GUT"])
