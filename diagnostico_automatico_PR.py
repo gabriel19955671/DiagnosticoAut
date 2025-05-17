@@ -190,8 +190,10 @@ if aba == "Administrador" and st.session_state.admin_logado:
                         nova = pd.DataFrame([[nova_pergunta + f" [{tipo_pergunta}]"]], columns=["Pergunta"])
                         df = pd.concat([df, nova], ignore_index=True)
                         df.to_csv(perguntas_csv, index=False)
-                        st.success("Pergunta adicionada com sucesso!")
-                        st.experimental_rerun()
+                        st.success("Pergunta adicionada com sucesso! Para visualizar a pergunta adicionada, recarregue a página.")
+                        st.stop()
+                    else:
+                        st.warning("Digite uma pergunta antes de adicionar.")
                     else:
                         st.warning("Digite uma pergunta antes de adicionar.")
                 if nova_pergunta.strip():
