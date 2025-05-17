@@ -285,10 +285,12 @@ if st.session_state.admin_logado:
     st.success("Painel Administrativo Ativo")
 
     if menu_admin == "Visualizar Diagnósticos":
-        try:
-        import matplotlib.pyplot as plt
-        import seaborn as sns
+    try:
+    import matplotlib.pyplot as plt    import seaborn as sns
     except ModuleNotFoundError:
+    st.warning("Bibliotecas de gráficos não estão disponíveis no ambiente atual.")
+    plt = None
+    sns = None
         st.warning("Bibliotecas de gráficos não estão disponíveis no ambiente atual.")
         plt = None
         sns = None
