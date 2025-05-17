@@ -164,7 +164,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         st.dataframe(historico.sort_values(by="Data", ascending=False))
 
     elif menu_admin == "Gerenciar Perguntas do Formulário":
-    tabs_perguntas = st.tabs(["📋 Perguntas Atuais", "➕ Adicionar Nova Pergunta"])
+        tabs_perguntas = st.tabs(["📋 Perguntas Atuais", "➕ Adicionar Nova Pergunta"])
 
     with tabs_perguntas[0]:
         st.subheader("📋 Perguntas Atuais")
