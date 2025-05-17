@@ -175,14 +175,14 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 st.dataframe(perguntas)
 
         with tabs_perguntas[1]:
-            st.subheader("➕ Adicionar Nova Pergunta")
-            nova_pergunta = st.text_input("Texto da Pergunta", key="nova_pergunta")
-            tipo_pergunta = st.selectbox("Tipo de Pergunta", ["Pontuação (0-10)", "Texto Aberto", "Escala", "Pontuação (0-5) + Matriz GUT"], key="tipo_pergunta")
+        st.subheader("➕ Adicionar Nova Pergunta")
+        nova_pergunta = st.text_input("Texto da Pergunta", key="nova_pergunta")
+        tipo_pergunta = st.selectbox("Tipo de Pergunta", ["Pontuação (0-10)", "Texto Aberto", "Escala", "Pontuação (0-5) + Matriz GUT"], key="tipo_pergunta")
 
-            if tipo_pergunta == "Pontuação (0-5) + Matriz GUT":
+        if tipo_pergunta == "Pontuação (0-5) + Matriz GUT":
             st.markdown("Essa pergunta utilizará uma escala de 0 a 5 e será analisada com base em Gravidade, Urgência e Tendência da Matriz GUT.")
 
-            if st.button("Adicionar Pergunta", key="adicionar_pergunta"):
+        if st.button("Adicionar Pergunta", key="adicionar_pergunta"):
                 if nova_pergunta.strip():
                     df = pd.read_csv(perguntas_csv)
                     nova = pd.DataFrame([[nova_pergunta + f" [{tipo_pergunta}]"]], columns=["Pergunta"])
@@ -259,7 +259,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         email = st.text_input("E-mail")
 
         for i, row in perguntas.iterrows():
-        texto = row["Pergunta"]
+            texto = row["Pergunta"]
         if "Pontuação (0-5) + Matriz GUT" in texto:
             respostas[texto] = st.slider(texto, 0, 5, key=f"q_{i}")
         elif "Pontuação (0-10)" in texto:
