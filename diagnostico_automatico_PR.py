@@ -180,7 +180,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             tipo_pergunta = st.selectbox("Tipo de Pergunta", ["Pontuação (0-10)", "Texto Aberto", "Escala", "Pontuação (0-5) + Matriz GUT"], key="tipo_pergunta")
 
             if tipo_pergunta == "Pontuação (0-5) + Matriz GUT":
-    st.markdown("Essa pergunta utilizará uma escala de 0 a 5 e será analisada com base em Gravidade, Urgência e Tendência da Matriz GUT.")
+            st.markdown("Essa pergunta utilizará uma escala de 0 a 5 e será analisada com base em Gravidade, Urgência e Tendência da Matriz GUT.")
 
             if st.button("Adicionar Pergunta", key="adicionar_pergunta"):
                 if nova_pergunta.strip():
