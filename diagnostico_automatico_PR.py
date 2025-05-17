@@ -149,8 +149,7 @@ if st.session_state.cliente_logado:
         pdf.cell(200, 10, txt=f"Data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True)
         pdf.cell(200, 10, txt=f"CNPJ: {st.session_state.cnpj}", ln=True)
         pdf.cell(200, 10, txt=f"Média Geral: {round(media, 2)}", ln=True)
-        pdf.multi_cell(0, 10, txt=f"Resumo:
-{observacoes}")
+        pdf.multi_cell(0, 10, txt=f"Resumo:\n{observacoes}")
         for k, v in respostas.items():
             pdf.multi_cell(0, 10, txt=f"{k}: {v}")
 
