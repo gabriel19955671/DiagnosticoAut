@@ -282,7 +282,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         st.stop()  # Redirecionar de forma segura
 
 # Painel Administrativo
-if st.sidebar.button("🚪 Sair do Sistema"):
+if st.session_state.admin_logado and st.sidebar.button("🚪 Sair do Sistema"):
     st.session_state.admin_logado = False
     st.experimental_rerun()
 
