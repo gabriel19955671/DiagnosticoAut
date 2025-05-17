@@ -72,6 +72,11 @@ def registrar_acao(cnpj, acao, descricao):
     historico = pd.concat([historico, nova], ignore_index=True)
     historico.to_csv(historico_csv, index=False)
 
+# Redirecionamento seguro pós-login admin
+if st.session_state.get("trigger_admin_rerun"):
+    st.session_state.trigger_admin_rerun = False
+    st.experimental_rerun()
+
 # Definição de aba
 if not st.session_state.admin_logado:
     aba = st.radio("Você é:", ["Administrador", "Cliente"], horizontal=True)
@@ -91,7 +96,8 @@ if aba == "Administrador" and not st.session_state.admin_logado:
         if not df_admin[(df_admin["Usuario"] == usuario) & (df_admin["Senha"] == senha)].empty:
             st.session_state.admin_logado = True
             st.success("Login de administrador realizado com sucesso!")
-            st.experimental_rerun()
+            st.session_state.trigger_admin_rerun = True
+            st.stop()
         else:
             st.error("Usuário ou senha inválidos.")
     st.markdown('</div>', unsafe_allow_html=True)
