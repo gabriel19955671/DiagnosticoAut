@@ -296,7 +296,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
             respostas[texto] = st.slider(texto, 0, 10, key=f"q_{i}")
             respondidas += 1 if respostas[texto] != 0 else 0
 
-    st.info(f"📊 Progresso: {respondidas} de {total_perguntas} perguntas respondidas ({round((respondidas/total_perguntas)*100)}%)")*100)}%)")
+    st.info(f"📊 Progresso: {respondidas} de {total_perguntas} perguntas respondidas ({round((respondidas / total_perguntas) * 100)}%)")
     observacoes = st.text_area("Observações Gerais")
     diagnostico_texto = st.text_area("Resumo do Diagnóstico (para PDF)")
 
