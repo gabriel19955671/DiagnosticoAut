@@ -65,21 +65,20 @@ for arquivo, colunas in [
     if not os.path.exists(arquivo):
         pd.DataFrame(columns=colunas).to_csv(arquivo, index=False)
 
-# Função de log de ações
-
+# Função para registrar ações no histórico
 def registrar_acao(cnpj, acao, descricao):
     historico = pd.read_csv(historico_csv)
-    nova = pd.DataFrame([{"Data": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "CNPJ": cnpj, "Ação": acao, "Descrição": descricao}])
+    nova = pd.DataFrame([{ "Data": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "CNPJ": cnpj, "Ação": acao, "Descrição": descricao }])
     historico = pd.concat([historico, nova], ignore_index=True)
     historico.to_csv(historico_csv, index=False)
 
-# Determina a aba com base na sessão ou na seleção do usuário
+# Definição de aba
 if not st.session_state.admin_logado:
     aba = st.radio("Você é:", ["Administrador", "Cliente"], horizontal=True)
 else:
     aba = "Administrador"
 
-# LOGIN ADMINISTRADOR
+# Login do Administrador
 if aba == "Administrador" and not st.session_state.admin_logado:
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
     st.markdown('<h2 class="login-title">Login Administrador</h2>', unsafe_allow_html=True)
@@ -92,12 +91,12 @@ if aba == "Administrador" and not st.session_state.admin_logado:
         if not df_admin[(df_admin["Usuario"] == usuario) & (df_admin["Senha"] == senha)].empty:
             st.session_state.admin_logado = True
             st.success("Login de administrador realizado com sucesso!")
-            st.stop()
+            st.experimental_rerun()
         else:
             st.error("Usuário ou senha inválidos.")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# LOGIN CLIENTE
+# Login do Cliente
 if aba == "Cliente" and not st.session_state.cliente_logado:
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
     st.markdown('<h2 class="login-title">Login Cliente</h2>', unsafe_allow_html=True)
@@ -129,13 +128,12 @@ if aba == "Cliente" and not st.session_state.cliente_logado:
         st.session_state.inicio_sessao_cliente = time.time()
         registrar_acao(cnpj, "Login", "Usuário realizou login no sistema.")
         st.success("Login realizado com sucesso!")
-        st.stop()
+        st.experimental_rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Painel Administrativo
 if aba == "Administrador" and st.session_state.admin_logado:
-    if st.sidebar.button("Sair do Painel Admin"):
-        st.session_state.admin_logado = False
+    if st.sidebar.button("🔄 Atualizar Página"):
         st.experimental_rerun()
 
     menu_admin = st.sidebar.selectbox(
@@ -147,69 +145,86 @@ if aba == "Administrador" and st.session_state.admin_logado:
             "Gerenciar Usuários"
         ],
     )
-    if st.sidebar.button("🔄 Atualizar Página"):
-        st.experimental_rerun(), 2)
-        insights = [f"{k} abaixo da média." for k, v in respostas.items() if v < 6]
-        diagnostico_texto = "\n".join(insights) if insights else "Nenhuma área crítica identificada. Excelente desempenho geral."
 
-        resposta = pd.DataFrame([{
-            "Data": datetime.now().strftime("%Y-%m-%d %H:%M"),
-            "CNPJ": cnpj,
-            "Nome": nome,
-            "Email": email,
-            "Empresa": nome_empresa,
-            "Financeiro": respostas.get("Controle financeiro da empresa", 0),
-            "Processos": respostas.get("Eficiência dos processos internos", 0),
-            "Marketing": respostas.get("Presença e estratégia de marketing", 0),
-            "Vendas": respostas.get("Resultado comercial (vendas/negociação)", 0),
-            "Equipe": respostas.get("Desempenho da equipe/colaboradores", 0),
-            "Média Geral": media_geral,
-            "Observações": observacoes,
-            "Diagnóstico": diagnostico_texto.replace("\n", " "),
-        }])
+    st.success("Painel Administrativo Ativo")
 
+    elif menu_admin == "Gerenciar Perguntas do Formulário":
+        st.subheader("📝 Gerenciar Perguntas do Diagnóstico")
+        tabs_perguntas = st.tabs(["📋 Perguntas Atuais", "➕ Adicionar Nova Pergunta"])
+
+        with tabs_perguntas[0]:
+            perguntas = pd.read_csv(perguntas_csv)
+            if perguntas.empty:
+                st.info("Nenhuma pergunta cadastrada ainda.")
+            else:
+                for i, row in perguntas.iterrows():
+                    col1, col2, col3 = st.columns([6, 1, 1])
+                    with col1:
+                        nova = st.text_input(f"Pergunta {i+1}", value=row["Pergunta"], key=f"edit_{i}")
+                        perguntas.at[i, "Pergunta"] = nova
+                    with col2:
+                        if st.button("💾", key=f"salvar_{i}"):
+                            perguntas.to_csv(perguntas_csv, index=False)
+                            st.success("Pergunta atualizada.")
+                            st.experimental_rerun()
+                    with col3:
+                        if st.button("🗑️", key=f"deletar_{i}"):
+                            perguntas = perguntas.drop(i).reset_index(drop=True)
+                            perguntas.to_csv(perguntas_csv, index=False)
+                            st.warning("Pergunta removida.")
+                            st.experimental_rerun()
+
+        with tabs_perguntas[1]:
+            with st.form("form_nova_pergunta"):
+                st.subheader("➕ Adicionar Nova Pergunta")
+                nova_pergunta = st.text_input("Texto da Pergunta", key="nova_pergunta")
+                tipo_pergunta = st.selectbox("Tipo de Pergunta", ["Pontuação (0-10)", "Texto Aberto", "Escala", "Pontuação (0-5) + Matriz GUT"], key="tipo_pergunta")
+
+                if tipo_pergunta == "Pontuação (0-5) + Matriz GUT":
+                    st.markdown("Essa pergunta utilizará uma escala de 0 a 5 e será analisada com base em Gravidade, Urgência e Tendência da Matriz GUT.")
+
+                adicionar = st.form_submit_button("Adicionar Pergunta")
+                if adicionar:
+                    if nova_pergunta.strip():
+                        df = pd.read_csv(perguntas_csv)
+                        nova = pd.DataFrame([[nova_pergunta + f" [{tipo_pergunta}]"]], columns=["Pergunta"])
+                        df = pd.concat([df, nova], ignore_index=True)
+                        df.to_csv(perguntas_csv, index=False)
+                        st.success("Pergunta adicionada com sucesso! Para visualizar a pergunta adicionada, recarregue a página.")
+                        st.stop()
+                    else:
+                        st.warning("Digite uma pergunta antes de adicionar.")
+
+    if menu_admin == "Visualizar Diagnósticos":
         if os.path.exists(arquivo_csv):
-            antigo = pd.read_csv(arquivo_csv)
-            resultado = pd.concat([antigo, resposta], ignore_index=True)
+            st.subheader("📊 Diagnósticos Enviados")
+            diagnosticos = pd.read_csv(arquivo_csv)
+            st.dataframe(diagnosticos.sort_values(by="Data", ascending=False))
         else:
-            resultado = resposta
+            st.info("Nenhum diagnóstico encontrado.")
 
-        resultado.to_csv(arquivo_csv, index=False)
+    elif menu_admin == "Histórico de Usuários":
+        st.subheader("📜 Histórico de Ações dos Clientes")
+        historico = pd.read_csv(historico_csv)
+        st.dataframe(historico.sort_values(by="Data", ascending=False))
 
-        class PDF(FPDF):
-            def header(self):
-                if hasattr(self, "logo_path") and self.logo_path:
-                    self.image(self.logo_path, x=10, y=8, w=30)
-                self.set_font("Arial", "B", 16)
-                self.cell(0, 10, "Diagnóstico Empresarial - Potencialize Resultados", ln=True, align="C")
-                self.ln(10)
+    elif menu_admin == "Gerenciar Usuários":
+        st.subheader("👥 Gerenciar Usuários Clientes")
+        usuarios_df = pd.read_csv(usuarios_csv)
+        st.dataframe(usuarios_df)
 
-            def footer(self):
-                self.set_y(-15)
-                self.set_font("Arial", "I", 8)
-                self.set_text_color(128)
-                self.cell(0, 10, f"Potencialize Resultados - Página {self.page_no()}", align="C")
-
-        pdf = PDF()
-        if logo_cliente is not None:
-            img_temp = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
-            img_temp.write(logo_cliente.read())
-            img_temp.close()
-            pdf.logo_path = img_temp.name
-        else:
-            pdf.logo_path = None
-
-        pdf.add_page()
-        pdf.set_font("Arial", size=12)
-        pdf.cell(0, 10, f"Data: {datetime.now().strftime('%d/%m/%Y %H:%M')}", ln=True)
-        pdf.cell(0, 10, f"Nome: {nome}", ln=True)
-        pdf.cell(0, 10, f"E-mail: {email}", ln=True)
-        pdf.cell(0, 10, f"Empresa: {nome_empresa}", ln=True)
-        pdf.ln(5)
-        for pergunta, nota in respostas.items():
-            pdf.cell(0, 10, f"{pergunta}: {nota}", ln=True)
-        pdf.ln(5)
-        pdf.multi_cell(0, 10, f"Média Geral: {media_geral}\n\nObservações:\n{observacoes}\n\nDiagnóstico Automático:\n{diagnostico_texto}")
-        pdf.output(f"diagnostico_{cnpj}.pdf")
-
-        st.experimental_rerun()
+        st.markdown("### Adicionar novo usuário")
+        with st.form("form_novo_usuario"):
+            novo_cnpj = st.text_input("CNPJ do cliente")
+            nova_senha = st.text_input("Senha do cliente", type="password")
+            nova_empresa = st.text_input("Nome da empresa")
+            adicionar = st.form_submit_button("Adicionar Cliente")
+        if adicionar:
+            if novo_cnpj and nova_senha and nova_empresa:
+                novo_usuario = pd.DataFrame([[novo_cnpj, nova_senha, nova_empresa]], columns=["CNPJ", "Senha", "Empresa"])
+                usuarios_df = pd.concat([usuarios_df, novo_usuario], ignore_index=True)
+                usuarios_df.to_csv(usuarios_csv, index=False)
+                st.success("Cliente adicionado com sucesso!")
+                st.experimental_rerun()
+            else:
+                st.warning("Preencha todos os campos para adicionar um novo cliente.")
