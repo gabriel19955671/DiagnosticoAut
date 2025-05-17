@@ -285,7 +285,7 @@ if st.session_state.admin_logado:
     st.success("Painel Administrativo Ativo")
 
     if menu_admin == "Visualizar Diagnósticos":
-    try:
+        try:
         import matplotlib.pyplot as plt
         import seaborn as sns
     except ModuleNotFoundError:
