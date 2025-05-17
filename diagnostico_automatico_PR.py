@@ -154,6 +154,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
     else:
         for i, row in df_cliente.sort_values(by="Data", ascending=False).iterrows():
             with st.expander(f"📅 {row['Data']} - {row['Empresa']}"):
+                registrar_acao(st.session_state.cnpj, "Visualização", f"Cliente visualizou o diagnóstico de {row['Data']}")
                 st.write(f"**Média Geral:** {row['Média Geral']}")
                 st.write(f"**GUT Média:** {row.get('GUT Média', 'N/A')}")
                 st.write(f"**Resumo:** {row['Diagnóstico']}")
@@ -161,6 +162,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                 analise_cliente = st.text_area("🧠 Análise do Cliente", key=analise_key, value=row.get("Análise do Cliente", ""))
                 if st.button("💾 Salvar Análise", key=f"salvar_analise_{i}"):
                     df_antigos.loc[df_antigos.index == row.name, "Análise do Cliente"] = analise_cliente
+                    registrar_acao(st.session_state.cnpj, "Análise", f"Cliente escreveu ou editou análise do diagnóstico de {row['Data']}")
                     df_antigos.to_csv(arquivo_csv, index=False)
                     st.success("Análise salva com sucesso!")
                 st.write(f"**Observações:** {row['Observações']}")
@@ -281,6 +283,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
 
         with open(temp_pdf.name, "rb") as f:
             st.download_button("📄 Baixar PDF do Diagnóstico", f, file_name=f"diagnostico_{empresa}.pdf")
+        registrar_acao(st.session_state.cnpj, "Download", "Cliente baixou o PDF do diagnóstico")
         registrar_acao(st.session_state.cnpj, "Envio", "Cliente enviou diagnóstico.")
         st.session_state.diagnostico_enviado = True
         st.stop()  # Redirecionar de forma segura
