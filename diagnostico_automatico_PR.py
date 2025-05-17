@@ -164,7 +164,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         st.dataframe(historico.sort_values(by="Data", ascending=False))
 
     elif menu_admin == "Gerenciar Perguntas do Formulário":
-    st.subheader("📝 Gerenciar Perguntas do Diagnóstico")
+        st.subheader("📝 Gerenciar Perguntas do Diagnóstico")
     perguntas = pd.read_csv(perguntas_csv)
 
     st.markdown("### Perguntas atuais")
