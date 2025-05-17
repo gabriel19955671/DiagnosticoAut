@@ -194,8 +194,6 @@ if aba == "Administrador" and st.session_state.admin_logado:
                         st.stop()
                     else:
                         st.warning("Digite uma pergunta antes de adicionar.")
-                    else:
-                        st.warning("Digite uma pergunta antes de adicionar.")
                 if nova_pergunta.strip():
                     df = pd.read_csv(perguntas_csv)
                     nova = pd.DataFrame([[nova_pergunta + f" [{tipo_pergunta}]"]], columns=["Pergunta"])
