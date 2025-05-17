@@ -131,6 +131,55 @@ if aba == "Cliente" and not st.session_state.cliente_logado:
         st.experimental_rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
+# Histórico de diagnósticos anteriores do cliente
+if aba == "Cliente" and st.session_state.cliente_logado:
+    if st.session_state.get("diagnostico_enviado", False):
+        st.markdown("<h2 style='color: green;'>🎯 Controle de Evolução - Diagnóstico</h2>", unsafe_allow_html=True)
+        st.session_state.diagnostico_enviado = False
+    st.subheader("📁 Diagnósticos Anteriores")
+    df_antigos = pd.read_csv(arquivo_csv)
+    df_cliente = df_antigos[df_antigos["CNPJ"] == st.session_state.cnpj]
+    if df_cliente.empty:
+        st.info("Nenhum diagnóstico anterior encontrado.")
+    else:
+        for i, row in df_cliente.sort_values(by="Data", ascending=False).iterrows():
+            with st.expander(f"📅 {row['Data']} - {row['Empresa']}"):
+                st.write(f"**Média Geral:** {row['Média Geral']}")
+                st.write(f"**GUT Média:** {row.get('GUT Média', 'N/A')}")
+                st.write(f"**Resumo:** {row['Diagnóstico']}")
+                analise_key = f"analise_{i}"
+                analise_cliente = st.text_area("🧠 Análise do Cliente", key=analise_key, value=row.get("Análise do Cliente", ""))
+                if st.button("💾 Salvar Análise", key=f"salvar_analise_{i}"):
+                    df_antigos.loc[df_antigos.index == row.name, "Análise do Cliente"] = analise_cliente
+                    df_antigos.to_csv(arquivo_csv, index=False)
+                    st.success("Análise salva com sucesso!")
+                st.write(f"**Observações:** {row['Observações']}")
+                st.markdown("---")
+
+        # Comparação gráfica
+        st.subheader("📈 Comparativo de Evolução")
+        grafico = df_cliente.sort_values(by="Data")
+        grafico["Data"] = pd.to_datetime(grafico["Data"])
+        st.line_chart(grafico.set_index("Data")[['Média Geral', 'GUT Média']])
+
+        st.subheader("📊 Comparação Entre Diagnósticos")
+        opcoes = grafico["Data"].astype(str).tolist()
+        diag_atual = st.selectbox("Selecione o diagnóstico atual:", opcoes, index=len(opcoes)-1)
+        diag_anterior = st.selectbox("Selecione o diagnóstico anterior:", opcoes, index=max(len(opcoes)-2, 0))
+
+        atual = grafico[grafico["Data"].astype(str) == diag_atual].iloc[0]
+        anterior = grafico[grafico["Data"].astype(str) == diag_anterior].iloc[0]
+
+        st.write(f"### 📅 Comparando {diag_anterior} ⟶ {diag_atual}")
+        variaveis = [col for col in grafico.columns if col not in ["Data", "CNPJ", "Nome", "Email", "Empresa", "Observações", "Diagnóstico"]]
+        comparativo = pd.DataFrame({
+            "Indicador": variaveis,
+            "Anterior": [anterior[v] for v in variaveis],
+            "Atual": [atual[v] for v in variaveis],
+            "Evolução": ["🔼 Melhorou" if atual[v] > anterior[v] else ("🔽 Piorou" if atual[v] < anterior[v] else "➖ Igual") for v in variaveis]
+        })
+        st.dataframe(comparativo)
+
 # Painel Cliente - Diagnóstico
 if aba == "Cliente" and st.session_state.cliente_logado:
     st.subheader("📋 Formulário de Diagnóstico")
@@ -176,8 +225,31 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         df = pd.concat([df, pd.DataFrame([nova_linha])], ignore_index=True)
         df.to_csv(arquivo_csv, index=False)
         st.success("Diagnóstico enviado com sucesso!")
+        # Gerar PDF
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        pdf.multi_cell(0, 10, f"Diagnóstico - {empresa}")
+        pdf.multi_cell(0, 10, f"Data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        pdf.multi_cell(0, 10, f"CNPJ: {st.session_state.cnpj}")
+        pdf.multi_cell(0, 10, f"Média Geral: {media}")
+        pdf.multi_cell(0, 10, f"GUT Média: {gut_media}")
+        pdf.multi_cell(0, 10, f"
+Resumo do Diagnóstico:
+{diagnostico_texto}")
+
+        for k, v in respostas.items():
+            if isinstance(v, (int, float, str)):
+                pdf.multi_cell(0, 10, f"{k}: {v}")
+
+        temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+        pdf.output(temp_pdf.name)
+
+        with open(temp_pdf.name, "rb") as f:
+            st.download_button("📄 Baixar PDF do Diagnóstico", f, file_name=f"diagnostico_{empresa}.pdf")
         registrar_acao(st.session_state.cnpj, "Envio", "Cliente enviou diagnóstico.")
         st.session_state.diagnostico_enviado = True
+        st.experimental_rerun()  # Redirecionar após envio
 
 # Painel Administrativo
 if aba == "Administrador" and st.session_state.admin_logado:
@@ -244,7 +316,22 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
     if menu_admin == "Visualizar Diagnósticos":
         if os.path.exists(arquivo_csv):
-            st.subheader("📊 Diagnósticos Enviados")
+        st.subheader("📊 Diagnósticos Enviados")
+        diagnosticos = pd.read_csv(arquivo_csv)
+        st.dataframe(diagnosticos.sort_values(by="Data", ascending=False))
+        st.subheader("🔍 Filtrar por CNPJ")
+        cnpjs = diagnosticos["CNPJ"].unique().tolist()
+        filtro_cnpj = st.selectbox("Selecione um CNPJ", ["Todos"] + cnpjs)
+        if filtro_cnpj != "Todos":
+            filtrado = diagnosticos[diagnosticos["CNPJ"] == filtro_cnpj]
+            st.dataframe(filtrado)
+            for i, row in filtrado.iterrows():
+                st.markdown(f"**Data:** {row['Data']}  |  **Empresa:** {row['Empresa']}")
+                st.markdown(f"**Média Geral:** {row['Média Geral']} | GUT Média: {row.get('GUT Média', 'N/A')}")
+                st.markdown(f"**Resumo:** {row['Diagnóstico']}")
+                st.markdown(f"**Observações:** {row['Observações']}")
+                st.markdown(f"**Análise do Cliente:** {row.get('Análise do Cliente', 'Não preenchida')}")
+                st.markdown("---")
             diagnosticos = pd.read_csv(arquivo_csv)
             st.dataframe(diagnosticos.sort_values(by="Data", ascending=False))
         else:
