@@ -73,6 +73,9 @@ def registrar_acao(cnpj, acao, descricao):
     historico.to_csv(historico_csv, index=False)
 
 # Redirecionamento seguro pós-login admin
+if st.session_state.get("trigger_cliente_rerun"):
+    st.session_state.trigger_cliente_rerun = False
+    st.experimental_rerun()
 if st.session_state.get("trigger_admin_rerun"):
     st.session_state.trigger_admin_rerun = False
     st.experimental_rerun()
@@ -134,7 +137,8 @@ if aba == "Cliente" and not st.session_state.cliente_logado:
         st.session_state.inicio_sessao_cliente = time.time()
         registrar_acao(cnpj, "Login", "Usuário realizou login no sistema.")
         st.success("Login realizado com sucesso!")
-        st.experimental_rerun()
+        st.session_state.trigger_cliente_rerun = True
+        st.stop()
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Histórico de diagnósticos anteriores do cliente
