@@ -181,8 +181,8 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                     st.markdown(f"### ⏱ {prazo}")
                     for card in gut_cards:
                         if card["Prazo"] == prazo:
-                            st.markdown(f"- ✅ **{card['Tarefa']}**
-    - 👤 {card['Responsável']}")
+                            st.markdown(f"""- ✅ **{card['Tarefa']}**  
+👤 {card['Responsável']}""")
         st.subheader("📈 Comparativo de Evolução")
         grafico = df_cliente.sort_values(by="Data")
         grafico["Data"] = pd.to_datetime(grafico["Data"])
