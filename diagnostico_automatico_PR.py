@@ -192,7 +192,6 @@ if aba == "Administrador" and st.session_state.admin_logado:
             st.experimental_rerun()
         else:
             st.warning("Digite uma pergunta antes de adicionar.")
-                st.warning("Digite uma pergunta antes de adicionar.")
 
     elif menu_admin == "Gerenciar Usuários":
         st.subheader("👥 Gerenciar Usuários Clientes")
