@@ -11,6 +11,7 @@ admin_credenciais_csv = "admins.csv"
 usuarios_csv = "usuarios.csv"
 arquivo_csv = "diagnosticos_clientes.csv"
 usuarios_bloqueados_csv = "usuarios_bloqueados.csv"
+perguntas_csv = "perguntas_formulario.csv"
 
 if "admin_logado" not in st.session_state:
     st.session_state.admin_logado = False
@@ -32,6 +33,7 @@ for arquivo, colunas in [
             "Observações", "Diagnóstico",
         ],
     ),
+    (perguntas_csv, ["Pergunta"]),
 ]:
     if not os.path.exists(arquivo):
         pd.DataFrame(columns=colunas).to_csv(arquivo, index=False)
@@ -125,12 +127,23 @@ if aba == "Administrador" and st.session_state.admin_logado:
             "Reautorizar Cliente",
             "Gerenciar Usuários",
             "Gerenciar Bloqueios",
-            "Gerenciar Administradores"
+            "Gerenciar Administradores",
+            "Gerenciar Perguntas do Formulário"
         ],
     )
     if st.sidebar.button("Sair do Painel Admin"):
         st.session_state.admin_logado = False
         st.experimental_rerun()
+
+    if menu_admin == "Gerenciar Perguntas do Formulário":
+        st.subheader("📝 Gerenciar Perguntas do Diagnóstico")
+        perguntas = pd.read_csv(perguntas_csv)
+        for i, row in perguntas.iterrows():
+            nova = st.text_input(f"Pergunta {i+1}", value=row["Pergunta"], key=f"pergunta_{i}")
+            perguntas.at[i, "Pergunta"] = nova
+        if st.button("Salvar Perguntas"):
+            perguntas.to_csv(perguntas_csv, index=False)
+            st.success("Perguntas atualizadas com sucesso!")
 
 # Painel Cliente
 if aba == "Cliente" and st.session_state.cliente_logado:
@@ -165,16 +178,18 @@ if aba == "Cliente" and st.session_state.cliente_logado:
     - Após o preenchimento, você poderá baixar um PDF com o resultado.
     """)
 
+    perguntas_form = pd.read_csv(perguntas_csv)
+    respostas = {}
+
     with st.form("form_diagnostico"):
         logo_cliente = st.file_uploader("📎 Envie a logo da sua empresa (opcional)", type=["png", "jpg", "jpeg"])
         nome_empresa_custom = st.text_input("📝 Nome da sua empresa", value=user.iloc[0].get("Empresa", "Nome da Empresa"))
         nome = st.text_input("Nome completo")
         email = st.text_input("E-mail")
-        financeiro = st.slider("Controle financeiro da empresa", 0, 10)
-        processos = st.slider("Eficiência dos processos internos", 0, 10)
-        marketing = st.slider("Presença e estratégia de marketing", 0, 10)
-        vendas = st.slider("Resultado comercial (vendas/negociação)", 0, 10)
-        equipe = st.slider("Desempenho da equipe/colaboradores", 0, 10)
+
+        for idx, row in perguntas_form.iterrows():
+            respostas[row["Pergunta"]] = st.slider(row["Pergunta"], 0, 10, key=f"resposta_{idx}")
+
         observacoes = st.text_area("Observações adicionais (opcional)")
         enviado = st.form_submit_button("🚀 Enviar Diagnóstico")
 
@@ -195,18 +210,8 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                 self.set_text_color(128)
                 self.cell(0, 10, f"Potencialize Resultados - Diagnóstico Automático | Página {self.page_no()}", align="C")
 
-        media_geral = round((financeiro + processos + marketing + vendas + equipe) / 5, 2)
-        insights = []
-        if financeiro < 6:
-            insights.append("Controle financeiro necessita de atenção.")
-        if processos < 6:
-            insights.append("Processos internos abaixo do ideal.")
-        if marketing < 6:
-            insights.append("Estratégia de marketing pode ser melhorada.")
-        if vendas < 6:
-            insights.append("Resultados comerciais abaixo da média.")
-        if equipe < 6:
-            insights.append("Desempenho da equipe pode estar comprometido.")
+        media_geral = round(sum(respostas.values()) / len(respostas), 2)
+        insights = [f"{k} abaixo da média." for k, v in respostas.items() if v < 6]
 
         diagnostico_texto = "\n".join(insights) if insights else "Nenhuma área crítica identificada. Excelente desempenho geral."
 
@@ -216,11 +221,11 @@ if aba == "Cliente" and st.session_state.cliente_logado:
             "Nome": nome,
             "Email": email,
             "Empresa": nome_empresa_custom,
-            "Financeiro": financeiro,
-            "Processos": processos,
-            "Marketing": marketing,
-            "Vendas": vendas,
-            "Equipe": equipe,
+            "Financeiro": respostas.get("Controle financeiro da empresa", 0),
+            "Processos": respostas.get("Eficiência dos processos internos", 0),
+            "Marketing": respostas.get("Presença e estratégia de marketing", 0),
+            "Vendas": respostas.get("Resultado comercial (vendas/negociação)", 0),
+            "Equipe": respostas.get("Desempenho da equipe/colaboradores", 0),
             "Média Geral": media_geral,
             "Observações": observacoes,
             "Diagnóstico": diagnostico_texto.replace("\n", " "),
@@ -250,21 +255,10 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         pdf.cell(0, 10, f"E-mail: {email}", ln=True)
         pdf.cell(0, 10, f"Empresa: {nome_empresa_custom}", ln=True)
         pdf.ln(5)
-        texto_pdf = f"""Financeiro: {financeiro}
-Processos: {processos}
-Marketing: {marketing}
-Vendas: {vendas}
-Equipe: {equipe}
-
-Média Geral: {media_geral}
-
-Observações:
-{observacoes}
-
-Diagnóstico Automático:
-{diagnostico_texto}"""
-        texto_pdf = texto_pdf.encode("latin-1", "ignore").decode("latin-1")
-        pdf.multi_cell(0, 10, texto_pdf)
+        for pergunta, nota in respostas.items():
+            pdf.cell(0, 10, f"{pergunta}: {nota}", ln=True)
+        pdf.ln(5)
+        pdf.multi_cell(0, 10, f"Média Geral: {media_geral}\n\nObservações:\n{observacoes}\n\nDiagnóstico Automático:\n{diagnostico_texto}")
         pdf_output = f"diagnostico_{cnpj}.pdf"
         pdf.output(pdf_output)
 
