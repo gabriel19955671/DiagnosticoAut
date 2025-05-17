@@ -131,6 +131,54 @@ if aba == "Cliente" and not st.session_state.cliente_logado:
         st.experimental_rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
+# Painel Cliente - Diagnóstico
+if aba == "Cliente" and st.session_state.cliente_logado:
+    st.subheader("📋 Formulário de Diagnóstico")
+    perguntas = pd.read_csv(perguntas_csv)
+    respostas = {}
+    for i, row in perguntas.iterrows():
+        texto = row["Pergunta"]
+        if "Pontuação (0-5) + Matriz GUT" in texto:
+            respostas[texto] = st.slider(texto, 0, 5, key=f"q_{i}")
+        elif "Pontuação (0-10)" in texto:
+            respostas[texto] = st.slider(texto, 0, 10, key=f"q_{i}")
+        elif "Texto Aberto" in texto:
+            respostas[texto] = st.text_area(texto, key=f"q_{i}")
+        elif "Escala" in texto:
+            respostas[texto] = st.selectbox(texto, ["Muito Baixo", "Baixo", "Médio", "Alto", "Muito Alto"], key=f"q_{i}")
+        else:
+            respostas[texto] = st.slider(texto, 0, 10, key=f"q_{i}")
+
+    observacoes = st.text_area("Observações Gerais")
+    diagnostico_texto = st.text_area("Resumo do Diagnóstico (para PDF)")
+
+    if st.button("Enviar Diagnóstico"):
+        # Calcular GUT se aplicável
+        gut_perguntas = {k: v for k, v in respostas.items() if "Pontuação (0-5) + Matriz GUT" in k and isinstance(v, int)}
+        gut_total = sum(gut_perguntas.values())
+        gut_media = round(gut_total / len(gut_perguntas), 2) if gut_perguntas else 0
+        dados = pd.read_csv(usuarios_csv)
+        empresa = dados.loc[dados["CNPJ"] == st.session_state.cnpj, "Empresa"].values[0]
+        media = round(sum([v for v in respostas.values() if isinstance(v, (int, float))]) / len(respostas), 2)
+                nova_linha = {
+            "GUT Média": gut_media,
+            "Data": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "CNPJ": st.session_state.cnpj,
+            "Nome": st.session_state.user["CNPJ"].values[0],
+            "Email": "",
+            "Empresa": empresa,
+            "Média Geral": media,
+            "Observações": observacoes,
+            "Diagnóstico": diagnostico_texto
+        }
+        nova_linha.update(respostas)
+        df = pd.read_csv(arquivo_csv)
+        df = pd.concat([df, pd.DataFrame([nova_linha])], ignore_index=True)
+        df.to_csv(arquivo_csv, index=False)
+        st.success("Diagnóstico enviado com sucesso!")
+        registrar_acao(st.session_state.cnpj, "Envio", "Cliente enviou diagnóstico.")
+        st.session_state.diagnostico_enviado = True
+
 # Painel Administrativo
 if aba == "Administrador" and st.session_state.admin_logado:
     if st.sidebar.button("🔄 Atualizar Página"):
@@ -147,8 +195,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
     )
 
     st.success("Painel Administrativo Ativo")
-
-    elif menu_admin == "Gerenciar Perguntas do Formulário":
+    if menu_admin == "Gerenciar Perguntas do Formulário":
         st.subheader("📝 Gerenciar Perguntas do Diagnóstico")
         tabs_perguntas = st.tabs(["📋 Perguntas Atuais", "➕ Adicionar Nova Pergunta"])
 
