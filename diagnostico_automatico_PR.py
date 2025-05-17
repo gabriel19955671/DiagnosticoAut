@@ -175,7 +175,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 st.dataframe(perguntas)
 
         with tabs_perguntas[1]:
-        st.subheader("➕ Adicionar Nova Pergunta")
+            st.subheader("➕ Adicionar Nova Pergunta")
         nova_pergunta = st.text_input("Texto da Pergunta", key="nova_pergunta")
         tipo_pergunta = st.selectbox("Tipo de Pergunta", ["Pontuação (0-10)", "Texto Aberto", "Escala", "Pontuação (0-5) + Matriz GUT"], key="tipo_pergunta")
 
@@ -260,10 +260,16 @@ if aba == "Cliente" and st.session_state.cliente_logado:
 
         for i, row in perguntas.iterrows():
             texto = row["Pergunta"]
-        if "Pontuação (0-5) + Matriz GUT" in texto:
-            respostas[texto] = st.slider(texto, 0, 5, key=f"q_{i}")
-        elif "Pontuação (0-10)" in texto:
-            respostas[texto] = st.slider(texto, 0, 10, key=f"q_{i}")
+            if "Pontuação (0-5) + Matriz GUT" in texto:
+                respostas[texto] = st.slider(texto, 0, 5, key=f"q_{i}")
+            elif "Pontuação (0-10)" in texto:
+                respostas[texto] = st.slider(texto, 0, 10, key=f"q_{i}")
+            elif "Texto Aberto" in texto:
+                respostas[texto] = st.text_area(texto, key=f"q_{i}")
+            elif "Escala" in texto:
+                respostas[texto] = st.selectbox(texto, ["Muito Baixo", "Baixo", "Médio", "Alto", "Muito Alto"], key=f"q_{i}")
+            else:
+                respostas[texto] = st.slider(texto, 0, 10, key=f"q_{i}")
         elif "Texto Aberto" in texto:
             respostas[texto] = st.text_area(texto, key=f"q_{i}")
         elif "Escala" in texto:
