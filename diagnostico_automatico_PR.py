@@ -157,6 +157,32 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                 st.markdown("---")
 
         # Comparação gráfica
+
+        # Kanban baseado nas respostas GUT
+        st.subheader("📌 Plano de Ação - Kanban")
+        gut_cards = []
+        for pergunta, resposta in respostas.items():
+            if "Pontuação (0-5) + Matriz GUT" in pergunta and isinstance(resposta, int):
+                if resposta >= 4:
+                    prazo = "15 dias"
+                elif resposta == 3:
+                    prazo = "30 dias"
+                elif resposta == 2:
+                    prazo = "45 dias"
+                else:
+                    prazo = "60 dias"
+                gut_cards.append({"Tarefa": pergunta, "Prazo": prazo, "Responsável": st.session_state.user["Empresa"].values[0]})
+
+        if gut_cards:
+            prazos = ["15 dias", "30 dias", "45 dias", "60 dias"]
+            cols = st.columns(4)
+            for idx, prazo in enumerate(prazos):
+                with cols[idx]:
+                    st.markdown(f"### ⏱ {prazo}")
+                    for card in gut_cards:
+                        if card["Prazo"] == prazo:
+                            st.markdown(f"- ✅ **{card['Tarefa']}**
+    - 👤 {card['Responsável']}")
         st.subheader("📈 Comparativo de Evolução")
         grafico = df_cliente.sort_values(by="Data")
         grafico["Data"] = pd.to_datetime(grafico["Data"])
@@ -209,7 +235,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         dados = pd.read_csv(usuarios_csv)
         empresa = dados.loc[dados["CNPJ"] == st.session_state.cnpj, "Empresa"].values[0]
         media = round(sum([v for v in respostas.values() if isinstance(v, (int, float))]) / len(respostas), 2)
-                nova_linha = {
+        nova_linha = {
             "GUT Média": gut_media,
             "Data": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "CNPJ": st.session_state.cnpj,
