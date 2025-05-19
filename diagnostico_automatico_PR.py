@@ -186,15 +186,18 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", size=12)
-        texto_cabecalho = f"Diagnóstico - {empresa}
-CNPJ: {st.session_state.cnpj}
-Data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        texto_cabecalho = (
+    f"Diagnóstico - {empresa}\n"
+    f"CNPJ: {st.session_state.cnpj}\n"
+    f"Data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+)
 pdf.multi_cell(0, 10, texto_cabecalho)
-        texto_medias = f"Média Geral: {media}
-GUT Média: {gut_media}"
+        texto_medias = (
+    f"Média Geral: {media}\n"
+    f"GUT Média: {gut_media}"
+)
 pdf.multi_cell(0, 10, texto_medias)
-        texto_resumo = f"Resumo do Diagnóstico:
-{diagnostico_texto}"
+        texto_resumo = f"Resumo do Diagnóstico:\n{diagnostico_texto}"
 pdf.multi_cell(0, 10, texto_resumo)
         for k, v in respostas.items():
             pdf.multi_cell(0, 10, f"{k}: {v}")
