@@ -186,13 +186,16 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", size=12)
-        pdf.multi_cell(0, 10, f"Diagnóstico - {empresa}
+        texto_cabecalho = f"Diagnóstico - {empresa}
 CNPJ: {st.session_state.cnpj}
-Data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        pdf.multi_cell(0, 10, f"Média Geral: {media}
-GUT Média: {gut_media}")
-        pdf.multi_cell(0, 10, f"Resumo do Diagnóstico:
-{diagnostico_texto}")
+Data: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+pdf.multi_cell(0, 10, texto_cabecalho)
+        texto_medias = f"Média Geral: {media}
+GUT Média: {gut_media}"
+pdf.multi_cell(0, 10, texto_medias)
+        texto_resumo = f"Resumo do Diagnóstico:
+{diagnostico_texto}"
+pdf.multi_cell(0, 10, texto_resumo)
         for k, v in respostas.items():
             pdf.multi_cell(0, 10, f"{k}: {v}")
         temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
