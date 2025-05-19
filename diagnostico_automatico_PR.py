@@ -219,7 +219,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         # Kanban baseado nas respostas GUT
         st.subheader("📌 Plano de Ação - Kanban")
         gut_cards = []
-        respostas = st.session_state["respostas"]
+        for pergunta, resposta in respostas.items():
             if "Pontuação (0-5) + Matriz GUT" in pergunta and isinstance(resposta, int):
                 if resposta >= 4:
                     prazo = "15 dias"
