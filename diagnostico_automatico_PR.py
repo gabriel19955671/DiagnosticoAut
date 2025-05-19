@@ -218,18 +218,25 @@ if aba == "Cliente" and st.session_state.cliente_logado:
 
         # Kanban baseado nas respostas GUT
         st.subheader("📌 Plano de Ação - Kanban")
-        gut_cards = []
-        for pergunta, resposta in respostas.items():
-            if "Pontuação (0-5) + Matriz GUT" in pergunta and isinstance(resposta, int):
-                if resposta >= 4:
-                    prazo = "15 dias"
-                elif resposta == 3:
-                    prazo = "30 dias"
-                elif resposta == 2:
-                    prazo = "45 dias"
-                else:
-                    prazo = "60 dias"
-                gut_cards.append({"Tarefa": pergunta, "Prazo": prazo, "Responsável": st.session_state.user["Empresa"].values[0]})
+       gut_cards = []
+respostas = st.session_state.get("respostas", {})
+if isinstance(respostas, dict):
+    for pergunta, resposta in respostas.items():
+        if "Pontuação (0-5) + Matriz GUT" in pergunta and isinstance(resposta, int):
+            if resposta >= 4:
+                prazo = "15 dias"
+            elif resposta == 3:
+                prazo = "30 dias"
+            elif resposta == 2:
+                prazo = "45 dias"
+            else:
+                prazo = "60 dias"
+            gut_cards.append({
+                "Tarefa": pergunta,
+                "Prazo": prazo,
+                "Responsável": st.session_state.user["Empresa"].values[0] if "user" in st.session_state else "Não definido"
+            })
+
 
         if gut_cards:
             prazos = ["15 dias", "30 dias", "45 dias", "60 dias"]
