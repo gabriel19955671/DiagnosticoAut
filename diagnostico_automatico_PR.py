@@ -66,7 +66,7 @@ for arquivo, colunas in [
     (usuarios_bloqueados_csv, ["CNPJ"]),
     (admin_credenciais_csv, ["Usuario", "Senha"]),
     (usuarios_csv, ["CNPJ", "Senha", "Empresa"]),
-    (arquivo_csv, ["Data", "CNPJ", "Nome", "Email", "Empresa", "Financeiro", "Processos", "Marketing", "Vendas", "Equipe", "Média Geral", "Observações", "Diagnóstico"]),
+    (arquivo_csv, ["Data", "CNPJ", "Nome", "Email", "Empresa", "Financeiro", "Processos", "Marketing", "Vendas", "Equipe", "Média Geral", "GUT Média", "Observações", "Diagnóstico"]),
     (perguntas_csv, ["Pergunta"]),
     (historico_csv, ["Data", "CNPJ", "Ação", "Descrição"])
 ]:
@@ -89,10 +89,10 @@ if st.session_state.get("trigger_admin_rerun"):
     rerun_flag = True
 
 # Título e aba
-st.title("🔒 Portal de Acesso")
+st.title("🔒 Portal de Diagnóstico")
 aba = "Administrador" if st.session_state.admin_logado else st.radio("Você é:", ["Administrador", "Cliente"], horizontal=True)
 
-# Login administrador
+# LOGIN ADMINISTRADOR
 if aba == "Administrador" and not st.session_state.admin_logado:
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
     with st.form("form_admin"):
@@ -109,7 +109,7 @@ if aba == "Administrador" and not st.session_state.admin_logado:
                 st.error("Usuário ou senha inválidos.")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Login cliente
+# LOGIN CLIENTE
 if aba == "Cliente" and not st.session_state.cliente_logado:
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
     with st.form("form_cliente"):
@@ -137,9 +137,9 @@ if aba == "Cliente" and not st.session_state.cliente_logado:
             st.stop()
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Formulário de Diagnóstico
+# FORMULÁRIO DE DIAGNÓSTICO
 if aba == "Cliente" and st.session_state.cliente_logado:
-    st.subheader("📝 Novo Diagnóstico")
+    st.header("📝 Novo Diagnóstico")
     perguntas = pd.read_csv(perguntas_csv)
     respostas = {}
     for i, row in perguntas.iterrows():
@@ -200,7 +200,7 @@ GUT Média: {gut_media}")
         with open(temp_pdf.name, "rb") as f:
             st.download_button("📄 Baixar PDF do Diagnóstico", f, file_name=f"diagnostico_{empresa}.pdf")
 
-# Histórico e Comparativo
+# HISTÓRICO E COMPARATIVO DO CLIENTE
 if aba == "Cliente" and st.session_state.cliente_logado:
     st.subheader("📁 Diagnósticos Anteriores")
     df_antigos = pd.read_csv(arquivo_csv)
@@ -214,42 +214,42 @@ if aba == "Cliente" and st.session_state.cliente_logado:
 
         st.subheader("📊 Comparativo Entre Diagnósticos")
         opcoes = df_cliente["Data"].dt.strftime("%Y-%m-%d %H:%M:%S").tolist()
-        diag_atual = st.selectbox("Diagnóstico Atual", opcoes, index=len(opcoes)-1)
-        diag_anterior = st.selectbox("Diagnóstico Anterior", opcoes, index=max(len(opcoes)-2, 0))
-        atual = df_cliente[df_cliente["Data"].dt.strftime("%Y-%m-%d %H:%M:%S") == diag_atual].iloc[0]
-        anterior = df_cliente[df_cliente["Data"].dt.strftime("%Y-%m-%d %H:%M:%S") == diag_anterior].iloc[0]
-        variaveis = [col for col in df_cliente.columns if col not in ["Data", "CNPJ", "Nome", "Email", "Empresa", "Observações", "Diagnóstico"]]
-        comparativo = pd.DataFrame({
-            "Indicador": variaveis,
-            "Anterior": [anterior[v] for v in variaveis],
-            "Atual": [atual[v] for v in variaveis],
-            "Evolução": ["🔼 Melhorou" if atual[v] > anterior[v] else ("🔽 Piorou" if atual[v] < anterior[v] else "➖ Igual") for v in variaveis]
-        })
-        st.dataframe(comparativo)
-        st.download_button("⬇️ Exportar Comparativo", comparativo.to_csv(index=False).encode("utf-8"), file_name="comparativo_diagnostico.csv")
+        if len(opcoes) >= 2:
+            diag_atual = st.selectbox("Diagnóstico Atual", opcoes, index=len(opcoes)-1)
+            diag_anterior = st.selectbox("Diagnóstico Anterior", opcoes, index=max(len(opcoes)-2, 0))
+            atual = df_cliente[df_cliente["Data"].dt.strftime("%Y-%m-%d %H:%M:%S") == diag_atual].iloc[0]
+            anterior = df_cliente[df_cliente["Data"].dt.strftime("%Y-%m-%d %H:%M:%S") == diag_anterior].iloc[0]
+            variaveis = [col for col in df_cliente.columns if col not in ["Data", "CNPJ", "Nome", "Email", "Empresa", "Observações", "Diagnóstico"]]
+            comparativo = pd.DataFrame({
+                "Indicador": variaveis,
+                "Anterior": [anterior[v] for v in variaveis],
+                "Atual": [atual[v] for v in variaveis],
+                "Evolução": ["🔼 Melhorou" if atual[v] > anterior[v] else ("🔽 Piorou" if atual[v] < anterior[v] else "➖ Igual") for v in variaveis]
+            })
+            st.dataframe(comparativo)
+            st.download_button("⬇️ Exportar Comparativo", comparativo.to_csv(index=False).encode("utf-8"), file_name="comparativo_diagnostico.csv")
 
-# Painel Administrativo
+# PAINEL ADMINISTRATIVO
 if aba == "Administrador" and st.session_state.admin_logado:
-    st.header("📊 Painel Administrativo")
-    menu_admin = st.selectbox("Menu", ["Visualizar Diagnósticos", "Gerenciar Perguntas", "Gerenciar Usuários", "Histórico de Ações"])
+    st.subheader("📊 Painel Administrativo")
+    menu_admin = st.selectbox("Menu", ["Visualizar Diagnósticos", "Ranking por Empresa", "Gerenciar Perguntas", "Gerenciar Usuários", "Histórico de Ações"])
 
     if menu_admin == "Visualizar Diagnósticos":
-        df = pd.read_csv(arquivo_csv)
-        df["Data"] = pd.to_datetime(df["Data"], errors="coerce")
-        st.subheader("📅 Diagnósticos por Empresa")
-        empresa_opcao = st.selectbox("Empresa:", ["Todas"] + df["Empresa"].unique().tolist())
-        if empresa_opcao != "Todas":
-            df = df[df["Empresa"] == empresa_opcao]
-        st.dataframe(df.sort_values(by="Data", ascending=False))
+        if os.path.exists(arquivo_csv):
+            df = pd.read_csv(arquivo_csv)
+            df["Data"] = pd.to_datetime(df["Data"], errors="coerce")
+            st.dataframe(df.sort_values(by="Data", ascending=False))
 
-        st.subheader("📈 Ranking por Média Geral")
-        ranking = df.groupby("Empresa")["Média Geral"].mean().sort_values(ascending=False).reset_index()
-        ranking.index += 1
-        st.dataframe(ranking.rename(columns={"Média Geral": "Média Geral (Ranking)"}))
+    elif menu_admin == "Ranking por Empresa":
+        if os.path.exists(arquivo_csv):
+            df = pd.read_csv(arquivo_csv)
+            ranking = df.groupby("Empresa")["Média Geral"].mean().sort_values(ascending=False).reset_index()
+            ranking.index += 1
+            st.dataframe(ranking.rename(columns={"Média Geral": "Média Geral (Ranking)"}))
 
     elif menu_admin == "Gerenciar Perguntas":
-        st.subheader("✏️ Perguntas do Diagnóstico")
         perguntas = pd.read_csv(perguntas_csv)
+        st.subheader("✏️ Perguntas do Diagnóstico")
         for i, row in perguntas.iterrows():
             st.text_input(f"Pergunta {i+1}", value=row["Pergunta"], key=f"pergunta_{i}")
         if st.button("Salvar Perguntas"):
@@ -258,8 +258,8 @@ if aba == "Administrador" and st.session_state.admin_logado:
             st.success("Perguntas atualizadas.")
 
     elif menu_admin == "Gerenciar Usuários":
-        st.subheader("👥 Usuários Clientes")
         usuarios = pd.read_csv(usuarios_csv)
+        st.subheader("👥 Usuários Clientes")
         st.dataframe(usuarios)
         with st.form("novo_usuario"):
             cnpj = st.text_input("CNPJ")
@@ -272,9 +272,10 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 st.success("Usuário adicionado.")
 
     elif menu_admin == "Histórico de Ações":
-        st.subheader("📜 Histórico de Atividades")
-        historico = pd.read_csv(historico_csv)
-        st.dataframe(historico.sort_values(by="Data", ascending=False))
+        if os.path.exists(historico_csv):
+            historico = pd.read_csv(historico_csv)
+            st.subheader("📜 Histórico de Atividades")
+            st.dataframe(historico.sort_values(by="Data", ascending=False))
 
 # Rerun final
 if rerun_flag:
