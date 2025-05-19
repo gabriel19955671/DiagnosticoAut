@@ -2,3 +2,4 @@ streamlit
 pandas
 fpdf==1.7.2
 streamlit-js-eval
+plotly
