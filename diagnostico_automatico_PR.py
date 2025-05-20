@@ -567,7 +567,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                     for col_ev in df_evolucao.columns:
                         if str(col_ev).startswith("Media_Cat_"):
                             df_evolucao[col_ev] = pd.to_numeric(df_evolucao[col_ev], errors='coerce')
-                            if not df_evolucao[col_ev].isnull().all(): # Corrected: was single line if, now multi-line
+                            if not df_evolucao[col_ev].isnull().all():
                                 cols_plot_evol.append(col_ev)
                     df_evolucao_plot = df_evolucao.set_index("Data")[cols_plot_evol].dropna(axis=1, how='all')
                     if not df_evolucao_plot.empty: st.line_chart(df_evolucao_plot)
@@ -899,22 +899,42 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 else: st.info("Nenhum registro de histórico encontrado para os filtros aplicados.")
 
             elif menu_admin == "📝 Gerenciar Perguntas":
-                st.subheader("Gerenciar Perguntas do Diagnóstico"); tabs_perg_admin = st.tabs(["📋 Perguntas Atuais", "➕ Adicionar Nova Pergunta"])
+                st.subheader("Gerenciar Perguntas do Diagnóstico")
+                tabs_perg_admin = st.tabs(["📋 Perguntas Atuais", "➕ Adicionar Nova Pergunta"])
                 try:
                     perguntas_df_admin_gp = pd.read_csv(perguntas_csv, encoding='utf-8')
-                    if "Categoria" not in perguntas_df_admin_gp.columns: # Corrected line
+                    if "Categoria" not in perguntas_df_admin_gp.columns: # Corrected: Multi-line if
                         perguntas_df_admin_gp["Categoria"] = "Geral"
                 except (FileNotFoundError, pd.errors.EmptyDataError):
                     perguntas_df_admin_gp = pd.DataFrame(columns=colunas_base_perguntas)
+
                 with tabs_perg_admin[0]:
-                    if perguntas_df_admin_gp.empty: st.info("Nenhuma pergunta cadastrada.")
+                    if perguntas_df_admin_gp.empty:
+                        st.info("Nenhuma pergunta cadastrada.")
                     else:
                         for i_p_admin, row_p_admin in perguntas_df_admin_gp.iterrows():
-                            cols_p_admin = st.columns([4, 2, 0.5, 0.5]); nova_p_text_admin = cols_p_admin[0].text_input("Pergunta", value=str(row_p_admin["Pergunta"]), key=f"edit_p_txt_v14_final_gp_{i_p_admin}"); nova_cat_text_admin = cols_p_admin[1].text_input("Categoria", value=str(row_p_admin.get("Categoria", "Geral")), key=f"edit_p_cat_v14_final_gp_{i_p_admin}")
-                            with cols_p_admin[2]: st.write(""); \
-                                if st.button("💾", key=f"salvar_p_adm_v14_final_gp_{i_p_admin}", help="Salvar"): perguntas_df_admin_gp.loc[i_p_admin, "Pergunta"] = nova_p_text_admin; perguntas_df_admin_gp.loc[i_p_admin, "Categoria"] = nova_cat_text_admin; perguntas_df_admin_gp.to_csv(perguntas_csv, index=False, encoding='utf-8'); st.success(f"Pergunta {i_p_admin+1} atualizada."); st.rerun()
-                            with cols_p_admin[3]: st.write(""); \
-                                if st.button("🗑️", key=f"deletar_p_adm_v14_final_gp_{i_p_admin}", help="Deletar"): perguntas_df_admin_gp = perguntas_df_admin_gp.drop(i_p_admin).reset_index(drop=True); perguntas_df_admin_gp.to_csv(perguntas_csv, index=False, encoding='utf-8'); st.warning(f"Pergunta {i_p_admin+1} removida."); st.rerun()
+                            cols_p_admin = st.columns([4, 2, 0.5, 0.5])
+                            with cols_p_admin[0]:
+                                nova_p_text_admin = st.text_input("Pergunta", value=str(row_p_admin["Pergunta"]), key=f"edit_p_txt_v14_final_gp_{i_p_admin}")
+                            with cols_p_admin[1]:
+                                nova_cat_text_admin = st.text_input("Categoria", value=str(row_p_admin.get("Categoria", "Geral")), key=f"edit_p_cat_v14_final_gp_{i_p_admin}")
+                            with cols_p_admin[2]:
+                                st.write("") # For alignment
+                                if st.button("💾", key=f"salvar_p_adm_v14_final_gp_{i_p_admin}", help="Salvar"):
+                                    # Corrected: Multi-line block for chained statements
+                                    perguntas_df_admin_gp.loc[i_p_admin, "Pergunta"] = nova_p_text_admin
+                                    perguntas_df_admin_gp.loc[i_p_admin, "Categoria"] = nova_cat_text_admin
+                                    perguntas_df_admin_gp.to_csv(perguntas_csv, index=False, encoding='utf-8')
+                                    st.success(f"Pergunta {i_p_admin+1} atualizada.")
+                                    st.rerun()
+                            with cols_p_admin[3]:
+                                st.write("") # For alignment
+                                if st.button("🗑️", key=f"deletar_p_adm_v14_final_gp_{i_p_admin}", help="Deletar"):
+                                    # Corrected: Multi-line block
+                                    perguntas_df_admin_gp = perguntas_df_admin_gp.drop(i_p_admin).reset_index(drop=True)
+                                    perguntas_df_admin_gp.to_csv(perguntas_csv, index=False, encoding='utf-8')
+                                    st.warning(f"Pergunta {i_p_admin+1} removida.")
+                                    st.rerun()
                             st.divider()
                 with tabs_perg_admin[1]:
                     with st.form("form_nova_pergunta_admin_v14_final_gp"):
