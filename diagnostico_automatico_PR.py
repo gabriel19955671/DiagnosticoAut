@@ -516,9 +516,8 @@ if aba == "Cliente" and st.session_state.cliente_logado:
     if instrucoes_pendentes_obrigatorias_val and st.session_state.cliente_page != "Instruções":
         st.sidebar.error("❗REDIRECIONAMENTO AUTOMÁTICO: Para 'Instruções' (pendência obrigatória).")
         effective_cliente_page_for_radio_default = "Instruções"
-        if st.session_state.cliente_page != "Instruções": # Se a página atual não é Instruções, force-a.
-            st.session_state.cliente_page = "Instruções"
-            # Não usar st.rerun() aqui para permitir que o restante da página de instruções seja renderizado.
+        if st.session_state.cliente_page != "Instruções":
+            st.session_state.cliente_page = "Instruções" # Make the override sticky for this run's display logic
 
     st.sidebar.write(f"`effective_page_for_radio`: `{effective_cliente_page_for_radio_default}`")
     st.sidebar.markdown("---")
@@ -530,17 +529,17 @@ if aba == "Cliente" and st.session_state.cliente_logado:
     except ValueError:
         st.sidebar.warning(f"DEBUG: `current_page_for_radio_display` ('{current_page_for_radio_display}') não encontrada no menu. Default para Instruções.")
         current_idx_cli_val = 0
-        if st.session_state.cliente_page != "Instruções": # Se já não estiver, força e reroda para aplicar
+        if st.session_state.cliente_page != "Instruções":
             st.session_state.cliente_page = "Instruções"
-            st.rerun() 
-    
+            # Consider if a rerun is needed here if this state is unexpected.
+            # For now, let the current script try to render "Instruções".
+
     selected_page_cli_raw_val = st.sidebar.radio("Menu Cliente", menu_options_cli_val, index=current_idx_cli_val, key="cli_menu_v15_debug_radio")
     selected_page_cli_actual = "Notificações" if "Notificações" in selected_page_cli_raw_val else selected_page_cli_raw_val
     
-    if selected_page_cli_actual != st.session_state.cliente_page: # Compara o clique com a página ATUALMENTE definida no estado
+    if selected_page_cli_actual != st.session_state.cliente_page:
         if instrucoes_pendentes_obrigatorias_val and selected_page_cli_actual != "Instruções":
             st.sidebar.error("⚠️ ACESSO NEGADO! Você deve primeiro ler e confirmar as instruções na página '📖 Instruções' para acessar outras seções ou iniciar um novo diagnóstico.")
-            # Não muda st.session_state.cliente_page nem faz st.rerun(), mantém na página atual (provavelmente "Instruções")
         else:
             st.session_state.cliente_page = selected_page_cli_actual
             st.rerun()
@@ -557,8 +556,8 @@ if aba == "Cliente" and st.session_state.cliente_logado:
     # --- Conteúdo da Página do Cliente ---
     if st.session_state.cliente_page == "Instruções":
         st.subheader("📖 Instruções do Sistema de Diagnóstico")
-        default_instructions_text = """ (COLE SUAS INSTRUÇÕES PADRÃO COMPLETAS AQUI) """
-        instructions_to_display = default_instructions_text
+        default_instructions_text_content = """**Bem-vindo ao Portal de Diagnóstico Empresarial!** (Conteúdo completo das instruções aqui...)""" # Substitua pelo seu texto completo
+        instructions_to_display = default_instructions_text_content
         try:
             if os.path.exists(instrucoes_txt_file) and os.path.getsize(instrucoes_txt_file) > 0:
                 with open(instrucoes_txt_file, "r", encoding="utf-8") as f:
@@ -584,11 +583,10 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                 st.info("Você não possui diagnósticos disponíveis no momento para iniciar.")
             
             if st.button("Ir para o Painel Principal", key="ir_painel_inst_v15_final_geral"):
-                # Verifica novamente se há pendências antes de permitir a navegação direta para o painel
-                _pode_fazer_novo = st.session_state.user.get("DiagnosticosDisponiveis", 0) > st.session_state.user.get("TotalDiagnosticosRealizados", 0)
-                _confirmou_instr = st.session_state.user.get("ConfirmouInstrucoesParaSlotAtual", False)
-                _instr_pendentes = _pode_fazer_novo and not _confirmou_instr
-                if _instr_pendentes:
+                _pode_fazer_novo_check = st.session_state.user.get("DiagnosticosDisponiveis", 0) > st.session_state.user.get("TotalDiagnosticosRealizados", 0)
+                _confirmou_instr_check = st.session_state.user.get("ConfirmouInstrucoesParaSlotAtual", False)
+                _instr_pendentes_check = _pode_fazer_novo_check and not _confirmou_instr_check
+                if _instr_pendentes_check:
                      st.error("⚠️ Você precisa confirmar as instruções acima antes de ir para o Painel Principal, pois um novo diagnóstico está disponível e pendente de confirmação.")
                 else:
                     st.session_state.cliente_page = "Painel Principal"; st.rerun()
@@ -596,52 +594,50 @@ if aba == "Cliente" and st.session_state.cliente_logado:
 
 
     elif st.session_state.cliente_page == "Painel Principal":
+        st.error(f"ALERTA DE DEPURAÇÃO: SE VOCÊ VÊ ISTO, O BLOCO DA PÁGINA 'Painel Principal' FOI ALCANÇADO!") # << NOVO
         st.success(f"DEBUG: Tentando carregar página: {st.session_state.cliente_page}")
-        st.write("DEBUG: Ponto A - Início do Painel Principal")
+        st.write("DEBUG: Ponto PP_A - Início do Painel Principal")
         st.subheader("📊 Painel Principal do Cliente")
         
-        # ----- CÓDIGO SIMPLIFICADO PARA TESTE -----
-        st.info("Conteúdo do Painel Principal está temporariamente simplificado para depuração.")
-        st.write("Se você vê esta mensagem, o bloco do Painel Principal foi alcançado.")
-        
-        # Você pode DESCOMENTAR as seções abaixo GRADUALMENTE para encontrar o erro:
-        # st.write("DEBUG: Ponto B - Antes de carregar diagnósticos anteriores")
-        # if st.session_state.diagnostico_enviado_sucesso:
-        #     # ... (bloco do diagnostico_enviado_sucesso) ...
-        # with st.expander("📖 Instruções e Informações", expanded=False):
-        #     # ... (markdown de instruções) ...
-        # st.markdown("#### 📁 Diagnósticos Anteriores")
-        # df_cliente_diags = pd.DataFrame()
-        # try:
-        #     # ... (lógica de carregamento de df_cliente_diags) ...
-        # except Exception as e_load_diags:
-        #     st.error(f"Erro carregando df_cliente_diags: {e_load_diags}")
-        #     st.exception(e_load_diags)
+        st.info("Conteúdo do Painel Principal está temporariamente SIMPLIFICADO para depuração.")
+        st.write("Se você vê esta mensagem, significa que o código está entrando corretamente no bloco do Painel Principal.")
+        st.write("O conteúdo original foi comentado para ajudar a isolar o problema.")
+        st.write("Se esta mensagem aparecer, o problema está no código que foi comentado abaixo.")
 
-        # if df_cliente_diags.empty:
-        #     st.info("Nenhum diagnóstico anterior.")
-        #     st.write("DEBUG: Ponto J - Nenhum diagnóstico para o cliente.")
-        # else:
-        #     st.write(f"DEBUG: Ponto C - {len(df_cliente_diags)} diagnósticos carregados.")
-        #     # ... (resto da lógica do Painel Principal, incluindo loops e gráficos) ...
-        #     # ... DESCOMENTE PEQUENAS PARTES DE CADA VEZ ...
-        #     st.write("DEBUG: Ponto F - Após loop de diagnósticos (se existiu)")
-        #     st.write("DEBUG: Ponto G - Após Kanban (se existiu)")
-        #     st.write("DEBUG: Ponto H - Após Evolução (se existiu)")
-        #     st.write("DEBUG: Ponto I - Após Comparação Detalhada (se existiu)")
-        
-        st.write("DEBUG: Ponto K - FIM do Painel Principal (simplificado)")
+        # ----- TODO O CONTEÚDO ORIGINAL DO PAINEL PRINCIPAL FOI COMENTADO ABAIXO -----
+        # ----- DESCOMENTE SEÇÕES GRADUALMENTE PARA ENCONTRAR O ERRO -----
+        """
+        if st.session_state.diagnostico_enviado_sucesso:
+            st.success("🎯 Seu último diagnóstico foi enviado e processado com sucesso!")
+            if st.session_state.pdf_gerado_path and st.session_state.pdf_gerado_filename:
+                try:
+                    with open(st.session_state.pdf_gerado_path, "rb") as f_pdf:
+                        st.download_button(label="📄 Baixar PDF do Diagnóstico Recém-Enviado", data=f_pdf, file_name=st.session_state.pdf_gerado_filename, mime="application/pdf", key="dl_novo_diag_painel_v15_final_pp")
+                except FileNotFoundError: st.error("Arquivo PDF do diagnóstico recente não encontrado.")
+                except Exception as e_pdf_dl: st.error(f"Erro ao preparar download do PDF: {e_pdf_dl}")
+            st.session_state.pdf_gerado_path = None; st.session_state.pdf_gerado_filename = None
+            st.session_state.diagnostico_enviado_sucesso = False
+        with st.expander("📖 Instruções e Informações", expanded=False):
+            st.markdown("- Visualize seus diagnósticos anteriores e sua evolução.\n- Acompanhe seu plano de ação no Kanban.\n- Para um novo diagnóstico (se liberado), selecione 'Novo Diagnóstico' no menu ao lado.")
+        st.write("DEBUG: Ponto B - Antes de carregar diagnósticos anteriores")
+        st.markdown("#### 📁 Diagnósticos Anteriores")
+        df_cliente_diags = pd.DataFrame()
+        # ... (toda a lógica de carregamento e exibição de df_cliente_diags, incluindo o loop e gráficos) ...
+        st.write("DEBUG: Ponto J - (localização aproximada)") 
+        """
+        st.write("DEBUG: Ponto PP_K - FIM do Painel Principal (simplificado)")
 
 
     elif st.session_state.cliente_page == "Novo Diagnóstico":
+        st.error(f"ALERTA DE DEPURAÇÃO: SE VOCÊ VÊ ISTO, O BLOCO DA PÁGINA 'Novo Diagnóstico' FOI ALCANÇADO!") # << NOVO
         st.success(f"DEBUG: Tentando carregar página: {st.session_state.cliente_page}")
         st.write("DEBUG: Ponto ND_A - Início de Novo Diagnóstico")
         st.subheader("📝 Formulário de Novo Diagnóstico")
 
-        # ----- CÓDIGO SIMPLIFICADO PARA TESTE -----
-        st.info("Conteúdo do Novo Diagnóstico está temporariamente simplificado para depuração.")
-        st.write("Se você vê esta mensagem, o bloco do Novo Diagnóstico foi alcançado após as verificações iniciais.")
-
+        st.info("Conteúdo do Novo Diagnóstico está temporariamente SIMPLIFICADO para depuração.")
+        st.write("Se você vê esta mensagem, significa que o código está entrando corretamente no bloco do Novo Diagnóstico após as verificações de permissão.")
+        st.write("O conteúdo original do formulário foi comentado para ajudar a isolar o problema.")
+        
         # Verificações de permissão (essas precisam rodar)
         if not st.session_state.user: st.error("Erro: Dados do usuário não encontrados. Faça login novamente."); st.stop()
         pode_fazer_novo_form = st.session_state.user.get("DiagnosticosDisponiveis", 0) > st.session_state.user.get("TotalDiagnosticosRealizados", 0)
@@ -657,33 +653,31 @@ if aba == "Cliente" and st.session_state.cliente_logado:
             st.stop()
         st.write("DEBUG: Ponto ND_B - Após checagens de permissão")
         
-        # if st.session_state.diagnostico_enviado_sucesso:
-        #     # ... (bloco do diagnostico_enviado_sucesso) ...
-        #     st.stop()
-        # st.write("DEBUG: Ponto ND_C - Antes de carregar perguntas_df_formulario")
+        # ----- TODO O CONTEÚDO ORIGINAL DO FORMULÁRIO FOI COMENTADO ABAIXO -----
+        # ----- DESCOMENTE SEÇÕES GRADUALMENTE PARA ENCONTRAR O ERRO -----
+        """
+        if st.session_state.diagnostico_enviado_sucesso:
+            # ... (bloco do diagnostico_enviado_sucesso) ...
+            st.stop()
+        st.write("DEBUG: Ponto ND_C - Antes de carregar perguntas_df_formulario")
         
-        # perguntas_df_formulario = pd.DataFrame()
-        # try:
-        #     # ... (lógica de carregamento de perguntas_df_formulario) ...
-        # except Exception as e_load_perg:
-        #     st.error(f"Erro carregando perguntas_df_formulario: {e_load_perg}")
-        #     st.exception(e_load_perg)
+        perguntas_df_formulario = pd.DataFrame()
+        # ... (lógica de carregamento de perguntas_df_formulario) ...
 
-        # if not perguntas_df_formulario.empty:
-        #     st.write(f"DEBUG: Ponto ND_D - {len(perguntas_df_formulario)} perguntas carregadas.")
-        #     # ... (resto da lógica do Novo Diagnóstico, incluindo loops de perguntas) ...
-        #     # ... DESCOMENTE PEQUENAS PARTES DE CADA VEZ ...
-        #     st.write("DEBUG: Ponto ND_H - Após loop de perguntas (se existiu)")
-        # else:
-        #     st.warning("DEBUG: Nenhuma pergunta de formulário encontrada (após tentativa de carga e checagens).")
-        #     st.write("DEBUG: Ponto ND_I - Nenhuma pergunta de formulário.")
-            
+        if not perguntas_df_formulario.empty:
+            st.write(f"DEBUG: Ponto ND_D - {len(perguntas_df_formulario)} perguntas carregadas.")
+            # ... (barra de progresso, loop de categorias e perguntas para criar o formulário) ...
+            st.write("DEBUG: Ponto ND_H - Após loop de perguntas (se existiu)")
+            # ... (campos de texto para observações e resumo, botão de enviar) ...
+        else:
+            st.warning("DEBUG: Nenhuma pergunta de formulário encontrada (após tentativa de carga e checagens).")
+            st.write("DEBUG: Ponto ND_I - Nenhuma pergunta de formulário.")
+        """    
         st.write("DEBUG: Ponto ND_J - FIM de Novo Diagnóstico (simplificado)")
 
 
     elif st.session_state.cliente_page == "Notificações":
         st.subheader("🔔 Minhas Notificações")
-        # (Código de Notificações como antes)
         try:
             df_notif_cliente_view = pd.read_csv(notificacoes_csv, dtype={'CNPJ_Cliente': str}, encoding='utf-8')
             df_notif_cliente_view = df_notif_cliente_view[df_notif_cliente_view['CNPJ_Cliente'] == st.session_state.cnpj]
@@ -705,7 +699,6 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                  del st.session_state.notif_page_loaded_once_v14_final_c
 
 # --- ÁREA DO ADMINISTRADOR LOGADO ---
-# COLE SEU CÓDIGO DE ADMIN COMPLETO AQUI (omitido para brevidade nesta resposta)
 if aba == "Administrador" and st.session_state.admin_logado:
     try:
         try: st.sidebar.image("https://via.placeholder.com/150x75.png?text=Sua+Logo+Admin", width=150)
@@ -744,7 +737,6 @@ if aba == "Administrador" and st.session_state.admin_logado:
         try: # Admin menu dispatch
             if menu_admin == "📊 Visão Geral e Diagnósticos":
                 st.subheader("Visão Geral e Indicadores de Diagnósticos")
-                # ... (Conteúdo Visão Geral) ...
                 st.markdown("#### Métricas Gerais do Sistema (Todos os Clientes)")
                 col_mg1_vg, col_mg2_vg, col_mg3_vg, col_mg4_vg = st.columns(4)
                 total_clientes_cadastrados_vg = len(df_usuarios_admin_geral) if not df_usuarios_admin_geral.empty else 0
@@ -829,19 +821,267 @@ if aba == "Administrador" and st.session_state.admin_logado:
                             except Exception as e_detalhe: st.error(f"Erro ao tentar detalhar diagnóstico: {e_detalhe}")
                     else: st.caption("Nenhum diagnóstico na seleção atual para detalhar.")
             
-            # ... (O restante das seções do admin: Status, Histórico, Perguntas, Análises, Instruções, Clientes, Admins, Backup)
-            # COPIE E COLE O RESTANTE DO SEU CÓDIGO DE ADMIN AQUI
-            # Exemplo:
             elif menu_admin == "🚦 Status dos Clientes":
                 st.subheader("Status de Diagnósticos dos Clientes")
-                # (código completo desta seção)
-                pass
+                df_usuarios_status_view = df_usuarios_admin_geral.copy()
+                df_diagnosticos_status_geral = diagnosticos_df_admin_orig_view.copy() if admin_data_carregada_view_sucesso and not diagnosticos_df_admin_orig_view.empty else pd.DataFrame()
+                empresas_status_list_view = ["Todas"] + (sorted(df_usuarios_status_view['Empresa'].astype(str).unique().tolist()) if not df_usuarios_status_view.empty and "Empresa" in df_usuarios_status_view.columns else [])
+                emp_sel_status_view = st.selectbox("Filtrar por Empresa:", empresas_status_list_view, key="status_emp_sel_v14_final")
+                df_usuarios_status_filtrado = df_usuarios_status_view.copy()
+                df_diagnosticos_status_filtrado_local = df_diagnosticos_status_geral.copy()
+                if emp_sel_status_view != "Todas":
+                    df_usuarios_status_filtrado = df_usuarios_status_view[df_usuarios_status_view["Empresa"] == emp_sel_status_view]
+                    if not df_diagnosticos_status_filtrado_local.empty: df_diagnosticos_status_filtrado_local = df_diagnosticos_status_filtrado_local[df_diagnosticos_status_filtrado_local["Empresa"] == emp_sel_status_view]
+                if df_usuarios_status_filtrado.empty: st.info(f"Nenhum cliente encontrado para a empresa '{emp_sel_status_view}'.")
+                else:
+                    st.markdown("##### Clientes que JÁ REALIZARAM pelo menos um diagnóstico (no contexto da empresa filtrada):")
+                    if not df_diagnosticos_status_filtrado_local.empty:
+                        cnpjs_com_diagnostico_status = df_diagnosticos_status_filtrado_local['CNPJ'].unique()
+                        clientes_que_fizeram_status = df_usuarios_status_filtrado[df_usuarios_status_filtrado['CNPJ'].isin(cnpjs_com_diagnostico_status)]
+                        if not clientes_que_fizeram_status.empty: st.dataframe(clientes_que_fizeram_status[['CNPJ', 'Empresa', 'NomeContato', 'TotalDiagnosticosRealizados', 'DiagnosticosDisponiveis']])
+                        else: st.info(f"Nenhum cliente da empresa '{emp_sel_status_view}' realizou diagnósticos.")
+                    elif admin_data_carregada_view_sucesso: st.info(f"Nenhum diagnóstico registrado para a empresa '{emp_sel_status_view}'.")
+                    else: st.info("Dados de diagnóstico não disponíveis para consulta.")
+                    st.markdown("---")
+                    st.markdown("##### Clientes com Diagnósticos LIBERADOS e AINDA NÃO REALIZADOS (ou com slots pendentes):")
+                    clientes_liberados_pendentes_status = df_usuarios_status_filtrado[df_usuarios_status_filtrado['DiagnosticosDisponiveis'] > df_usuarios_status_filtrado['TotalDiagnosticosRealizados']]
+                    if not clientes_liberados_pendentes_status.empty: st.dataframe(clientes_liberados_pendentes_status[['CNPJ', 'Empresa', 'NomeContato', 'DiagnosticosDisponiveis', 'TotalDiagnosticosRealizados']])
+                    else: st.info(f"Nenhum cliente da empresa '{emp_sel_status_view}' com diagnósticos liberados pendentes.")
+
             elif menu_admin == "📜 Histórico de Usuários":
                 st.subheader("📜 Histórico de Ações")
-                # (código completo desta seção)
-                pass
-            # E assim por diante para todas as outras seções do admin...
+                df_historico_completo_hu = pd.DataFrame()
+                df_usuarios_para_filtro_hu = pd.DataFrame()
+                try:
+                    df_historico_completo_hu = pd.read_csv(historico_csv, encoding='utf-8', dtype={'CNPJ': str})
+                    df_usuarios_para_filtro_hu = pd.read_csv(usuarios_csv, encoding='utf-8', usecols=['CNPJ', 'Empresa', 'NomeContato'], dtype={'CNPJ': str})
+                except FileNotFoundError: st.error("Arquivo de histórico ou usuários não encontrado."); df_historico_completo_hu = pd.DataFrame(columns=["Data", "CNPJ", "Ação", "Descrição"]); df_usuarios_para_filtro_hu = pd.DataFrame(columns=['CNPJ', 'Empresa', 'NomeContato'])
+                except Exception as e_hu: st.error(f"Erro ao carregar dados para o histórico: {e_hu}"); df_historico_completo_hu = pd.DataFrame(columns=["Data", "CNPJ", "Ação", "Descrição"]); df_usuarios_para_filtro_hu = pd.DataFrame(columns=['CNPJ', 'Empresa', 'NomeContato'])
+                st.markdown("#### Filtros do Histórico"); col_hu_f1, col_hu_f2 = st.columns(2); empresas_hist_list_hu = ["Todas"]
+                if not df_usuarios_para_filtro_hu.empty and 'Empresa' in df_usuarios_para_filtro_hu.columns: empresas_hist_list_hu.extend(sorted(df_usuarios_para_filtro_hu['Empresa'].astype(str).unique().tolist()))
+                emp_sel_hu = col_hu_f1.selectbox("Filtrar por Empresa:", empresas_hist_list_hu, key="hist_emp_sel_v14_final_hu_adm"); termo_busca_hu = col_hu_f2.text_input("Buscar por Nome do Contato, CNPJ, Ação ou Descrição:", key="hist_termo_busca_v14_final_hu_adm")
+                df_historico_filtrado_view_hu = df_historico_completo_hu.copy()
+                if emp_sel_hu != "Todas" and not df_usuarios_para_filtro_hu.empty: cnpjs_da_empresa_hu = df_usuarios_para_filtro_hu[df_usuarios_para_filtro_hu['Empresa'] == emp_sel_hu]['CNPJ'].tolist(); df_historico_filtrado_view_hu = df_historico_filtrado_view_hu[df_historico_filtrado_view_hu['CNPJ'].isin(cnpjs_da_empresa_hu)]
+                if termo_busca_hu.strip():
+                    busca_lower_hu = termo_busca_hu.strip().lower(); cnpjs_match_nome_hu = []
+                    if not df_usuarios_para_filtro_hu.empty and 'NomeContato' in df_usuarios_para_filtro_hu.columns: cnpjs_match_nome_hu = df_usuarios_para_filtro_hu[df_usuarios_para_filtro_hu['NomeContato'].astype(str).str.lower().str.contains(busca_lower_hu, na=False)]['CNPJ'].tolist()
+                    df_historico_filtrado_view_hu = df_historico_filtrado_view_hu[df_historico_filtrado_view_hu['CNPJ'].isin(cnpjs_match_nome_hu) | df_historico_filtrado_view_hu['CNPJ'].astype(str).str.lower().str.contains(busca_lower_hu) | df_historico_filtrado_view_hu['Ação'].astype(str).str.lower().str.contains(busca_lower_hu, na=False) | df_historico_filtrado_view_hu['Descrição'].astype(str).str.lower().str.contains(busca_lower_hu, na=False)]
+                st.markdown("#### Registros do Histórico")
+                if not df_historico_filtrado_view_hu.empty:
+                    st.dataframe(df_historico_filtrado_view_hu.sort_values(by="Data", ascending=False))
+                    if st.button("📄 Baixar Histórico Filtrado (PDF)", key="download_hist_filtrado_pdf_v14_final_hu_adm"):
+                        titulo_pdf_hist = f"Historico_Acoes_{sanitize_column_name(emp_sel_hu)}_{sanitize_column_name(termo_busca_hu) if termo_busca_hu else 'Todos'}_{datetime.now().strftime('%Y%m%d')}.pdf"; pdf_path_hist = gerar_pdf_historico(df_historico_filtrado_view_hu, titulo=f"Histórico ({emp_sel_hu} - Busca: {termo_busca_hu or 'N/A'})")
+                        if pdf_path_hist:
+                            with open(pdf_path_hist, "rb") as f_pdf_hist: st.download_button(label="Download Confirmado", data=f_pdf_hist, file_name=titulo_pdf_hist, mime="application/pdf", key="confirm_download_hist_pdf_v14_final_hu_adm")
+                            try: os.remove(pdf_path_hist)
+                            except: pass
+                else: st.info("Nenhum registro de histórico encontrado para os filtros aplicados.")
 
+            elif menu_admin == "📝 Gerenciar Perguntas":
+                st.subheader("Gerenciar Perguntas do Diagnóstico"); tabs_perg_admin = st.tabs(["📋 Perguntas Atuais", "➕ Adicionar Nova Pergunta"])
+                try:
+                    perguntas_df_admin_gp = pd.read_csv(perguntas_csv, encoding='utf-8')
+                    if "Categoria" not in perguntas_df_admin_gp.columns:
+                        perguntas_df_admin_gp["Categoria"] = "Geral"
+                except (FileNotFoundError, pd.errors.EmptyDataError):
+                    perguntas_df_admin_gp = pd.DataFrame(columns=colunas_base_perguntas)
+                with tabs_perg_admin[0]:
+                    if perguntas_df_admin_gp.empty: st.info("Nenhuma pergunta cadastrada.")
+                    else:
+                        for i_p_admin, row_p_admin in perguntas_df_admin_gp.iterrows():
+                            cols_p_admin = st.columns([4, 2, 0.5, 0.5])
+                            with cols_p_admin[0]: nova_p_text_admin = st.text_input("Pergunta", value=str(row_p_admin["Pergunta"]), key=f"edit_p_txt_v14_final_gp_{i_p_admin}")
+                            with cols_p_admin[1]: nova_cat_text_admin = st.text_input("Categoria", value=str(row_p_admin.get("Categoria", "Geral")), key=f"edit_p_cat_v14_final_gp_{i_p_admin}")
+                            with cols_p_admin[2]:
+                                st.markdown("<br/>", unsafe_allow_html=True)
+                                if st.button("💾", key=f"salvar_p_adm_v14_final_gp_{i_p_admin}", help="Salvar Alterações"):
+                                    perguntas_df_admin_gp.loc[i_p_admin, "Pergunta"] = nova_p_text_admin
+                                    perguntas_df_admin_gp.loc[i_p_admin, "Categoria"] = nova_cat_text_admin
+                                    perguntas_df_admin_gp.to_csv(perguntas_csv, index=False, encoding='utf-8')
+                                    st.success(f"Pergunta {i_p_admin+1} atualizada."); st.rerun()
+                            with cols_p_admin[3]:
+                                st.markdown("<br/>", unsafe_allow_html=True)
+                                if st.button("🗑️", key=f"deletar_p_adm_v14_final_gp_{i_p_admin}", help="Deletar Pergunta"):
+                                    perguntas_df_admin_gp = perguntas_df_admin_gp.drop(i_p_admin).reset_index(drop=True)
+                                    perguntas_df_admin_gp.to_csv(perguntas_csv, index=False, encoding='utf-8')
+                                    st.warning(f"Pergunta {i_p_admin+1} removida."); st.rerun()
+                            st.divider()
+                with tabs_perg_admin[1]:
+                    with st.form("form_nova_pergunta_admin_v14_final_gp"):
+                        st.subheader("➕ Adicionar Nova Pergunta"); nova_p_form_txt_admin = st.text_input("Texto da Pergunta (sem incluir o tipo, ex: 'Qual o nível de satisfação?')", key="nova_p_input_admin_txt_v14_final_gp")
+                        cat_existentes_gp = sorted(list(perguntas_df_admin_gp['Categoria'].astype(str).unique())) if not perguntas_df_admin_gp.empty and "Categoria" in perguntas_df_admin_gp.columns else []; cat_options_gp = ["Nova Categoria"] + cat_existentes_gp; cat_selecionada_gp = st.selectbox("Categoria:", cat_options_gp, key="cat_select_admin_new_q_v14_final_gp")
+                        nova_cat_form_admin_gp = st.text_input("Nome da Nova Categoria (se 'Nova Categoria' selecionada acima):", key="nova_cat_input_admin_new_q_v14_final_gp") if cat_selecionada_gp == "Nova Categoria" else cat_selecionada_gp
+                        tipo_p_form_admin = st.selectbox("Tipo de Pergunta (será adicionado ao final do texto da pergunta):", ["Pontuação (0-10)", "Pontuação (0-5)", "Texto Aberto", "Escala", "[Matriz GUT]"], key="tipo_p_select_admin_new_q_v14_final_gp")
+                        if st.form_submit_button("➕ Adicionar Pergunta"):
+                            if nova_p_form_txt_admin.strip() and nova_cat_form_admin_gp.strip():
+                                p_completa_add_admin = f"{nova_p_form_txt_admin.strip()} [{tipo_p_form_admin.replace('[','').replace(']','') if tipo_p_form_admin != 'Escala' else 'Escala'}]"
+                                if tipo_p_form_admin == "Escala": p_completa_add_admin = f"{nova_p_form_txt_admin.strip()} [Escala (Muito Baixo, Baixo, Médio, Alto, Muito Alto)]"
+                                nova_entrada_p_add_admin = pd.DataFrame([[p_completa_add_admin, nova_cat_form_admin_gp.strip()]], columns=["Pergunta", "Categoria"]); perguntas_df_admin_gp = pd.concat([perguntas_df_admin_gp, nova_entrada_p_add_admin], ignore_index=True); perguntas_df_admin_gp.to_csv(perguntas_csv, index=False, encoding='utf-8'); st.success(f"Pergunta adicionada!"); st.rerun()
+                            else: st.warning("Texto da pergunta e categoria são obrigatórios.")
+
+            elif menu_admin == "💡 Gerenciar Análises de Perguntas":
+                st.subheader("Gerenciar Análises Vinculadas às Perguntas"); df_analises_existentes_admin = carregar_analises_perguntas()
+                try: df_perguntas_formulario_admin = pd.read_csv(perguntas_csv, encoding='utf-8')
+                except: df_perguntas_formulario_admin = pd.DataFrame(columns=colunas_base_perguntas)
+                st.markdown("#### Adicionar Nova Análise")
+                if df_perguntas_formulario_admin.empty: st.warning("Nenhuma pergunta cadastrada no formulário. Adicione perguntas primeiro em 'Gerenciar Perguntas'.")
+                else:
+                    lista_perguntas_txt_admin = [""] + df_perguntas_formulario_admin["Pergunta"].unique().tolist(); pergunta_selecionada_analise_admin = st.selectbox("Selecione a Pergunta para adicionar análise:", lista_perguntas_txt_admin, key="sel_perg_analise_v14_final_ga")
+                    if pergunta_selecionada_analise_admin:
+                        st.caption(f"Pergunta selecionada: {pergunta_selecionada_analise_admin}"); tipo_condicao_analise_display_admin = st.selectbox("Tipo de Condição para a Análise:", ["Faixa Numérica (p/ Pontuação 0-X)", "Valor Exato (p/ Escala)", "Faixa de Score (p/ Matriz GUT)", "Análise Padrão (default para a pergunta)"], key="tipo_cond_analise_v14_final_ga")
+                        map_tipo_cond_to_csv_admin = { "Faixa Numérica (p/ Pontuação 0-X)": "FaixaNumerica", "Valor Exato (p/ Escala)": "ValorExatoEscala", "Faixa de Score (p/ Matriz GUT)": "ScoreGUT", "Análise Padrão (default para a pergunta)": "Default" }; tipo_condicao_csv_val_admin = map_tipo_cond_to_csv_admin[tipo_condicao_analise_display_admin]
+                        cond_val_min_ui_admin, cond_val_max_ui_admin, cond_val_exato_ui_admin = None, None, None
+                        if tipo_condicao_csv_val_admin == "FaixaNumerica": cols_faixa_ui_admin = st.columns(2); cond_val_min_ui_admin = cols_faixa_ui_admin[0].number_input("Valor Mínimo da Faixa", step=1.0, format="%.2f", key="cond_min_analise_v14_final_ga"); cond_val_max_ui_admin = cols_faixa_ui_admin[1].number_input("Valor Máximo da Faixa", step=1.0, format="%.2f", key="cond_max_analise_v14_final_ga")
+                        elif tipo_condicao_csv_val_admin == "ValorExatoEscala": cond_val_exato_ui_admin = st.text_input("Valor Exato da Escala (ex: Baixo, Médio, Alto)", key="cond_exato_analise_v14_final_ga")
+                        elif tipo_condicao_csv_val_admin == "ScoreGUT": cols_faixa_gut_ui_admin = st.columns(2); cond_val_min_ui_admin = cols_faixa_gut_ui_admin[0].number_input("Score GUT Mínimo", step=1, key="cond_min_gut_analise_v14_final_ga"); cond_val_max_ui_admin = cols_faixa_gut_ui_admin[1].number_input("Score GUT Máximo (opcional, deixe 0 ou vazio se for 'acima de Mínimo')", value=0.0, step=1.0, format="%.0f", key="cond_max_gut_analise_v14_final_ga")
+                        texto_analise_nova_ui_admin = st.text_area("Texto da Análise:", height=150, key="txt_analise_nova_v14_final_ga")
+                        if st.button("💾 Salvar Nova Análise", key="salvar_analise_pergunta_v14_final_ga"):
+                            if texto_analise_nova_ui_admin.strip(): nova_id_analise_admin = str(uuid.uuid4()); nova_entrada_analise_admin = { "ID_Analise": nova_id_analise_admin, "TextoPerguntaOriginal": pergunta_selecionada_analise_admin, "TipoCondicao": tipo_condicao_csv_val_admin, "CondicaoValorMin": cond_val_min_ui_admin if cond_val_min_ui_admin is not None else pd.NA, "CondicaoValorMax": cond_val_max_ui_admin if cond_val_max_ui_admin is not None and cond_val_max_ui_admin !=0 else pd.NA, "CondicaoValorExato": cond_val_exato_ui_admin if cond_val_exato_ui_admin else pd.NA, "TextoAnalise": texto_analise_nova_ui_admin }; df_analises_existentes_admin = pd.concat([df_analises_existentes_admin, pd.DataFrame([nova_entrada_analise_admin])], ignore_index=True); df_analises_existentes_admin.to_csv(analises_perguntas_csv, index=False, encoding='utf-8'); st.success(f"Nova análise salva!"); st.markdown(f"**Pergunta:** {pergunta_selecionada_analise_admin}"); st.markdown(f"**Análise:** {texto_analise_nova_ui_admin}"); st.rerun()
+                            else: st.error("O texto da análise não pode estar vazio.")
+                st.markdown("---"); st.subheader("📜 Análises Cadastradas")
+                df_analises_para_exibir = carregar_analises_perguntas()
+                if df_analises_para_exibir.empty: st.info("Nenhuma análise cadastrada.")
+                else:
+                    df_display_analises_view = df_analises_para_exibir.copy()
+                    for col_num_format_view in ['CondicaoValorMin', 'CondicaoValorMax']:
+                        if col_num_format_view in df_display_analises_view.columns: df_display_analises_view[col_num_format_view] = pd.to_numeric(df_display_analises_view[col_num_format_view], errors='coerce').fillna("")
+                    st.dataframe(df_display_analises_view)
+                    analise_del_id_admin_view = st.selectbox("Deletar Análise por ID:", [""] + df_analises_para_exibir["ID_Analise"].astype(str).tolist(), key="del_analise_id_v14_final_ga_view")
+                    if st.button("🗑️ Deletar Análise Selecionada", key="btn_del_analise_v14_final_ga_view", type="primary") and analise_del_id_admin_view: df_analises_para_exibir = df_analises_para_exibir[df_analises_para_exibir["ID_Analise"] != analise_del_id_admin_view]; df_analises_para_exibir.to_csv(analises_perguntas_csv, index=False, encoding='utf-8'); st.warning("Análise deletada."); st.rerun()
+
+            elif menu_admin == "✍️ Gerenciar Instruções Clientes":
+                st.subheader("Gerenciar Instruções para Clientes")
+                current_instructions = ""
+                default_instr_text_full = """**Bem-vindo ao Portal de Diagnóstico Empresarial!**
+
+Este sistema foi projetado para ajudar a sua empresa a identificar pontos fortes e áreas de melhoria através de um questionário estruturado. Por favor, leia as seguintes instruções cuidadosamente antes de iniciar:
+
+1.  **Preparação**:
+    * Reserve um tempo adequado para responder todas as perguntas com atenção. A qualidade das suas respostas impactará diretamente a precisão do diagnóstico.
+    * Tenha em mãos informações relevantes sobre os diversos setores da sua empresa (Finanças, Marketing, Operações, RH, etc.), se aplicável.
+
+2.  **Respondendo ao Questionário**:
+    * O questionário é dividido em categorias. Procure responder todas as perguntas de cada categoria.
+    * **Perguntas de Pontuação (0-5 ou 0-10)**: Avalie o item da pergunta de acordo com a realidade da sua empresa, onde 0 geralmente representa "Não se aplica" ou "Muito Ruim" e a pontuação máxima (5 ou 10) representa "Excelente" ou "Totalmente Implementado".
+    * **Matriz GUT (Gravidade, Urgência, Tendência)**: Para estas perguntas, você avaliará três aspectos:
+        * **Gravidade (G)**: O quão sério é o impacto do problema/item se não for tratado? (0=Nenhum, 5=Extremamente Grave)
+        * **Urgência (U)**: Com que rapidez uma ação precisa ser tomada? (0=Pode esperar, 5=Imediata)
+        * **Tendência (T)**: Se nada for feito, o problema tende a piorar, manter-se estável ou melhorar? (0=Melhorar sozinho, 5=Piorar rapidamente)
+        * O sistema calculará um score (G x U x T) para priorização.
+    * **Perguntas de Texto Aberto**: Forneça respostas claras e concisas, detalhando a situação conforme solicitado.
+    * **Perguntas de Escala**: Selecione a opção que melhor descreve a situação na sua empresa (ex: Muito Baixo, Baixo, Médio, Alto, Muito Alto).
+
+3.  **Progresso e Envio**:
+    * Seu progresso é salvo automaticamente à medida que você responde.
+    * Você pode ver uma barra de progresso indicando quantas perguntas foram respondidas.
+    * Ao final, revise suas respostas antes de clicar em "Concluir e Enviar Diagnóstico".
+    * **O campo "Resumo/principais insights (para PDF)" é obrigatório.** Preencha com suas considerações gerais sobre o diagnóstico realizado.
+
+4.  **Pós-Diagnóstico**:
+    * Após o envio, um PDF do seu diagnóstico será gerado e disponibilizado para download.
+    * Você poderá visualizar seus diagnósticos anteriores e acompanhar a evolução no "Painel Principal".
+    * O consultor poderá adicionar comentários e análises ao seu diagnóstico, que ficarão visíveis no seu painel.
+
+5.  **Confirmação**:
+    * Ao marcar a caixa de seleção abaixo e prosseguir, você declara que leu, compreendeu e concorda em seguir estas instruções para a realização do diagnóstico.
+
+Em caso de dúvidas, entre em contato com o consultor responsável.
+"""
+                try:
+                    if os.path.exists(instrucoes_txt_file) and os.path.getsize(instrucoes_txt_file) > 0:
+                        with open(instrucoes_txt_file, "r", encoding="utf-8") as f:
+                            current_instructions = f.read()
+                    elif not os.path.exists(instrucoes_txt_file):
+                           with open(instrucoes_txt_file, "w", encoding="utf-8") as f:
+                                f.write(default_instr_text_full)
+                                current_instructions = default_instr_text_full
+                except Exception as e: st.error(f"Erro ao ler arquivo de instruções: {e}")
+                edited_instructions = st.text_area("Edite as instruções para os clientes (use Markdown para formatação):", value=current_instructions, height=400, key="admin_edit_instructions_ta")
+                if st.button("💾 Salvar Instruções", key="admin_save_instructions_btn"):
+                    try:
+                        with open(instrucoes_txt_file, "w", encoding="utf-8") as f: f.write(edited_instructions)
+                        st.success("Instruções salvas com sucesso!")
+                    except Exception as e: st.error(f"Erro ao salvar instruções: {e}")
+
+            elif menu_admin == "👥 Gerenciar Clientes":
+                st.subheader("Gerenciar Clientes")
+                try:
+                    df_usuarios_gc = pd.read_csv(usuarios_csv, dtype={'CNPJ': str}, encoding='utf-8')
+                    for col, default, dtype_col in [("ConfirmouInstrucoesParaSlotAtual", "False", str), ("DiagnosticosDisponiveis", 1, int), ("TotalDiagnosticosRealizados", 0, int), ("LiberacoesExtrasConcedidas", 0, int)]:
+                        if col not in df_usuarios_gc.columns: df_usuarios_gc[col] = default
+                        if dtype_col == int: df_usuarios_gc[col] = pd.to_numeric(df_usuarios_gc[col], errors='coerce').fillna(default).astype(int)
+                        else: df_usuarios_gc[col] = df_usuarios_gc[col].astype(str)
+                except FileNotFoundError: st.error(f"Arquivo de usuários '{usuarios_csv}' não encontrado."); df_usuarios_gc = pd.DataFrame(columns=colunas_base_usuarios)
+                except Exception as e_gc_load_full: st.error(f"Erro ao carregar usuários: {e_gc_load_full}"); df_usuarios_gc = pd.DataFrame(columns=colunas_base_usuarios)
+                st.markdown("#### Lista de Clientes Cadastrados")
+                if not df_usuarios_gc.empty:
+                    cols_display_gc = ["CNPJ", "Empresa", "NomeContato", "Telefone", "DiagnosticosDisponiveis", "TotalDiagnosticosRealizados", "LiberacoesExtrasConcedidas", "ConfirmouInstrucoesParaSlotAtual"]; st.dataframe(df_usuarios_gc[cols_display_gc])
+                    st.markdown("#### Ações de Cliente"); clientes_lista_gc_ops = df_usuarios_gc.apply(lambda row: f"{row['Empresa']} ({row['CNPJ']})", axis=1).tolist(); cliente_selecionado_str_gc = st.selectbox("Selecione o cliente para gerenciar:", [""] + clientes_lista_gc_ops, key="sel_cliente_gc_v14_final_adm")
+                    if cliente_selecionado_str_gc:
+                        cnpj_selecionado_gc_val = cliente_selecionado_str_gc.split('(')[-1].replace(')','').strip(); cliente_data_gc_val = df_usuarios_gc[df_usuarios_gc["CNPJ"] == cnpj_selecionado_gc_val].iloc[0]
+                        st.write(f"**Empresa:** {cliente_data_gc_val['Empresa']}"); st.write(f"**Diagnósticos Disponíveis (Slots):** {cliente_data_gc_val['DiagnosticosDisponiveis']}"); st.write(f"**Diagnósticos Já Realizados:** {cliente_data_gc_val['TotalDiagnosticosRealizados']}"); st.write(f"**Liberações Extras Concedidas:** {cliente_data_gc_val['LiberacoesExtrasConcedidas']}")
+                        st.write(f"**Confirmou Instruções para Slot Atual:** {cliente_data_gc_val['ConfirmouInstrucoesParaSlotAtual']}")
+                        if st.button(f"➕ Conceder +1 Diagnóstico para {cliente_data_gc_val['Empresa']}", key=f"conceder_diag_gc_v14_final_adm_{cnpj_selecionado_gc_val}"):
+                            novos_disponiveis = cliente_data_gc_val['DiagnosticosDisponiveis'] + 1; liberacoes_extras_atuais = cliente_data_gc_val.get('LiberacoesExtrasConcedidas', 0)
+                            update_user_data(cnpj_selecionado_gc_val, "DiagnosticosDisponiveis", novos_disponiveis); update_user_data(cnpj_selecionado_gc_val, "LiberacoesExtrasConcedidas", liberacoes_extras_atuais + 1); update_user_data(cnpj_selecionado_gc_val, "ConfirmouInstrucoesParaSlotAtual", "False")
+                            registrar_acao("ADMIN", "Concessão Diagnóstico", f"Admin concedeu +1 slot para {cliente_data_gc_val['Empresa']} ({cnpj_selecionado_gc_val}). Slots: {novos_disponiveis}. Extras: {liberacoes_extras_atuais + 1}."); st.success(f"+1 Slot concedido. Slots disponíveis: {novos_disponiveis}. Liberações extras: {liberacoes_extras_atuais + 1}. Instruções resetadas."); st.rerun()
+                        if st.button(f"🔄 Resetar Confirmação de Instruções para {cliente_data_gc_val['Empresa']}", key=f"reset_inst_gc_{cnpj_selecionado_gc_val}"):
+                            update_user_data(cnpj_selecionado_gc_val, "ConfirmouInstrucoesParaSlotAtual", "False")
+                            registrar_acao("ADMIN", "Reset Instruções", f"Admin resetou confirmação de instruções para {cliente_data_gc_val['Empresa']} ({cnpj_selecionado_gc_val})."); st.success(f"Confirmação de instruções resetada para {cliente_data_gc_val['Empresa']}."); st.rerun()
+
+                        try: bloqueados_df_gc_check = pd.read_csv(usuarios_bloqueados_csv, dtype={'CNPJ': str}, encoding='utf-8')
+                        except FileNotFoundError: bloqueados_df_gc_check = pd.DataFrame(columns=["CNPJ"])
+                        is_blocked_gc_check = cnpj_selecionado_gc_val in bloqueados_df_gc_check["CNPJ"].values
+                        if is_blocked_gc_check:
+                            if st.button(f"🔓 Desbloquear Acesso Total para {cliente_data_gc_val['Empresa']}", key=f"desbloq_total_gc_v14_final_adm_{cnpj_selecionado_gc_val}"): bloqueados_df_gc_check = bloqueados_df_gc_check[bloqueados_df_gc_check["CNPJ"] != cnpj_selecionado_gc_val]; bloqueados_df_gc_check.to_csv(usuarios_bloqueados_csv, index=False, encoding='utf-8'); st.success(f"Acesso total desbloqueado."); st.rerun()
+                        else:
+                            if st.button(f"🚫 Bloquear Acesso Total para {cliente_data_gc_val['Empresa']}", type="primary", key=f"bloq_total_gc_v14_final_adm_{cnpj_selecionado_gc_val}"): nova_entrada_bloqueio_gc_val = pd.DataFrame([{"CNPJ": cnpj_selecionado_gc_val}]); bloqueados_df_gc_check = pd.concat([bloqueados_df_gc_check, nova_entrada_bloqueio_gc_val], ignore_index=True); bloqueados_df_gc_check.to_csv(usuarios_bloqueados_csv, index=False, encoding='utf-8'); st.error(f"Acesso total bloqueado."); st.rerun()
+                else: st.info("Nenhum cliente cadastrado para gerenciar.")
+                st.markdown("---"); st.markdown("#### Adicionar Novo Cliente")
+                with st.form("form_novo_cliente_v14_final_adm", clear_on_submit=True):
+                    novo_cnpj_gc_form = st.text_input("CNPJ do Novo Cliente:"); nova_senha_gc_form = st.text_input("Senha para o Novo Cliente:", type="password"); nova_empresa_gc_form = st.text_input("Nome da Empresa do Novo Cliente:"); novo_contato_gc_form = st.text_input("Nome do Contato (opcional):"); novo_telefone_gc_form = st.text_input("Telefone do Contato (opcional):")
+                    if st.form_submit_button("➕ Cadastrar Novo Cliente"):
+                        if novo_cnpj_gc_form and nova_senha_gc_form and nova_empresa_gc_form:
+                            try: current_users_df_for_check = pd.read_csv(usuarios_csv, dtype={'CNPJ': str}, encoding='utf-8')
+                            except (FileNotFoundError, pd.errors.EmptyDataError): current_users_df_for_check = pd.DataFrame(columns=colunas_base_usuarios)
+
+                            if current_users_df_for_check.empty or (novo_cnpj_gc_form not in current_users_df_for_check["CNPJ"].values):
+                                nova_linha_cliente_form = pd.DataFrame([{"CNPJ": novo_cnpj_gc_form, "Senha": nova_senha_gc_form, "Empresa": nova_empresa_gc_form, "NomeContato": novo_contato_gc_form, "Telefone": novo_telefone_gc_form, "ConfirmouInstrucoesParaSlotAtual": "False", "DiagnosticosDisponiveis": 1, "TotalDiagnosticosRealizados": 0, "LiberacoesExtrasConcedidas": 0}])
+                                df_usuarios_gc_updated = pd.concat([current_users_df_for_check, nova_linha_cliente_form], ignore_index=True);
+                                df_usuarios_gc_updated.to_csv(usuarios_csv, index=False, encoding='utf-8'); st.success(f"Cliente {nova_empresa_gc_form} cadastrado com sucesso!"); st.rerun()
+                            else: st.error("CNPJ já cadastrado.")
+                        else: st.error("CNPJ, Senha e Nome da Empresa são obrigatórios.")
+
+            elif menu_admin == "👮 Gerenciar Administradores":
+                st.subheader("Gerenciar Administradores");
+                try: admins_df_mng = pd.read_csv(admin_credenciais_csv, encoding='utf-8')
+                except (FileNotFoundError, pd.errors.EmptyDataError): admins_df_mng = pd.DataFrame(columns=["Usuario", "Senha"])
+                st.dataframe(admins_df_mng[["Usuario"]]); st.markdown("---"); st.subheader("➕ Adicionar Novo Admin")
+                with st.form("form_novo_admin_mng_v14_final_adm"):
+                    novo_admin_user_mng = st.text_input("Usuário do Admin"); novo_admin_pass_mng = st.text_input("Senha do Admin", type="password")
+                    if st.form_submit_button("Adicionar Admin"):
+                        if novo_admin_user_mng and novo_admin_pass_mng:
+                            if novo_admin_user_mng in admins_df_mng["Usuario"].values: st.error(f"Usuário '{novo_admin_user_mng}' já existe.")
+                            else: novo_admin_data_mng = pd.DataFrame([[novo_admin_user_mng, novo_admin_pass_mng]], columns=["Usuario", "Senha"]); admins_df_mng = pd.concat([admins_df_mng, novo_admin_data_mng], ignore_index=True); admins_df_mng.to_csv(admin_credenciais_csv, index=False, encoding='utf-8'); st.success(f"Admin '{novo_admin_user_mng}' adicionado!"); st.rerun()
+                        else: st.warning("Preencha todos os campos.")
+                st.markdown("---"); st.subheader("🗑️ Remover Admin")
+                if not admins_df_mng.empty:
+                    admin_para_remover_mng = st.selectbox("Remover Admin:", options=[""] + admins_df_mng["Usuario"].tolist(), key="remove_admin_select_mng_v14_final_adm")
+                    if st.button("Remover Admin Selecionado", type="primary", key="btn_remove_admin_v14_final_adm") and admin_para_remover_mng:
+                        if len(admins_df_mng) == 1 and admin_para_remover_mng == admins_df_mng["Usuario"].iloc[0]: st.error("Não é possível remover o único administrador.")
+                        elif 'admin_u_v15' in st.session_state and admin_para_remover_mng == st.session_state.admin_u_v15 :
+                             st.error("Não é possível remover a si mesmo.")
+                        else: admins_df_mng = admins_df_mng[admins_df_mng["Usuario"] != admin_para_remover_mng]; admins_df_mng.to_csv(admin_credenciais_csv, index=False, encoding='utf-8'); st.warning(f"Admin '{admin_para_remover_mng}' removido."); st.rerun()
+                else: st.info("Nenhum administrador para remover.")
+
+            elif menu_admin == "💾 Backup de Dados":
+                st.subheader("Backup de Dados do Sistema"); st.markdown("Clique nos botões abaixo para baixar cópias dos arquivos CSV do sistema.")
+                arquivos_para_backup = { "Clientes (Usuários)": usuarios_csv, "Diagnósticos": arquivo_csv, "Perguntas do Formulário": perguntas_csv, "Análises das Perguntas": analises_perguntas_csv, "Histórico de Ações": historico_csv, "Administradores": admin_credenciais_csv, "Clientes Bloqueados": usuarios_bloqueados_csv, "Notificações": notificacoes_csv }
+                for nome_amigavel, nome_arquivo in arquivos_para_backup.items():
+                    if os.path.exists(nome_arquivo) and os.path.getsize(nome_arquivo) > 0:
+                        with open(nome_arquivo, "rb") as fp: st.download_button(label=f"Baixar {nome_amigavel} ({os.path.getsize(nome_arquivo)} bytes)", data=fp, file_name=nome_arquivo, mime="text/csv", key=f"backup_btn_v14_final_{nome_arquivo.replace('.','_')}")
+                    elif os.path.exists(nome_arquivo): st.warning(f"Arquivo '{nome_arquivo}' encontrado, mas está vazio. Backup não gerado.")
+                    else: st.warning(f"Arquivo '{nome_arquivo}' não encontrado para backup.")
         except Exception as e_admin_menu_dispatch:
             st.error(f"Ocorreu um erro na funcionalidade '{menu_admin}': {e_admin_menu_dispatch}")
             st.exception(e_admin_menu_dispatch)
