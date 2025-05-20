@@ -124,10 +124,43 @@ try:
     inicializar_csv(arquivo_csv, colunas_base_diagnosticos)
     inicializar_csv(analises_perguntas_csv, colunas_base_analises)
     inicializar_csv(notificacoes_csv, colunas_base_notificacoes, defaults={"Lida": False})
-    # Initialize instructions file if it doesn't exist
     if not os.path.exists(instrucoes_txt_file):
         with open(instrucoes_txt_file, "w", encoding="utf-8") as f:
-            f.write("Bem-vindo ao Portal de Diagnóstico!\n\nSiga as instruções cuidadosamente para completar seu diagnóstico.")
+            f.write("""**Bem-vindo ao Portal de Diagnóstico Empresarial!**
+
+Este sistema foi projetado para ajudar a sua empresa a identificar pontos fortes e áreas de melhoria através de um questionário estruturado. Por favor, leia as seguintes instruções cuidadosamente antes de iniciar:
+
+1.  **Preparação**:
+    * Reserve um tempo adequado para responder todas as perguntas com atenção. A qualidade das suas respostas impactará diretamente a precisão do diagnóstico.
+    * Tenha em mãos informações relevantes sobre os diversos setores da sua empresa (Finanças, Marketing, Operações, RH, etc.), se aplicável.
+
+2.  **Respondendo ao Questionário**:
+    * O questionário é dividido em categorias. Procure responder todas as perguntas de cada categoria.
+    * **Perguntas de Pontuação (0-5 ou 0-10)**: Avalie o item da pergunta de acordo com a realidade da sua empresa, onde 0 geralmente representa "Não se aplica" ou "Muito Ruim" e a pontuação máxima (5 ou 10) representa "Excelente" ou "Totalmente Implementado".
+    * **Matriz GUT (Gravidade, Urgência, Tendência)**: Para estas perguntas, você avaliará três aspectos:
+        * **Gravidade (G)**: O quão sério é o impacto do problema/item se não for tratado? (0=Nenhum, 5=Extremamente Grave)
+        * **Urgência (U)**: Com que rapidez uma ação precisa ser tomada? (0=Pode esperar, 5=Imediata)
+        * **Tendência (T)**: Se nada for feito, o problema tende a piorar, manter-se estável ou melhorar? (0=Melhorar sozinho, 5=Piorar rapidamente)
+        * O sistema calculará um score (G x U x T) para priorização.
+    * **Perguntas de Texto Aberto**: Forneça respostas claras e concisas, detalhando a situação conforme solicitado.
+    * **Perguntas de Escala**: Selecione a opção que melhor descreve a situação na sua empresa (ex: Muito Baixo, Baixo, Médio, Alto, Muito Alto).
+
+3.  **Progresso e Envio**:
+    * Seu progresso é salvo automaticamente à medida que você responde.
+    * Você pode ver uma barra de progresso indicando quantas perguntas foram respondidas.
+    * Ao final, revise suas respostas antes de clicar em "Concluir e Enviar Diagnóstico".
+    * **O campo "Resumo/principais insights (para PDF)" é obrigatório.** Preencha com suas considerações gerais sobre o diagnóstico realizado.
+
+4.  **Pós-Diagnóstico**:
+    * Após o envio, um PDF do seu diagnóstico será gerado e disponibilizado para download.
+    * Você poderá visualizar seus diagnósticos anteriores e acompanhar a evolução no "Painel Principal".
+    * O consultor poderá adicionar comentários e análises ao seu diagnóstico, que ficarão visíveis no seu painel.
+
+5.  **Confirmação**:
+    * Ao marcar a caixa de seleção abaixo e prosseguir, você declara que leu, compreendeu e concorda em seguir estas instruções para a realização do diagnóstico.
+
+Em caso de dúvidas, entre em contato com o consultor responsável.
+""")
 except Exception: st.stop()
 
 # --- Funções de Notificação ---
@@ -327,12 +360,12 @@ def gerar_pdf_historico(df_historico_filtrado, titulo="Histórico de Ações"):
         if desc_text_hist:
             temp_x_desc_calc = pdf.get_x()
             temp_y_desc_calc = pdf.get_y()
-            temp_pdf_for_height = FPDF() # Using a temporary instance for height calculation
+            temp_pdf_for_height = FPDF()
             temp_pdf_for_height.add_page()
             temp_pdf_for_height.set_font("Arial", "", 8)
             actual_desc_lines = temp_pdf_for_height.multi_cell(col_widths.get("Descrição", 75), 5, pdf_safe_text_output(desc_text_hist), 0, "L", split_only=True)
             max_h_row_hist = max(max_h_row_hist, len(actual_desc_lines) * 5)
-            pdf.set_xy(temp_x_desc_calc, temp_y_desc_calc) # Restore position
+            pdf.set_xy(temp_x_desc_calc, temp_y_desc_calc)
 
         current_x_for_cell = pdf.l_margin
         for header in headers_to_print_hist:
@@ -413,6 +446,12 @@ if aba == "Cliente" and not st.session_state.cliente_logado:
 
 # --- ÁREA DO CLIENTE LOGADO ---
 if aba == "Cliente" and st.session_state.cliente_logado:
+    # Ensure user and cnpj are in session_state
+    if "user" not in st.session_state or st.session_state.user is None or "cnpj" not in st.session_state or st.session_state.cnpj is None:
+        st.error("Erro de sessão. Por favor, faça o login novamente.")
+        st.session_state.cliente_logado = False # Force logout
+        st.rerun()
+
     st.sidebar.markdown(f"### Bem-vindo(a), {st.session_state.user.get('Empresa', 'Cliente')}! 👋")
     with st.sidebar.expander("Meu Perfil", expanded=False):
         logo_cliente_path = find_client_logo_path(st.session_state.cnpj)
@@ -437,7 +476,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
     current_page_for_radio = effective_cliente_page
     if current_page_for_radio == "Notificações": current_page_for_radio = notif_menu_label_val
     try: current_idx_cli_val = menu_options_cli_val.index(current_page_for_radio)
-    except ValueError: current_idx_cli_val = 0; st.session_state.cliente_page = "Instruções"
+    except ValueError: current_idx_cli_val = 0; st.session_state.cliente_page = "Instruções" # Default to instructions if page is invalid
     selected_page_cli_raw_val = st.sidebar.radio("Menu Cliente", menu_options_cli_val, index=current_idx_cli_val, key="cli_menu_v15")
     selected_page_cli_actual = "Notificações" if "Notificações" in selected_page_cli_raw_val else selected_page_cli_raw_val
     if selected_page_cli_actual != st.session_state.cliente_page:
@@ -450,65 +489,34 @@ if aba == "Cliente" and st.session_state.cliente_logado:
             if key_d not in ['admin_logado', 'last_cnpj_input']: st.session_state[key_d] = value_d
         st.session_state.cliente_logado = False; st.rerun()
 
+    # --- Conteúdo da Página do Cliente ---
     if st.session_state.cliente_page == "Instruções":
         st.subheader("📖 Instruções do Sistema de Diagnóstico")
-        default_instructions = """**Bem-vindo ao Portal de Diagnóstico Empresarial!**
+        default_instructions_text = """**Bem-vindo ao Portal de Diagnóstico Empresarial!**
 
-Este sistema foi projetado para ajudar a sua empresa a identificar pontos fortes e áreas de melhoria através de um questionário estruturado. Por favor, leia as seguintes instruções cuidadosamente antes de iniciar:
-
-1.  **Preparação**:
-    * Reserve um tempo adequado para responder todas as perguntas com atenção. A qualidade das suas respostas impactará diretamente a precisão do diagnóstico.
-    * Tenha em mãos informações relevantes sobre os diversos setores da sua empresa (Finanças, Marketing, Operações, RH, etc.), se aplicável.
-
-2.  **Respondendo ao Questionário**:
-    * O questionário é dividido em categorias. Procure responder todas as perguntas de cada categoria.
-    * **Perguntas de Pontuação (0-5 ou 0-10)**: Avalie o item da pergunta de acordo com a realidade da sua empresa, onde 0 geralmente representa "Não se aplica" ou "Muito Ruim" e a pontuação máxima (5 ou 10) representa "Excelente" ou "Totalmente Implementado".
-    * **Matriz GUT (Gravidade, Urgência, Tendência)**: Para estas perguntas, você avaliará três aspectos:
-        * **Gravidade (G)**: O quão sério é o impacto do problema/item se não for tratado? (0=Nenhum, 5=Extremamente Grave)
-        * **Urgência (U)**: Com que rapidez uma ação precisa ser tomada? (0=Pode esperar, 5=Imediata)
-        * **Tendência (T)**: Se nada for feito, o problema tende a piorar, manter-se estável ou melhorar? (0=Melhorar sozinho, 5=Piorar rapidamente)
-        * O sistema calculará um score (G x U x T) para priorização.
-    * **Perguntas de Texto Aberto**: Forneça respostas claras e concisas, detalhando a situação conforme solicitado.
-    * **Perguntas de Escala**: Selecione a opção que melhor descreve a situação na sua empresa (ex: Muito Baixo, Baixo, Médio, Alto, Muito Alto).
-
-3.  **Progresso e Envio**:
-    * Seu progresso é salvo automaticamente à medida que você responde.
-    * Você pode ver uma barra de progresso indicando quantas perguntas foram respondidas.
-    * Ao final, revise suas respostas antes de clicar em "Concluir e Enviar Diagnóstico".
-    * **O campo "Resumo/principais insights (para PDF)" é obrigatório.** Preencha com suas considerações gerais sobre o diagnóstico realizado.
-
-4.  **Pós-Diagnóstico**:
-    * Após o envio, um PDF do seu diagnóstico será gerado e disponibilizado para download.
-    * Você poderá visualizar seus diagnósticos anteriores e acompanhar a evolução no "Painel Principal".
-    * O consultor poderá adicionar comentários e análises ao seu diagnóstico, que ficarão visíveis no seu painel.
-
-5.  **Confirmação**:
-    * Ao marcar a caixa de seleção abaixo e prosseguir, você declara que leu, compreendeu e concorda em seguir estas instruções para a realização do diagnóstico.
-
-Em caso de dúvidas, entre em contato com o consultor responsável.
-"""
-        instructions_to_display = default_instructions
+Este sistema foi projetado para ajudar a sua empresa a identificar pontos fortes e áreas de melhoria através de um questionário estruturado. Por favor, leia as seguintes instruções cuidadosamente antes de iniciar: (...resto das instruções...)"""
+        instructions_to_display = default_instructions_text
         try:
             if os.path.exists(instrucoes_txt_file) and os.path.getsize(instrucoes_txt_file) > 0:
                 with open(instrucoes_txt_file, "r", encoding="utf-8") as f:
                     custom_instructions = f.read()
-                    if custom_instructions.strip():
-                        instructions_to_display = custom_instructions
-        except Exception as e:
-            st.error(f"Não foi possível carregar as instruções personalizadas: {e}")
+                    if custom_instructions.strip(): instructions_to_display = custom_instructions
+        except Exception as e: st.warning(f"Não foi possível carregar as instruções personalizadas: {e}. Exibindo instruções padrão.")
         st.markdown(instructions_to_display)
+        if st.session_state.user: # Ensure user state exists
+            pode_fazer_novo_inst_page_val = st.session_state.user.get("DiagnosticosDisponiveis", 0) > st.session_state.user.get("TotalDiagnosticosRealizados", 0)
+            if pode_fazer_novo_inst_page_val:
+                st.session_state.confirmou_instrucoes_checkbox_cliente = st.checkbox("Declaro que li e compreendi todas as instruções fornecidas para a realização deste diagnóstico.", value=st.session_state.get("confirmou_instrucoes_checkbox_cliente", False), key="confirma_leitura_inst_v15_final_cb")
+                if st.button("Prosseguir para o Diagnóstico", key="btn_instrucoes_v15_final_prosseguir", disabled=not st.session_state.confirmou_instrucoes_checkbox_cliente):
+                    if st.session_state.confirmou_instrucoes_checkbox_cliente:
+                        update_user_data(st.session_state.cnpj, "ConfirmouInstrucoesParaSlotAtual", "True")
+                        if st.session_state.user: st.session_state.user["ConfirmouInstrucoesParaSlotAtual"] = True
+                        st.session_state.cliente_page = "Novo Diagnóstico"; st.session_state.confirmou_instrucoes_checkbox_cliente = False; st.rerun()
+            else:
+                st.info("Você não possui diagnósticos disponíveis no momento.")
+                if st.button("Ir para o Painel Principal", key="ir_painel_inst_sem_diag_v15_final"): st.session_state.cliente_page = "Painel Principal"; st.rerun()
+        else: st.error("Erro de sessão do usuário. Por favor, faça login novamente.")
 
-        pode_fazer_novo_inst_page_val = st.session_state.user.get("DiagnosticosDisponiveis", 0) > st.session_state.user.get("TotalDiagnosticosRealizados", 0)
-        if pode_fazer_novo_inst_page_val:
-            st.session_state.confirmou_instrucoes_checkbox_cliente = st.checkbox("Declaro que li e compreendi todas as instruções fornecidas para a realização deste diagnóstico.", value=st.session_state.get("confirmou_instrucoes_checkbox_cliente", False), key="confirma_leitura_inst_v15_final_cb")
-            if st.button("Prosseguir para o Diagnóstico", key="btn_instrucoes_v15_final_prosseguir", disabled=not st.session_state.confirmou_instrucoes_checkbox_cliente):
-                if st.session_state.confirmou_instrucoes_checkbox_cliente:
-                    update_user_data(st.session_state.cnpj, "ConfirmouInstrucoesParaSlotAtual", "True")
-                    if st.session_state.user: st.session_state.user["ConfirmouInstrucoesParaSlotAtual"] = True
-                    st.session_state.cliente_page = "Novo Diagnóstico"; st.session_state.confirmou_instrucoes_checkbox_cliente = False; st.rerun()
-        else:
-            st.info("Você não possui diagnósticos disponíveis no momento.")
-            if st.button("Ir para o Painel Principal", key="ir_painel_inst_sem_diag_v15_final"): st.session_state.cliente_page = "Painel Principal"; st.rerun()
 
     elif st.session_state.cliente_page == "Painel Principal":
         st.subheader("📊 Painel Principal do Cliente")
@@ -522,31 +530,32 @@ Em caso de dúvidas, entre em contato com o consultor responsável.
         with st.expander("📖 Instruções e Informações", expanded=False):
             st.markdown("- Visualize seus diagnósticos anteriores e sua evolução.\n- Acompanhe seu plano de ação no Kanban.\n- Para um novo diagnóstico (se liberado), selecione 'Novo Diagnóstico' no menu ao lado.")
         st.markdown("#### 📁 Diagnósticos Anteriores")
-        df_cliente_diags = pd.DataFrame() # Initialize as empty
+        df_cliente_diags = pd.DataFrame()
         try:
-            if not os.path.exists(arquivo_csv):
-                st.warning(f"Arquivo de diagnósticos ('{arquivo_csv}') não encontrado. Não é possível exibir diagnósticos anteriores.")
+            if st.session_state.get("cnpj") is None:
+                st.error("Erro: CNPJ do cliente não identificado. Não é possível carregar o painel. Por favor, faça login novamente.")
+            elif not os.path.exists(arquivo_csv):
+                st.warning(f"Arquivo de diagnósticos ('{arquivo_csv}') não encontrado. Nenhum diagnóstico anterior para exibir.")
             else:
                 df_antigos = pd.read_csv(arquivo_csv, dtype={'CNPJ': str}, encoding='utf-8')
-                if st.session_state.get("cnpj") is None:
-                    st.error("Erro: CNPJ do cliente não identificado. Por favor, faça login novamente.")
-                else:
-                    df_cliente_diags = df_antigos[df_antigos["CNPJ"] == str(st.session_state.cnpj)].copy()
-        except pd.errors.EmptyDataError:
-            st.info(f"O arquivo de diagnósticos ('{arquivo_csv}') está vazio ou contém apenas cabeçalhos. Nenhum diagnóstico para exibir.")
-        except Exception as e:
-            st.error(f"Erro ao carregar dados para o painel do cliente: {e}")
-            st.exception(e)
+                df_cliente_diags = df_antigos[df_antigos["CNPJ"] == str(st.session_state.cnpj)].copy()
+        except pd.errors.EmptyDataError: st.info(f"O arquivo de diagnósticos ('{arquivo_csv}') está vazio ou contém apenas cabeçalhos. Nenhum diagnóstico para exibir.")
+        except Exception as e: st.error(f"Erro ao carregar dados para o painel do cliente: {e}"); st.exception(e)
 
         if df_cliente_diags.empty:
-            st.info("Nenhum diagnóstico anterior encontrado para sua empresa.")
+             if st.session_state.get("cnpj"): # Only show if CNPJ is available (i.e., not the CNPJ error above)
+                st.info("Nenhum diagnóstico anterior encontrado para sua empresa.")
         else:
             df_cliente_diags = df_cliente_diags.sort_values(by="Data", ascending=False)
+            perguntas_df_para_painel = pd.DataFrame()
             try:
-                perguntas_df_para_painel = pd.read_csv(perguntas_csv, encoding='utf-8')
-                if "Categoria" not in perguntas_df_para_painel.columns: perguntas_df_para_painel["Categoria"] = "Geral"
-            except FileNotFoundError: st.error(f"Arquivo de perguntas '{perguntas_csv}' não encontrado."); perguntas_df_para_painel = pd.DataFrame()
+                if os.path.exists(perguntas_csv):
+                    perguntas_df_para_painel = pd.read_csv(perguntas_csv, encoding='utf-8')
+                    if "Categoria" not in perguntas_df_para_painel.columns: perguntas_df_para_painel["Categoria"] = "Geral"
+                else: st.warning(f"Arquivo de perguntas '{perguntas_csv}' não encontrado. Detalhes das respostas podem ser limitados.")
+            except Exception as e_perg: st.warning(f"Erro ao carregar arquivo de perguntas: {e_perg}")
             analises_df_para_painel = carregar_analises_perguntas()
+            # ... (rest of the client panel display logic, using df_cliente_diags, perguntas_df_para_painel, analises_df_para_painel)
             for idx_row_diag, row_diag_data in df_cliente_diags.iterrows():
                 with st.expander(f"📅 {row_diag_data['Data']} - {row_diag_data['Empresa']}"):
                     cols_metricas = st.columns(2)
@@ -607,7 +616,7 @@ Em caso de dúvidas, entre em contato com o consultor responsável.
                                 else: continue
                                 if prazo_k != "N/A": gut_cards_kanban.append({"Tarefa": pergunta_k.replace(" [Matriz GUT]", ""), "Prazo": prazo_k, "Score": score_gut_k, "Responsável": st.session_state.user.get("Empresa", "N/D")})
                         except (json.JSONDecodeError, ValueError, TypeError) as e_kanban_painel: st.warning(f"Erro ao processar GUT para Kanban '{pergunta_k}': {e_kanban_painel}")
-                if gut_cards_kanban: # Check if list has items before trying to sort/display
+                if 'gut_cards_kanban' in locals() and gut_cards_kanban:
                     gut_cards_sorted_kanban = sorted(gut_cards_kanban, key=lambda x: x["Score"], reverse=True); prazos_unicos_kanban = sorted(list(set(card["Prazo"] for card in gut_cards_sorted_kanban)), key=lambda x_prazo: int(x_prazo.split(" ")[0]))
                     if prazos_unicos_kanban:
                         cols_kanban = st.columns(len(prazos_unicos_kanban))
@@ -683,12 +692,14 @@ Em caso de dúvidas, entre em contato com o consultor responsável.
             if st.button("Ir para o Painel Principal", key="ir_painel_apos_envio_sucesso_v14_final_nd"):
                 st.session_state.cliente_page = "Painel Principal"; st.session_state.diagnostico_enviado_sucesso = False; st.session_state.pdf_gerado_path = None; st.session_state.pdf_gerado_filename = None; st.rerun()
             st.stop()
+
+        perguntas_df_formulario = pd.DataFrame()
         try:
-            if not os.path.exists(perguntas_csv): st.error(f"Arquivo de perguntas '{perguntas_csv}' não encontrado. Não é possível iniciar um novo diagnóstico."); st.stop()
+            if not os.path.exists(perguntas_csv): st.error(f"Arquivo de perguntas ('{perguntas_csv}') não encontrado. Não é possível iniciar um novo diagnóstico."); st.stop()
             perguntas_df_formulario = pd.read_csv(perguntas_csv, encoding='utf-8')
             if perguntas_df_formulario.empty: st.warning("Nenhuma pergunta cadastrada no sistema. Não é possível iniciar um novo diagnóstico."); st.stop()
             if "Categoria" not in perguntas_df_formulario.columns: perguntas_df_formulario["Categoria"] = "Geral"
-        except pd.errors.EmptyDataError: st.error(f"O arquivo de perguntas '{perguntas_csv}' está vazio ou contém apenas cabeçalhos. Não é possível iniciar um novo diagnóstico."); st.stop()
+        except pd.errors.EmptyDataError: st.error(f"O arquivo de perguntas ('{perguntas_csv}') está vazio ou contém apenas cabeçalhos. Não é possível iniciar um novo diagnóstico."); st.stop()
         except Exception as e: st.error(f"Erro crítico ao carregar formulário de perguntas: {e}"); st.exception(e); st.stop()
 
         total_perguntas_form = len(perguntas_df_formulario)
@@ -801,7 +812,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         if st.sidebar.button("🚪 Sair do Painel Admin", key="logout_admin_v14_final_adm"): st.session_state.admin_logado = False; st.rerun()
         menu_admin_options = ["📊 Visão Geral e Diagnósticos", "🚦 Status dos Clientes", "📜 Histórico de Usuários",
                               "📝 Gerenciar Perguntas", "💡 Gerenciar Análises de Perguntas",
-                              "📜 Gerenciar Instruções Clientes", # Nova opção de menu
+                              "✍️ Gerenciar Instruções Clientes", # Nova opção de menu
                               "👥 Gerenciar Clientes", "👮 Gerenciar Administradores", "💾 Backup de Dados"]
         menu_admin = st.sidebar.selectbox("Funcionalidades Admin:", menu_admin_options, key="admin_menu_selectbox_v14_final_adm")
         st.header(f"{menu_admin.split(' ')[0]} {menu_admin.split(' ', 1)[1]}")
@@ -967,7 +978,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 st.subheader("Gerenciar Perguntas do Diagnóstico"); tabs_perg_admin = st.tabs(["📋 Perguntas Atuais", "➕ Adicionar Nova Pergunta"])
                 try:
                     perguntas_df_admin_gp = pd.read_csv(perguntas_csv, encoding='utf-8')
-                    if "Categoria" not in perguntas_df_admin_gp.columns: # Corrected to multi-line if
+                    if "Categoria" not in perguntas_df_admin_gp.columns:
                         perguntas_df_admin_gp["Categoria"] = "Geral"
                 except (FileNotFoundError, pd.errors.EmptyDataError):
                     perguntas_df_admin_gp = pd.DataFrame(columns=colunas_base_perguntas)
@@ -1034,29 +1045,25 @@ if aba == "Administrador" and st.session_state.admin_logado:
                     analise_del_id_admin_view = st.selectbox("Deletar Análise por ID:", [""] + df_analises_para_exibir["ID_Analise"].astype(str).tolist(), key="del_analise_id_v14_final_ga_view")
                     if st.button("🗑️ Deletar Análise", key="btn_del_analise_v14_final_ga_view") and analise_del_id_admin_view: df_analises_para_exibir = df_analises_para_exibir[df_analises_para_exibir["ID_Analise"] != analise_del_id_admin_view]; df_analises_para_exibir.to_csv(analises_perguntas_csv, index=False, encoding='utf-8'); st.warning("Análise deletada."); st.rerun()
 
-            elif menu_admin == "📜 Gerenciar Instruções Clientes":
+            elif menu_admin == "✍️ Gerenciar Instruções Clientes": # Nome atualizado
                 st.subheader("Gerenciar Instruções para Clientes")
                 current_instructions = ""
                 try:
                     if os.path.exists(instrucoes_txt_file) and os.path.getsize(instrucoes_txt_file) > 0:
                         with open(instrucoes_txt_file, "r", encoding="utf-8") as f:
                             current_instructions = f.read()
-                    elif not os.path.exists(instrucoes_txt_file): # Create if not exists with default
+                    elif not os.path.exists(instrucoes_txt_file):
                          with open(instrucoes_txt_file, "w", encoding="utf-8") as f:
                             default_text = "Bem-vindo ao Portal de Diagnóstico!\n\nSiga as instruções cuidadosamente para completar seu diagnóstico."
                             f.write(default_text)
                             current_instructions = default_text
-                except Exception as e:
-                    st.error(f"Erro ao ler arquivo de instruções: {e}")
-
+                except Exception as e: st.error(f"Erro ao ler arquivo de instruções: {e}")
                 edited_instructions = st.text_area("Edite as instruções para os clientes:", value=current_instructions, height=400, key="admin_edit_instructions_ta")
                 if st.button("💾 Salvar Instruções", key="admin_save_instructions_btn"):
                     try:
-                        with open(instrucoes_txt_file, "w", encoding="utf-8") as f:
-                            f.write(edited_instructions)
+                        with open(instrucoes_txt_file, "w", encoding="utf-8") as f: f.write(edited_instructions)
                         st.success("Instruções salvas com sucesso!")
-                    except Exception as e:
-                        st.error(f"Erro ao salvar instruções: {e}")
+                    except Exception as e: st.error(f"Erro ao salvar instruções: {e}")
 
             elif menu_admin == "👥 Gerenciar Clientes":
                 st.subheader("Gerenciar Clientes")
