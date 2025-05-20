@@ -352,7 +352,7 @@ def gerar_pdf_historico(df_historico_filtrado, titulo="Histórico de Ações"):
         for header_idx, header in enumerate(headers_to_print_hist):
             cell_text = str(row.get(header, ""))
             pdf.set_xy(current_x_for_cell, current_y_hist)
-            pdf.multi_cell(col_widths.get(header, 30), max_h_row_hist, pdf_safe_text_output(cell_text), border=1, align="L") # CORREÇÃO: Removido argumento 'ln'
+            pdf.multi_cell(col_widths.get(header, 30), max_h_row_hist, pdf_safe_text_output(cell_text), border=1, align="L") # CORRIGIDO: Removido ln=0
             current_x_for_cell += col_widths.get(header, 30)
         pdf.set_y(current_y_hist + max_h_row_hist)
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
@@ -423,11 +423,11 @@ if aba == "Cliente" and not st.session_state.cliente_logado:
 
                 pode_fazer_novo_login = st.session_state.user["DiagnosticosDisponiveis"] > st.session_state.user["TotalDiagnosticosRealizados"]
                 if pode_fazer_novo_login and not st.session_state.user["ConfirmouInstrucoesParaSlotAtual"]:
-                    st.session_state.cliente_page = "Instruções"
+                    st.session_state.cliente_page = "📖 Instruções" # CORRIGIDO - Usar nome completo com emoji
                 elif pode_fazer_novo_login and st.session_state.user["ConfirmouInstrucoesParaSlotAtual"]:
-                    st.session_state.cliente_page = "Novo Diagnóstico"
+                    st.session_state.cliente_page = "📝 Novo Diagnóstico" # CORRIGIDO
                 else:
-                    st.session_state.cliente_page = "Painel Principal"
+                    st.session_state.cliente_page = "📊 Painel Principal" # CORRIGIDO
 
                 st.session_state.id_formulario_atual = f"{c}_{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
                 st.session_state.respostas_atuais_diagnostico = {}; st.session_state.progresso_diagnostico_percentual = 0; st.session_state.progresso_diagnostico_contagem = (0,0); st.session_state.feedbacks_respostas = {}; st.session_state.diagnostico_enviado_sucesso = False; st.session_state.confirmou_instrucoes_checkbox_cliente = False
@@ -480,32 +480,32 @@ if aba == "Cliente" and st.session_state.cliente_logado:
     
     effective_cliente_page_for_radio_default = st.session_state.cliente_page
     
-    if instrucoes_pendentes_obrigatorias_val and st.session_state.cliente_page != "Instruções":
+    if instrucoes_pendentes_obrigatorias_val and st.session_state.cliente_page != "📖 Instruções": # CORRIGIDO
         st.sidebar.error("❗REDIRECIONAMENTO AUTOMÁTICO: Para 'Instruções' (pendência obrigatória).")
-        effective_cliente_page_for_radio_default = "Instruções"
-        if st.session_state.cliente_page != "Instruções":
-            st.session_state.cliente_page = "Instruções" 
+        effective_cliente_page_for_radio_default = "📖 Instruções" # CORRIGIDO
+        if st.session_state.cliente_page != "📖 Instruções": # CORRIGIDO
+            st.session_state.cliente_page = "📖 Instruções" # CORRIGIDO
 
     st.sidebar.write(f"`effective_page_for_radio`: `{effective_cliente_page_for_radio_default}`")
     st.sidebar.markdown("---")
-    st.sidebar.error("PERGUNTA IMPORTANTE PARA VOCÊ: Ao tentar acessar 'Painel Principal' ou 'Novo Diagnóstico', você vê o 'ALERTA DE DEPURAÇÃO MÁXIMA' em vermelho na área de conteúdo principal da página?") # CORRIGIDO
+    st.sidebar.error("PERGUNTA PARA VOCÊ: Ao tentar acessar 'Painel Principal' ou 'Novo Diagnóstico', você vê o 'ALERTA DE DEPURAÇÃO MÁXIMA' em vermelho na área de conteúdo principal da página?")
 
 
     current_page_for_radio_display = effective_cliente_page_for_radio_default
-    if current_page_for_radio_display == "Notificações": current_page_for_radio_display = notif_menu_label_val
+    if current_page_for_radio_display == "Notificações": current_page_for_radio_display = notif_menu_label_val # "Notificações" não tem emoji no menu_options_cli_val diretamente
     
     try: current_idx_cli_val = menu_options_cli_val.index(current_page_for_radio_display)
     except ValueError:
         st.sidebar.warning(f"DEBUG: `current_page_for_radio_display` ('{current_page_for_radio_display}') não encontrada no menu. Default para Instruções.")
         current_idx_cli_val = 0
-        if st.session_state.cliente_page != "Instruções":
-            st.session_state.cliente_page = "Instruções"
+        if st.session_state.cliente_page != "📖 Instruções": # CORRIGIDO
+            st.session_state.cliente_page = "📖 Instruções" # CORRIGIDO
     
     selected_page_cli_raw_val = st.sidebar.radio("Menu Cliente", menu_options_cli_val, index=current_idx_cli_val, key="cli_menu_v15_debug_radio")
     selected_page_cli_actual = "Notificações" if "Notificações" in selected_page_cli_raw_val else selected_page_cli_raw_val
     
     if selected_page_cli_actual != st.session_state.cliente_page: 
-        if instrucoes_pendentes_obrigatorias_val and selected_page_cli_actual != "Instruções":
+        if instrucoes_pendentes_obrigatorias_val and selected_page_cli_actual != "📖 Instruções": # CORRIGIDO
             st.sidebar.error("⚠️ ACESSO NEGADO! Você deve primeiro ler e confirmar as instruções na página '📖 Instruções' para acessar outras seções ou iniciar um novo diagnóstico.")
         else:
             st.session_state.cliente_page = selected_page_cli_actual
@@ -525,11 +525,12 @@ if aba == "Cliente" and st.session_state.cliente_logado:
     st.markdown("---")
 
     # --- Conteúdo da Página do Cliente ---
-    st.write(f"DEBUG: Verificando qual bloco de página renderizar para '{st.session_state.cliente_page}'...") # << NOVO
+    st.write(f"DEBUG: Verificando qual bloco de página renderizar para '{st.session_state.cliente_page}'...")
 
-    if st.session_state.cliente_page == "Instruções":
-        st.write("DEBUG: Entrando no bloco 'Instruções'") # << NOVO
+    if st.session_state.cliente_page == "📖 Instruções": # CORRIGIDO
+        st.write("DEBUG: Entrando no bloco 'Instruções'")
         st.subheader("📖 Instruções do Sistema de Diagnóstico")
+        # (Conteúdo completo da página de instruções aqui...)
         default_instructions_text_content = """**Bem-vindo ao Portal de Diagnóstico Empresarial!** (Substitua pelo texto completo das suas instruções)""" 
         instructions_to_display = default_instructions_text_content
         try:
@@ -552,7 +553,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                 if st.button("Prosseguir para o Diagnóstico", key="btn_instrucoes_v15_final_prosseguir", disabled=not st.session_state.confirmou_instrucoes_checkbox_cliente):
                     if st.session_state.confirmou_instrucoes_checkbox_cliente:
                         update_user_data(st.session_state.cnpj, "ConfirmouInstrucoesParaSlotAtual", "True")
-                        st.session_state.cliente_page = "Novo Diagnóstico"; st.session_state.confirmou_instrucoes_checkbox_cliente = False; st.rerun()
+                        st.session_state.cliente_page = "📝 Novo Diagnóstico"; st.session_state.confirmou_instrucoes_checkbox_cliente = False; st.rerun() # CORRIGIDO
             else:
                 st.info("Você não possui diagnósticos disponíveis no momento para iniciar.")
             
@@ -563,26 +564,25 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                 if _instr_pendentes_check:
                      st.error("⚠️ Você precisa confirmar as instruções acima antes de ir para o Painel Principal, pois um novo diagnóstico está disponível e pendente de confirmação.")
                 else:
-                    st.session_state.cliente_page = "Painel Principal"; st.rerun()
+                    st.session_state.cliente_page = "📊 Painel Principal"; st.rerun() # CORRIGIDO
         else: st.error("Erro de sessão do usuário. Por favor, faça login novamente.")
-        st.write("DEBUG: Saindo do bloco 'Instruções'") # << NOVO
+        st.write("DEBUG: Saindo do bloco 'Instruções'")
 
 
-    elif st.session_state.cliente_page == "Painel Principal":
-        st.write("DEBUG: Entrando no bloco 'Painel Principal'") # << NOVO
+    elif st.session_state.cliente_page == "📊 Painel Principal": # CORRIGIDO
+        st.write("DEBUG: Entrando no bloco 'Painel Principal'")
         st.error(f"ALERTA DE DEPURAÇÃO MÁXIMA: BLOCO 'Painel Principal' ALCANÇADO!")
         st.subheader("📊 Painel Principal do Cliente (Versão de Teste SUPER SIMPLIFICADA)")
         st.write(f"DEBUG: Ponto PP_A - Início do Painel Principal (SIMPLIFICADO)")
         st.write("Se você está vendo esta mensagem, o código entrou corretamente na seção do Painel Principal.")
         st.write("O conteúdo original foi comentado para ajudar a isolar o problema.")
-        st.write("Se esta mensagem aparecer, o problema está no código que foi comentado na versão anterior (procure o bloco comentado).")
         st.balloons()
         st.write("DEBUG: Ponto PP_K - FIM do Painel Principal (SIMPLIFICADO)")
-        st.write("DEBUG: Saindo do bloco 'Painel Principal'") # << NOVO
+        st.write("DEBUG: Saindo do bloco 'Painel Principal'")
         
 
-    elif st.session_state.cliente_page == "Novo Diagnóstico":
-        st.write("DEBUG: Entrando no bloco 'Novo Diagnóstico'") # << NOVO
+    elif st.session_state.cliente_page == "📝 Novo Diagnóstico": # CORRIGIDO
+        st.write("DEBUG: Entrando no bloco 'Novo Diagnóstico'")
         st.error(f"ALERTA DE DEPURAÇÃO MÁXIMA: BLOCO 'Novo Diagnóstico' ALCANÇADO!")
         st.subheader("📝 Formulário de Novo Diagnóstico (Versão de Teste SUPER SIMPLIFICADA)")
         st.write(f"DEBUG: Ponto ND_A - Início de Novo Diagnóstico (SIMPLIFICADO)")
@@ -593,11 +593,11 @@ if aba == "Cliente" and st.session_state.cliente_logado:
 
         if not pode_fazer_novo_form:
             st.warning("❌ Você não tem diagnósticos disponíveis no momento.")
-            if st.button("Voltar ao Painel Principal", key="voltar_painel_novo_diag_bloq_v14_final_nd_simp"): st.session_state.cliente_page = "Painel Principal"; st.rerun()
+            if st.button("Voltar ao Painel Principal", key="voltar_painel_novo_diag_bloq_v14_final_nd_simp"): st.session_state.cliente_page = "📊 Painel Principal"; st.rerun() # CORRIGIDO
             st.stop()
         elif not confirmou_inst_form:
             st.warning("⚠️ Por favor, confirme a leitura das instruções na página '📖 Instruções' antes de iniciar um novo diagnóstico.")
-            if st.button("Ir para Instruções", key="ir_instrucoes_novo_diag_v14_final_nd_simp"): st.session_state.cliente_page = "Instruções"; st.rerun()
+            if st.button("Ir para Instruções", key="ir_instrucoes_novo_diag_v14_final_nd_simp"): st.session_state.cliente_page = "📖 Instruções"; st.rerun() # CORRIGIDO
             st.stop()
         
         st.write("DEBUG: Ponto ND_B - Após checagens de permissão (SIMPLIFICADO)")
@@ -605,13 +605,13 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         st.write("O formulário de diagnóstico original foi comentado. Se esta página está 'em branco' (além destas mensagens), o problema residia no código original do formulário.")
         st.balloons()
         st.write("DEBUG: Ponto ND_J - FIM de Novo Diagnóstico (SIMPLIFICADO)")
-        st.write("DEBUG: Saindo do bloco 'Novo Diagnóstico'") # << NOVO
+        st.write("DEBUG: Saindo do bloco 'Novo Diagnóstico'")
 
 
-    elif st.session_state.cliente_page == "Notificações":
-        st.write("DEBUG: Entrando no bloco 'Notificações'") # << NOVO
+    elif st.session_state.cliente_page == "Notificações": # Esta já estava correta pois notif_menu_label_val é usado consistentemente
+        st.write("DEBUG: Entrando no bloco 'Notificações'")
         st.subheader("🔔 Minhas Notificações")
-        # (Código de Notificações como antes)
+        # (Conteúdo da página de Notificações como antes)
         try:
             df_notif_cliente_view = pd.read_csv(notificacoes_csv, dtype={'CNPJ_Cliente': str}, encoding='utf-8')
             df_notif_cliente_view = df_notif_cliente_view[df_notif_cliente_view['CNPJ_Cliente'] == st.session_state.cnpj]
@@ -631,8 +631,8 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                         st.rerun()
             elif 'notif_page_loaded_once_v14_final_c' in st.session_state and not ids_nao_lidas_para_marcar_view:
                  del st.session_state.notif_page_loaded_once_v14_final_c
-        st.write("DEBUG: Saindo do bloco 'Notificações'") # << NOVO
-    else: # << NOVO
+        st.write("DEBUG: Saindo do bloco 'Notificações'")
+    else: 
         st.error(f"ERRO DE ROTEAMENTO DE PÁGINA: Página do cliente desconhecida ou não definida: '{st.session_state.cliente_page}'")
         st.warning("Por favor, tente fazer login novamente ou contate o suporte se o problema persistir.")
 
@@ -678,6 +678,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         try: # Admin menu dispatch
             if menu_admin == "📊 Visão Geral e Diagnósticos":
                 st.subheader("Visão Geral e Indicadores de Diagnósticos")
+                # (Conteúdo Visão Geral - mantido como antes)
                 st.markdown("#### Métricas Gerais do Sistema (Todos os Clientes)")
                 col_mg1_vg, col_mg2_vg, col_mg3_vg, col_mg4_vg = st.columns(4)
                 total_clientes_cadastrados_vg = len(df_usuarios_admin_geral) if not df_usuarios_admin_geral.empty else 0
@@ -692,6 +693,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                     with col_mg3_vg: st.markdown(f"<div class='kpi-card'><h4>📈 Média Geral Global</h4><p class='value'>N/A</p></div>", unsafe_allow_html=True)
                     with col_mg4_vg: st.markdown(f"<div class='kpi-card'><h4>🔥 GUT Média Global</h4><p class='value'>N/A</p></div>", unsafe_allow_html=True)
                 st.divider()
+                # ... (Restante do conteúdo de Visão Geral e Diagnósticos) ...
                 st.markdown("#### Filtros para Análise Detalhada de Diagnósticos")
                 col_f1_vg, col_f2_vg, col_f3_vg = st.columns(3)
                 empresas_lista_admin_filtro_vg = sorted(df_usuarios_admin_geral["Empresa"].astype(str).unique().tolist()) if not df_usuarios_admin_geral.empty and "Empresa" in df_usuarios_admin_geral.columns else []
@@ -762,38 +764,41 @@ if aba == "Administrador" and st.session_state.admin_logado:
                             except Exception as e_detalhe: st.error(f"Erro ao tentar detalhar diagnóstico: {e_detalhe}")
                     else: st.caption("Nenhum diagnóstico na seleção atual para detalhar.")
             
+            # ... (O restante das seções do admin: Status, Histórico, Perguntas, Análises, Instruções, Clientes, Admins, Backup)
+            # COPIE E COLE O RESTANTE DO SEU CÓDIGO DE ADMIN AQUI (MANTIDO DA VERSÃO ANTERIOR)
+            # Exemplo de como estava:
             elif menu_admin == "🚦 Status dos Clientes":
                 st.subheader("Status de Diagnósticos dos Clientes")
                 # (código completo desta seção)
-                pass
+                pass # Substitua pelo código real
             elif menu_admin == "📜 Histórico de Usuários":
                 st.subheader("📜 Histórico de Ações")
                 # (código completo desta seção)
-                pass
+                pass # Substitua pelo código real
             elif menu_admin == "📝 Gerenciar Perguntas":
                 st.subheader("Gerenciar Perguntas do Diagnóstico")
                 # (código completo desta seção)
-                pass
+                pass # Substitua pelo código real
             elif menu_admin == "💡 Gerenciar Análises de Perguntas":
                 st.subheader("Gerenciar Análises Vinculadas às Perguntas")
                 # (código completo desta seção)
-                pass
+                pass # Substitua pelo código real
             elif menu_admin == "✍️ Gerenciar Instruções Clientes":
                 st.subheader("Gerenciar Instruções para Clientes")
                 # (código completo desta seção)
-                pass
+                pass # Substitua pelo código real
             elif menu_admin == "👥 Gerenciar Clientes":
                 st.subheader("Gerenciar Clientes")
                 # (código completo desta seção)
-                pass
+                pass # Substitua pelo código real
             elif menu_admin == "👮 Gerenciar Administradores":
                 st.subheader("Gerenciar Administradores")
                 # (código completo desta seção)
-                pass
+                pass # Substitua pelo código real
             elif menu_admin == "💾 Backup de Dados":
                 st.subheader("Backup de Dados do Sistema")
                 # (código completo desta seção)
-                pass
+                pass # Substitua pelo código real
 
         except Exception as e_admin_menu_dispatch:
             st.error(f"Ocorreu um erro na funcionalidade '{menu_admin}': {e_admin_menu_dispatch}")
