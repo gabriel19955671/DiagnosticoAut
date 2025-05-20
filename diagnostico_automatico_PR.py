@@ -219,7 +219,7 @@ def gerar_pdf_diagnostico_completo(diag_data, user_data, perguntas_df, respostas
                 current_y = pdf.get_y(); max_h = 20
                 pdf.image(logo_path, x=10, y=current_y, h=max_h)
                 pdf.set_y(current_y + max_h + 5)
-            except Exception: pass # Ignore logo errors
+            except Exception: pass
 
         pdf.set_font("Arial", 'B', 16); pdf.cell(0, 10, pdf_safe_text_output(f"Diagnóstico Empresarial - {empresa_nome}"), 0, 1, 'C'); pdf.ln(5)
         pdf.set_font("Arial", size=10)
@@ -311,41 +311,33 @@ def gerar_pdf_historico(df_historico_filtrado, titulo="Histórico de Ações"):
 
     for header in headers_to_print_hist:
         pdf.cell(col_widths.get(header, 30), 10, pdf_safe_text_output(header), 1, 0, "C")
-    pdf.ln() # New line after headers
+    pdf.ln()
 
     pdf.set_font("Arial", "", 8)
     for _, row in df_historico_filtrado.iterrows():
         current_y_hist = pdf.get_y()
-        max_h_row_hist = 10 # Min height for a row
+        max_h_row_hist = 10
 
-        # Pre-calculate height needed for Description cell
         desc_text_hist = str(row.get("Descrição", "")) if "Descrição" in row else ""
         if desc_text_hist:
-            temp_x_desc_calc = pdf.get_x() # Store current x before potential multi_cell for height calculation
+            temp_x_desc_calc = pdf.get_x()
             temp_y_desc_calc = pdf.get_y()
-            # Use a temporary MultiCell to calculate the number of lines for the description
-            desc_lines_hist = pdf.multi_cell(col_widths.get("Descrição", 75), 5, pdf_safe_text_output(desc_text_hist), border=0, align="L", ln=3, dry_run=True, output="HEIGHT", max_line_height=pdf.font_size)
-            # Calculate height based on number of lines; FPDF's dry_run for height might be tricky, so splitting and counting is safer if available
-            # For simplicity, if dry_run isn't straightforward or version-dependent for height, estimate via split_only
-            temp_pdf_for_height = FPDF() # Temporary FPDF instance for more reliable height calculation
+            temp_pdf_for_height = FPDF()
             temp_pdf_for_height.add_page()
             temp_pdf_for_height.set_font("Arial", "", 8)
             actual_desc_lines = temp_pdf_for_height.multi_cell(col_widths.get("Descrição", 75), 5, pdf_safe_text_output(desc_text_hist), 0, "L", split_only=True)
             max_h_row_hist = max(max_h_row_hist, len(actual_desc_lines) * 5)
-            pdf.set_xy(temp_x_desc_calc, temp_y_desc_calc) # Restore position
+            pdf.set_xy(temp_x_desc_calc, temp_y_desc_calc)
 
-        # Draw cells with calculated max_h_row_hist
         current_x_for_cell = pdf.l_margin
         for header in headers_to_print_hist:
             cell_text = str(row.get(header, ""))
             if header == "Descrição":
                 cell_text = desc_text_hist
-
             pdf.set_xy(current_x_for_cell, current_y_hist)
             pdf.multi_cell(col_widths.get(header, 30), max_h_row_hist, pdf_safe_text_output(cell_text), border=1, align="L", ln=3, max_line_height=pdf.font_size)
             current_x_for_cell += col_widths.get(header, 30)
-
-        pdf.set_y(current_y_hist + max_h_row_hist) # Move Y to the start of the next logical row
+        pdf.set_y(current_y_hist + max_h_row_hist)
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
         pdf_path = tmpfile.name
@@ -482,15 +474,13 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         st.markdown("#### 📁 Diagnósticos Anteriores")
         try:
             df_antigos = pd.read_csv(arquivo_csv, dtype={'CNPJ': str}, encoding='utf-8')
-            # Ensure st.session_state.cnpj is not None before filtering
             if st.session_state.cnpj is None:
                 st.error("Erro: CNPJ do cliente não encontrado na sessão. Por favor, faça login novamente.")
-                df_cliente_diags = pd.DataFrame() # Empty dataframe
+                df_cliente_diags = pd.DataFrame()
             else:
                 df_cliente_diags = df_antigos[df_antigos["CNPJ"] == str(st.session_state.cnpj)].copy()
 
-            if df_cliente_diags.empty:
-                st.info("Nenhum diagnóstico anterior encontrado para sua empresa.")
+            if df_cliente_diags.empty: st.info("Nenhum diagnóstico anterior encontrado para sua empresa.")
             else:
                 df_cliente_diags = df_cliente_diags.sort_values(by="Data", ascending=False)
                 try:
@@ -577,7 +567,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                     for col_ev in df_evolucao.columns:
                         if str(col_ev).startswith("Media_Cat_"):
                             df_evolucao[col_ev] = pd.to_numeric(df_evolucao[col_ev], errors='coerce')
-                            if not df_evolucao[col_ev].isnull().all(): # Corrected line
+                            if not df_evolucao[col_ev].isnull().all(): # Corrected: was single line if, now multi-line
                                 cols_plot_evol.append(col_ev)
                     df_evolucao_plot = df_evolucao.set_index("Data")[cols_plot_evol].dropna(axis=1, how='all')
                     if not df_evolucao_plot.empty: st.line_chart(df_evolucao_plot)
@@ -616,7 +606,6 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         except Exception as e: st.error(f"Erro ao carregar painel do cliente: {e}"); st.exception(e)
 
     elif st.session_state.cliente_page == "Novo Diagnóstico":
-        # (Código da página Novo Diagnóstico)
         st.subheader("📝 Formulário de Novo Diagnóstico")
         pode_fazer_novo_form = st.session_state.user.get("DiagnosticosDisponiveis", 0) > st.session_state.user.get("TotalDiagnosticosRealizados", 0)
         confirmou_inst_form = st.session_state.user.get("ConfirmouInstrucoesParaSlotAtual", False)
@@ -723,7 +712,6 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                 st.session_state.respostas_atuais_diagnostico = {}; st.session_state.progresso_diagnostico_percentual = 0; st.session_state.progresso_diagnostico_contagem = (0,total_perguntas_form); st.session_state.feedbacks_respostas = {}; st.rerun()
 
     elif st.session_state.cliente_page == "Notificações":
-        # (Código da página Notificações)
         st.subheader("🔔 Minhas Notificações")
         try:
             df_notif_cliente_view = pd.read_csv(notificacoes_csv, dtype={'CNPJ_Cliente': str}, encoding='utf-8')
@@ -865,7 +853,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 empresas_status_list_view = ["Todas"] + (sorted(df_usuarios_status_view['Empresa'].astype(str).unique().tolist()) if not df_usuarios_status_view.empty and "Empresa" in df_usuarios_status_view.columns else [])
                 emp_sel_status_view = st.selectbox("Filtrar por Empresa:", empresas_status_list_view, key="status_emp_sel_v14_final")
                 df_usuarios_status_filtrado = df_usuarios_status_view.copy()
-                df_diagnosticos_status_filtrado_local = df_diagnosticos_status_geral.copy() # Use a local copy for filtering
+                df_diagnosticos_status_filtrado_local = df_diagnosticos_status_geral.copy()
                 if emp_sel_status_view != "Todas":
                     df_usuarios_status_filtrado = df_usuarios_status_view[df_usuarios_status_view["Empresa"] == emp_sel_status_view]
                     if not df_diagnosticos_status_filtrado_local.empty: df_diagnosticos_status_filtrado_local = df_diagnosticos_status_filtrado_local[df_diagnosticos_status_filtrado_local["Empresa"] == emp_sel_status_view]
@@ -886,7 +874,6 @@ if aba == "Administrador" and st.session_state.admin_logado:
                     else: st.info(f"Nenhum cliente da empresa '{emp_sel_status_view}' com diagnósticos liberados pendentes.")
 
             elif menu_admin == "📜 Histórico de Usuários":
-                # (Código como antes)
                 st.subheader("📜 Histórico de Ações")
                 try:
                     df_historico_completo_hu = pd.read_csv(historico_csv, encoding='utf-8', dtype={'CNPJ': str})
@@ -912,11 +899,13 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 else: st.info("Nenhum registro de histórico encontrado para os filtros aplicados.")
 
             elif menu_admin == "📝 Gerenciar Perguntas":
-                # (Código como antes)
                 st.subheader("Gerenciar Perguntas do Diagnóstico"); tabs_perg_admin = st.tabs(["📋 Perguntas Atuais", "➕ Adicionar Nova Pergunta"])
-                try: perguntas_df_admin_gp = pd.read_csv(perguntas_csv, encoding='utf-8'); \
-                    if "Categoria" not in perguntas_df_admin_gp.columns: perguntas_df_admin_gp["Categoria"] = "Geral"
-                except (FileNotFoundError, pd.errors.EmptyDataError): perguntas_df_admin_gp = pd.DataFrame(columns=colunas_base_perguntas)
+                try:
+                    perguntas_df_admin_gp = pd.read_csv(perguntas_csv, encoding='utf-8')
+                    if "Categoria" not in perguntas_df_admin_gp.columns: # Corrected line
+                        perguntas_df_admin_gp["Categoria"] = "Geral"
+                except (FileNotFoundError, pd.errors.EmptyDataError):
+                    perguntas_df_admin_gp = pd.DataFrame(columns=colunas_base_perguntas)
                 with tabs_perg_admin[0]:
                     if perguntas_df_admin_gp.empty: st.info("Nenhuma pergunta cadastrada.")
                     else:
@@ -938,7 +927,6 @@ if aba == "Administrador" and st.session_state.admin_logado:
                             else: st.warning("Texto da pergunta e categoria são obrigatórios.")
 
             elif menu_admin == "💡 Gerenciar Análises de Perguntas":
-                # (Código como antes)
                 st.subheader("Gerenciar Análises Vinculadas às Perguntas"); df_analises_existentes_admin = carregar_analises_perguntas()
                 try: df_perguntas_formulario_admin = pd.read_csv(perguntas_csv, encoding='utf-8')
                 except: df_perguntas_formulario_admin = pd.DataFrame(columns=colunas_base_perguntas)
@@ -969,7 +957,6 @@ if aba == "Administrador" and st.session_state.admin_logado:
                     if st.button("🗑️ Deletar Análise", key="btn_del_analise_v14_final_ga_view") and analise_del_id_admin_view: df_analises_para_exibir = df_analises_para_exibir[df_analises_para_exibir["ID_Analise"] != analise_del_id_admin_view]; df_analises_para_exibir.to_csv(analises_perguntas_csv, index=False, encoding='utf-8'); st.warning("Análise deletada."); st.rerun()
 
             elif menu_admin == "👥 Gerenciar Clientes":
-                # (Código como antes)
                 st.subheader("Gerenciar Clientes")
                 try:
                     df_usuarios_gc = pd.read_csv(usuarios_csv, dtype={'CNPJ': str}, encoding='utf-8')
@@ -1008,7 +995,6 @@ if aba == "Administrador" and st.session_state.admin_logado:
                         else: st.error("CNPJ, Senha e Nome da Empresa são obrigatórios.")
 
             elif menu_admin == "👮 Gerenciar Administradores":
-                # (Código como antes)
                 st.subheader("Gerenciar Administradores");
                 try: admins_df_mng = pd.read_csv(admin_credenciais_csv, encoding='utf-8')
                 except (FileNotFoundError, pd.errors.EmptyDataError): admins_df_mng = pd.DataFrame(columns=["Usuario", "Senha"])
@@ -1029,7 +1015,6 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 else: st.info("Nenhum administrador para remover.")
 
             elif menu_admin == "💾 Backup de Dados":
-                # (Código como antes)
                 st.subheader("Backup de Dados do Sistema"); st.markdown("Clique nos botões abaixo para baixar cópias dos arquivos CSV do sistema.")
                 arquivos_para_backup = { "Clientes (Usuários)": usuarios_csv, "Diagnósticos": arquivo_csv, "Perguntas do Formulário": perguntas_csv, "Análises das Perguntas": analises_perguntas_csv, "Histórico de Ações": historico_csv, "Administradores": admin_credenciais_csv, "Clientes Bloqueados": usuarios_bloqueados_csv, "Notificações": notificacoes_csv }
                 for nome_amigavel, nome_arquivo in arquivos_para_backup.items():
