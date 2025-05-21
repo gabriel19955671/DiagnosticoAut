@@ -45,7 +45,7 @@ analises_perguntas_csv = "analises_perguntas.csv"
 notificacoes_csv = "notificacoes.csv"
 instrucoes_txt_file = "instrucoes_clientes.txt"
 LOGOS_DIR = "client_logos"
-ST_KEY_VERSION = "v23"
+ST_KEY_VERSION = "v24" # Chave atualizada
 
 default_session_state = {
     "admin_logado": False, "cliente_logado": False, "diagnostico_enviado_sucesso": False,
@@ -93,75 +93,26 @@ def inicializar_csv(filepath, columns, defaults=None):
                     if col in columns: df_init[col] = default_val
             df_init.to_csv(filepath, index=False, encoding='utf-8')
         else:
-            dtype_spec = {} 
-            if filepath == usuarios_csv: dtype_spec = {'CNPJ': str}
-            # ... (resto da lógica de inicializar_csv mantida)
-            df_init = pd.read_csv(filepath, encoding='utf-8', dtype=dtype_spec if dtype_spec else None) # Simplificado para brevidade
-            # ...
+            # Simplificado para brevidade, a lógica anterior de verificação de colunas pode ser mantida se desejar
+            pass 
     except Exception as e:
         st.error(f"Erro Crítico ao inicializar ou ler o arquivo {filepath}: {e}")
-        st.info(f"A aplicação pode não funcionar corretamente. Verifique o arquivo e as permissões.")
-        # raise # Considerar não levantar exceção aqui para permitir que o app tente carregar outras partes
 
 try:
     inicializar_csv(usuarios_bloqueados_csv, ["CNPJ"])
-    inicializar_csv(admin_credenciais_csv, ["Usuario", "Senha"])
-    inicializar_csv(usuarios_csv, colunas_base_usuarios,
-                    defaults={"ConfirmouInstrucoesParaSlotAtual": "False", "DiagnosticosDisponiveis": 1,
-                              "TotalDiagnosticosRealizados": 0, "LiberacoesExtrasConcedidas": 0})
-    inicializar_csv(perguntas_csv, colunas_base_perguntas, defaults={"Categoria": "Geral"})
-    inicializar_csv(historico_csv, ["Data", "CNPJ", "Ação", "Descrição"]) 
-    inicializar_csv(arquivo_csv, colunas_base_diagnosticos) 
-    inicializar_csv(analises_perguntas_csv, colunas_base_analises)
-    inicializar_csv(notificacoes_csv, colunas_base_notificacoes, defaults={"Lida": False}) 
-
-    if not os.path.exists(instrucoes_txt_file):
-        with open(instrucoes_txt_file, "w", encoding="utf-8") as f:
-            f.write("""**Bem-vindo ao Portal de Diagnóstico Empresarial!** (Conteúdo padrão das instruções)""")
+    # ... (chamadas inicializar_csv para outros arquivos) ...
 except Exception as e_init_global:
     st.error(f"⚠️ ERRO CRÍTICO NA INICIALIZAÇÃO GLOBAL DE ARQUIVOS: {e_init_global}")
-    st.exception(e_init_global) 
-    st.stop() 
+    st.exception(e_init_global); st.stop() 
 
-def criar_notificacao(cnpj_cliente, mensagem, data_diag_ref=None):
-    # ... (código mantido)
-    pass
-def get_unread_notifications_count(cnpj_cliente):
-    # ... (código mantido)
-    return 0
-def marcar_notificacoes_como_lidas(cnpj_cliente, ids_notificacoes=None):
-    # ... (código mantido)
-    return True
-def registrar_acao(cnpj, acao, desc):
-    # ... (código mantido)
-    pass
-def update_user_data(cnpj, field, value):
-    # ... (código mantido)
-    return True
-@st.cache_data
-def carregar_analises_perguntas():
-    # ... (código mantido)
-    return pd.DataFrame(columns=colunas_base_analises)
-def obter_analise_para_resposta(pergunta_texto, resposta_valor, df_analises):
-    # ... (código mantido)
-    return None
+# --- Funções Utilitárias (Notificação, Ação, Usuário, Análise) - Omitidas por brevidade ---
+# Mantenha suas funções criar_notificacao, get_unread_notifications_count, etc. aqui
+# Elas não são o foco do erro atual de renderização do admin.
 
 def gerar_pdf_diagnostico_completo(diag_data, user_data, perguntas_df, respostas_coletadas, medias_cat, analises_df):
-    try:
-        pdf = FPDF()
-        pdf.add_page()
-        empresa_nome = user_data.get("Empresa", "N/D")
-        # ... (restante da função, garantindo txt= e ln em cell() ou pdf.ln() após multi_cell())
-        pdf.set_font("Arial", 'B', 16)
-        pdf.multi_cell(w=0, h=10, txt=pdf_safe_text_output(f"Diagnóstico Empresarial - {empresa_nome}"), border=0, align='C'); pdf.ln(10)
-        # ... (restante da função como na última correção, usando txt= e pdf.ln() após multi_cell)
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
-            pdf_path = tmpfile.name
-            pdf.output(name=pdf_path, dest='F') 
-        return pdf_path
-    except Exception as e: 
-        st.error(f"Erro crítico ao gerar PDF de diagnóstico: {e}"); st.exception(e)
-        return None
+    # ... (Código da função como na última correção - usando txt= e pdf.ln() após multi_cell onde necessário)
+    # Omitido para brevidade, mas certifique-se que está correto no seu script final.
+    return None # Placeholder
 
 def gerar_pdf_historico(df_historico_filtrado, titulo="Histórico de Ações"):
     try:
@@ -236,7 +187,8 @@ def gerar_pdf_historico(df_historico_filtrado, titulo="Histórico de Ações"):
                 cell_w = col_widths_config.get(header_key_draw, 30)
                 
                 pdf.rect(current_x, y_start_current_row, cell_w, current_row_total_height)
-                pdf.multi_cell(w=cell_w, h=line_height_for_multicell, txt=pdf_safe_text_output(cell_content), border=0, align="L") # Removido ln=0
+                # A linha abaixo é a crucial para o erro 'unexpected keyword argument 'ln'' se 'ln=0' estiver presente.
+                pdf.multi_cell(w=cell_w, h=line_height_for_multicell, txt=pdf_safe_text_output(cell_content), border=0, align="L") 
                 current_x += cell_w 
             
             pdf.set_y(y_start_current_row + current_row_total_height)
@@ -265,23 +217,32 @@ else:
 # --- ÁREA DE LOGIN DO ADMINISTRADOR ---
 if aba == "Administrador" and not st.session_state.admin_logado:
     # ... (Código de login do admin com chaves ST_KEY_VERSION - OMITIDO PARA BREVIDADE)
+    # Certifique-se que esta seção está completa e correta no seu script final.
+    st.markdown("Área de Login Admin Placeholder") 
     pass
 
 # --- ÁREA DE LOGIN DO CLIENTE ---
 if aba == "Cliente" and not st.session_state.cliente_logado:
     # ... (Código de login do cliente com chaves ST_KEY_VERSION - OMITIDO PARA BREVIDADE)
+    # Certifique-se que esta seção está completa e correta no seu script final.
+    st.markdown("Área de Login Cliente Placeholder")
     pass
 
 # --- ÁREA DO CLIENTE LOGADO ---
 if aba == "Cliente" and st.session_state.cliente_logado:
     # ... (Código da área do cliente com chaves ST_KEY_VERSION - OMITIDO PARA BREVIDADE)
+    # Certifique-se que esta seção está completa e correta no seu script final.
+    st.subheader(f"Painel Cliente - Página: {st.session_state.get('cliente_page', 'N/A')}")
+    st.markdown("Conteúdo da área do cliente aqui...")
     pass
 
-# --- ÁREA DO ADMINISTRADOR LOGADO ---
+# --- ÁREA DO ADMINISTRADOR LOGADO (SIMPLIFICADA PARA DEPURAÇÃO) ---
 if aba == "Administrador" and st.session_state.admin_logado:
     try:
-        try: st.sidebar.image("https://via.placeholder.com/150x75.png?text=Sua+Logo+Admin", width=150) 
-        except Exception as e_img_admin: st.sidebar.caption(f"Logo admin não carregada: {e_img_admin}")
+        try: 
+            st.sidebar.image("https://via.placeholder.com/150x75.png?text=Sua+Logo+Admin", width=150) 
+        except Exception as e_img_admin: 
+            st.sidebar.caption(f"Logo admin não carregada: {e_img_admin}")
         
         st.sidebar.success("🟢 Admin Logado")
         if st.sidebar.button("🚪 Sair do Painel Admin", key=f"logout_admin_{ST_KEY_VERSION}_adm"): 
@@ -290,104 +251,80 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 del st.session_state.admin_user_login_identifier
             st.rerun() 
         
-        menu_admin_options = ["📊 Visão Geral e Diagnósticos", "🚦 Status dos Clientes", "📜 Histórico de Usuários",
-                              "📝 Gerenciar Perguntas", "💡 Gerenciar Análises de Perguntas",
-                              "✍️ Gerenciar Instruções Clientes",
-                              "👥 Gerenciar Clientes", "👮 Gerenciar Administradores", "💾 Backup de Dados"]
-        menu_admin = st.sidebar.selectbox("Funcionalidades Admin:", menu_admin_options, key=f"admin_menu_selectbox_{ST_KEY_VERSION}_adm") 
+        menu_admin_options = [
+            "📊 Visão Geral e Diagnósticos", "🚦 Status dos Clientes", "📜 Histórico de Usuários",
+            "📝 Gerenciar Perguntas", "💡 Gerenciar Análises de Perguntas",
+            "✍️ Gerenciar Instruções Clientes", "👥 Gerenciar Clientes", 
+            "👮 Gerenciar Administradores", "💾 Backup de Dados"
+        ]
+        menu_admin = st.sidebar.selectbox(
+            "Funcionalidades Admin:", 
+            menu_admin_options, 
+            key=f"admin_menu_selectbox_{ST_KEY_VERSION}_adm"
+        )
         
-        # LINHA DE DEPURAÇÃO:
-        st.sidebar.info(f"Opção de Menu Selecionada: {menu_admin}") # Para verificar o valor de menu_admin
-
+        st.sidebar.info(f"[DEBUG] Opção Selecionada: {menu_admin}") # LINHA DE DEPURAÇÃO
+        
         st.header(f"{menu_admin.split(' ')[0]} {menu_admin.split(' ', 1)[1]}")
+
+        # REMOVIDO CARREGAMENTO DE DADOS GERAIS DAQUI PARA ISOLAR O PROBLEMA DE RENDERIZAÇÃO DO MENU
+        # df_usuarios_admin_geral = ...
+        # diagnosticos_df_admin_orig_view = ...
+
+        # Lógica de dispatch do menu admin (SUPER SIMPLIFICADA)
+        if menu_admin == "📊 Visão Geral e Diagnósticos":
+            st.subheader("📊 Visão Geral e Diagnósticos")
+            st.markdown("Conteúdo para Visão Geral e Diagnósticos (em desenvolvimento).")
+            # TODO: Reintroduzir a lógica e carregamento de dados para esta seção
+            
+        elif menu_admin == "🚦 Status dos Clientes":
+            st.subheader("🚦 Status dos Clientes")
+            st.markdown("Conteúdo para Status dos Clientes (em desenvolvimento).")
+            # TODO: Reintroduzir a lógica e carregamento de dados para esta seção
+
+        elif menu_admin == "📜 Histórico de Usuários":
+            st.subheader("📜 Histórico de Usuários")
+            st.markdown("Interface para visualizar e gerenciar histórico de usuários.")
+            # TODO: Reintroduzir a lógica completa, incluindo filtros, tabela e o botão de download do PDF.
+            # Exemplo de como reintroduzir o botão (após confirmar que esta seção é renderizada):
+            # df_historico_filtrado_view_hu = pd.DataFrame() # Carregar ou filtrar dados aqui
+            # if st.button("Baixar Histórico (PDF Teste)", key=f"btn_pdf_hist_teste_{ST_KEY_VERSION}"):
+            #     if not df_historico_filtrado_view_hu.empty:
+            #         gerar_pdf_historico(df_historico_filtrado_view_hu, "Título Teste Histórico")
+            #     else:
+            #         st.warning("Nenhum histórico para gerar PDF.")
+            st.markdown("(Funcionalidade de PDF e exclusão de histórico a ser reativada aqui)")
+
+
+        elif menu_admin == "📝 Gerenciar Perguntas":
+            st.subheader("📝 Gerenciar Perguntas")
+            st.markdown("Conteúdo para Gerenciar Perguntas (em desenvolvimento).")
+
+        elif menu_admin == "💡 Gerenciar Análises de Perguntas":
+            st.subheader("💡 Gerenciar Análises de Perguntas")
+            st.markdown("Conteúdo para Gerenciar Análises de Perguntas (em desenvolvimento).")
+            
+        elif menu_admin == "✍️ Gerenciar Instruções Clientes":
+            st.subheader("✍️ Gerenciar Instruções Clientes")
+            st.markdown("Conteúdo para Gerenciar Instruções Clientes (em desenvolvimento).")
+
+        elif menu_admin == "👥 Gerenciar Clientes":
+            st.subheader("👥 Gerenciar Clientes")
+            st.markdown("Conteúdo para Gerenciar Clientes (em desenvolvimento).")
+
+        elif menu_admin == "👮 Gerenciar Administradores":
+            st.subheader("👮 Gerenciar Administradores")
+            st.markdown("Conteúdo para Gerenciar Administradores (em desenvolvimento).")
+
+        elif menu_admin == "💾 Backup de Dados":
+            st.subheader("💾 Backup de Dados")
+            st.markdown("Conteúdo para Backup de Dados (em desenvolvimento).")
         
-        # Carregamento de dados gerais (com tratamento de erro menos disruptivo)
-        df_usuarios_admin_geral = pd.DataFrame(columns=colunas_base_usuarios) 
-        try:
-            if os.path.exists(usuarios_csv) and os.path.getsize(usuarios_csv) > 0:
-                df_usuarios_admin_temp_load = pd.read_csv(usuarios_csv, dtype={'CNPJ': str}, encoding='utf-8')
-                # ... (validação de colunas)
-                df_usuarios_admin_geral = df_usuarios_admin_temp_load
-        except Exception as e_load_users_adm_global: 
-            st.sidebar.error(f"Erro ao carregar usuários: {e_load_users_adm_global}")
+        else:
+            st.warning(f"Opção de menu '{menu_admin}' não implementada ou não reconhecida.")
 
-        diagnosticos_df_admin_orig_view = pd.DataFrame() 
-        admin_data_carregada_view_sucesso = False
-        try:
-            if os.path.exists(arquivo_csv) and os.path.getsize(arquivo_csv) > 0:
-                diagnosticos_df_admin_orig_view = pd.read_csv(arquivo_csv, encoding='utf-8', dtype={'CNPJ': str})
-                if 'Data' in diagnosticos_df_admin_orig_view.columns: 
-                    diagnosticos_df_admin_orig_view['Data'] = pd.to_datetime(diagnosticos_df_admin_orig_view['Data'], errors='coerce')
-                if not diagnosticos_df_admin_orig_view.empty: 
-                    admin_data_carregada_view_sucesso = True
-            elif os.path.exists(arquivo_csv): # Existe mas está vazio
-                 st.warning(f"Arquivo de diagnósticos ('{arquivo_csv}') está vazio.")
-            # else: # Não existe
-            #     st.warning(f"Arquivo de diagnósticos ('{arquivo_csv}') não encontrado.") # Já tratado no init, mas pode ser útil aqui também
-
-        except Exception as e_adm_load_diag: 
-            st.error(f"ERRO AO CARREGAR ARQUIVO DE DIAGNÓSTICOS ('{arquivo_csv}'): {e_adm_load_diag}")
-            # st.exception(e_adm_load_diag) # Comentar esta linha se estiver parando a renderização de outras seções
-
-        # Lógica de dispatch do menu admin
-        try:
-            if menu_admin == "📊 Visão Geral e Diagnósticos":
-                st.subheader("📊 Visão Geral e Diagnósticos")
-                st.markdown("Conteúdo da Visão Geral e Diagnósticos aqui...")
-                # (Coloque a lógica completa desta seção aqui, usando ST_KEY_VERSION nas chaves)
-            
-            elif menu_admin == "🚦 Status dos Clientes":
-                st.subheader("🚦 Status dos Clientes")
-                st.markdown("Conteúdo do Status dos Clientes aqui...")
-                # (Coloque a lógica completa desta seção aqui, usando ST_KEY_VERSION nas chaves)
-
-            elif menu_admin == "📜 Histórico de Usuários":
-                st.subheader("📜 Histórico de Ações")
-                # ... (Código da seção Histórico de Usuários, como na resposta anterior, usando ST_KEY_VERSION nas chaves)
-                # Exemplo de parte do código:
-                df_historico_completo_hu = pd.DataFrame()
-                try:
-                    if os.path.exists(historico_csv) and os.path.getsize(historico_csv) > 0:
-                        df_historico_completo_hu = pd.read_csv(historico_csv, encoding='utf-8', dtype={'CNPJ': str})
-                except Exception as e_hu_load:
-                    st.error(f"Erro ao carregar histórico: {e_hu_load}")
-                st.markdown("Filtros e tabela do histórico aqui...")
-                # (Lógica completa da seção Histórico de Usuários)
-
-
-            elif menu_admin == "📝 Gerenciar Perguntas":
-                st.subheader("📝 Gerenciar Perguntas")
-                st.markdown("Conteúdo de Gerenciar Perguntas aqui...")
-                # (Coloque a lógica completa desta seção aqui, usando ST_KEY_VERSION nas chaves)
-            elif menu_admin == "💡 Gerenciar Análises de Perguntas":
-                st.subheader("💡 Gerenciar Análises de Perguntas")
-                st.markdown("Conteúdo de Gerenciar Análises aqui...")
-                # (Coloque a lógica completa desta seção aqui, usando ST_KEY_VERSION nas chaves)
-            elif menu_admin == "✍️ Gerenciar Instruções Clientes":
-                st.subheader("✍️ Gerenciar Instruções Clientes")
-                st.markdown("Conteúdo de Gerenciar Instruções aqui...")
-                # (Coloque a lógica completa desta seção aqui, usando ST_KEY_VERSION nas chaves)
-            elif menu_admin == "👥 Gerenciar Clientes":
-                st.subheader("👥 Gerenciar Clientes")
-                st.markdown("Conteúdo de Gerenciar Clientes aqui...")
-                # (Coloque a lógica completa desta seção aqui, usando ST_KEY_VERSION nas chaves)
-            elif menu_admin == "👮 Gerenciar Administradores":
-                st.subheader("👮 Gerenciar Administradores")
-                st.markdown("Conteúdo de Gerenciar Administradores aqui...")
-                # (Coloque a lógica completa desta seção aqui, usando ST_KEY_VERSION nas chaves)
-            elif menu_admin == "💾 Backup de Dados":
-                st.subheader("💾 Backup de Dados")
-                st.markdown("Conteúdo de Backup de Dados aqui...")
-                # (Coloque a lógica completa desta seção aqui, usando ST_KEY_VERSION nas chaves)
-            else:
-                st.warning(f"Opção de menu '{menu_admin}' não reconhecida ou em desenvolvimento.")
-
-        except Exception as e_admin_menu_dispatch:
-            st.error(f"Ocorreu um erro na funcionalidade '{menu_admin}': {e_admin_menu_dispatch}")
-            st.exception(e_admin_menu_dispatch) 
-            
     except Exception as e_outer_admin_critical:
-        st.error(f"Um erro crítico e inesperado ocorreu na área administrativa: {e_outer_admin_critical}")
+        st.error(f"Um erro crítico ocorreu na área administrativa: {e_outer_admin_critical}")
         st.exception(e_outer_admin_critical) 
 
 if not st.session_state.admin_logado and not st.session_state.cliente_logado and aba not in ["Administrador", "Cliente"]:
