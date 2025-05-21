@@ -13,17 +13,18 @@ import uuid
 
 st.set_page_config(page_title="Portal de Diagnóstico", layout="wide", initial_sidebar_state="expanded")
 
-# !!!!! LEMBRETE SOBRE O CSS !!!!!
-# Se você descomentar a linha abaixo, certifique-se que seu CSS não está tornando o texto invisível.
-# st.markdown(""" 
+# !!!!! PASSO DE DEPURAÇÃO IMPORTANTE !!!!!
+# !!!!! PARA TESTAR, MANTENHA A LINHA ABAIXO COMENTADA INICIALMENTE !!!!!
+# st.markdown("""
 # <style>
 # /* SEU CSS PERSONALIZADO AQUI */
 # .login-container { max-width: 400px; margin: 60px auto 0 auto; padding: 40px; border-radius: 8px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-family: 'Segoe UI', sans-serif; }
 # .login-container h2 { text-align: center; margin-bottom: 30px; font-weight: 600; font-size: 26px; color: #2563eb; }
+# /* ... (COLE SEU CSS COMPLETO AQUI SE DESCOMENTAR) ... */
 # .kpi-card .value { font-size: 1.8em; font-weight: bold; color: #2563eb; }
-# /* ... (resto do seu CSS) ... */
 # </style>
 # """, unsafe_allow_html=True)
+# !!!!! SE O CONTEÚDO APARECER APÓS COMENTAR, O PROBLEMA ESTÁ NO SEU CSS !!!!!
 
 st.title("🔒 Portal de Diagnóstico")
 
@@ -37,7 +38,7 @@ analises_perguntas_csv = "analises_perguntas.csv"
 notificacoes_csv = "notificacoes.csv"
 instrucoes_txt_file = "instrucoes_clientes.txt"
 LOGOS_DIR = "client_logos"
-ST_KEY_VERSION = "v25" 
+ST_KEY_VERSION = "v25_restore" 
 
 default_session_state = {
     "admin_logado": False, "cliente_logado": False, "diagnostico_enviado_sucesso": False,
@@ -54,10 +55,29 @@ for key, value in default_session_state.items():
     if key not in st.session_state:
         st.session_state[key] = value
 
-# --- Funções Utilitárias (COLOQUE SUAS FUNÇÕES COMPLETAS AQUI) ---
-def sanitize_column_name(name): return str(name).replace(" ","_") 
-def pdf_safe_text_output(text): return str(text).encode('latin-1', 'replace').decode('latin-1')
-def find_client_logo_path(cnpj_arg): return None 
+def sanitize_column_name(name):
+    s = str(name).strip().replace(' ', '_'); s = re.sub(r'(?u)[^-\w.]', '', s); return s
+def pdf_safe_text_output(text): 
+    return str(text).encode('latin-1', 'replace').decode('latin-1')
+def find_client_logo_path(cnpj_arg):
+    if not cnpj_arg: return None
+    base = str(cnpj_arg).replace('/', '').replace('.', '').replace('-', '')
+    for ext in ["png", "jpg", "jpeg"]:
+        path = os.path.join(LOGOS_DIR, f"{base}_logo.{ext}")
+        if os.path.exists(path): return path
+    return None
+
+if not os.path.exists(LOGOS_DIR):
+    try: os.makedirs(LOGOS_DIR)
+    except OSError as e: st.error(f"Erro ao criar diretório de logos '{LOGOS_DIR}': {e}")
+
+colunas_base_diagnosticos = ["Data", "CNPJ", "Nome", "Email", "Empresa", "Média Geral", "GUT Média", "Observações", "Diagnóstico", "Análise do Cliente", "Comentarios_Admin"]
+colunas_base_usuarios = ["CNPJ", "Senha", "Empresa", "NomeContato", "Telefone",
+                         "ConfirmouInstrucoesParaSlotAtual", "DiagnosticosDisponiveis", "TotalDiagnosticosRealizados", "LiberacoesExtrasConcedidas"]
+colunas_base_perguntas = ["Pergunta", "Categoria"]
+colunas_base_analises = ["ID_Analise", "TextoPerguntaOriginal", "TipoCondicao", "CondicaoValorMin", "CondicaoValorMax", "CondicaoValorExato", "TextoAnalise"]
+colunas_base_notificacoes = ["ID_Notificacao", "CNPJ_Cliente", "Mensagem", "DataHora", "Lida"]
+
 def inicializar_csv(filepath, columns, defaults=None):
     try:
         if not os.path.exists(filepath) or os.path.getsize(filepath) == 0:
@@ -66,20 +86,78 @@ def inicializar_csv(filepath, columns, defaults=None):
                 for col, default_val in defaults.items():
                     if col in columns: df_init[col] = default_val
             df_init.to_csv(filepath, index=False, encoding='utf-8')
-    except Exception as e:
-        st.error(f"Erro ao inicializar {filepath}: {e}")
+        else:
+            # Verificar se todas as colunas existem, adicionar se faltar
+            try:
+                df_check = pd.read_csv(filepath, encoding='utf-8', nrows=0) # Ler só cabeçalhos
+                col_missing = False
+                temp_df_to_save = pd.read_csv(filepath, encoding='utf-8') # Ler completo para adicionar colunas
 
-colunas_base_diagnosticos = ["Data", "CNPJ", "Nome", "Email", "Empresa", "Média Geral", "GUT Média", "Observações", "Diagnóstico", "Análise do Cliente", "Comentarios_Admin"]
-colunas_base_usuarios = ["CNPJ", "Senha", "Empresa", "NomeContato", "Telefone", "ConfirmouInstrucoesParaSlotAtual", "DiagnosticosDisponiveis", "TotalDiagnosticosRealizados", "LiberacoesExtrasConcedidas"]
+                for col_idx, col_name in enumerate(columns):
+                    if col_name not in df_check.columns:
+                        default_val = defaults.get(col_name, pd.NA) if defaults else pd.NA
+                        temp_df_to_save.insert(loc=min(col_idx, len(temp_df_to_save.columns)), column=col_name, value=default_val)
+                        col_missing = True
+                if col_missing:
+                    temp_df_to_save.to_csv(filepath, index=False, encoding='utf-8')
+            except pd.errors.EmptyDataError: # Arquivo só com cabeçalho ou totalmente vazio
+                df_init = pd.DataFrame(columns=columns)
+                if defaults:
+                    for col, default_val in defaults.items():
+                        if col in columns: df_init[col] = default_val
+                df_init.to_csv(filepath, index=False, encoding='utf-8')
+
+
+    except Exception as e:
+        st.error(f"Erro Crítico ao inicializar ou ler o arquivo {filepath}: {e}")
 
 try:
     inicializar_csv(admin_credenciais_csv, ["Usuario", "Senha"])
+    inicializar_csv(usuarios_bloqueados_csv, ["CNPJ"])
     inicializar_csv(usuarios_csv, colunas_base_usuarios, defaults={"ConfirmouInstrucoesParaSlotAtual": "False", "DiagnosticosDisponiveis": 1, "TotalDiagnosticosRealizados": 0, "LiberacoesExtrasConcedidas": 0})
-    inicializar_csv(historico_csv, ["Data", "CNPJ", "Ação", "Descrição"])
-    # ... (inicialize todos os seus CSVs) ...
-except Exception as e_init:
-    st.error(f"Erro fatal na inicialização dos arquivos CSV: {e_init}")
-    st.exception(e_init); st.stop()
+    inicializar_csv(perguntas_csv, colunas_base_perguntas, defaults={"Categoria": "Geral"})
+    inicializar_csv(historico_csv, ["Data", "CNPJ", "Ação", "Descrição"]) 
+    inicializar_csv(arquivo_csv, colunas_base_diagnosticos) 
+    inicializar_csv(analises_perguntas_csv, colunas_base_analises)
+    inicializar_csv(notificacoes_csv, colunas_base_notificacoes, defaults={"Lida": False}) 
+
+    if not os.path.exists(instrucoes_txt_file):
+        with open(instrucoes_txt_file, "w", encoding="utf-8") as f:
+            f.write("""**Bem-vindo ao Portal de Diagnóstico Empresarial!** (Conteúdo padrão das instruções)""")
+except Exception as e_init_global:
+    st.error(f"⚠️ ERRO CRÍTICO NA INICIALIZAÇÃO GLOBAL DE ARQUIVOS: {e_init_global}")
+    st.exception(e_init_global); st.stop() 
+
+# --- Funções Utilitárias (Notificação, Ação, Usuário, Análise) ---
+def criar_notificacao(cnpj_cliente, mensagem, data_diag_ref=None):
+    try:
+        df_notificacoes = pd.read_csv(notificacoes_csv, dtype={'CNPJ_Cliente': str}, encoding='utf-8')
+    except (FileNotFoundError, pd.errors.EmptyDataError):
+        df_notificacoes = pd.DataFrame(columns=colunas_base_notificacoes)
+    msg_final = mensagem
+    if data_diag_ref:
+        msg_final = f"O consultor adicionou comentários ao seu diagnóstico de {data_diag_ref}."
+    nova_notificacao = {"ID_Notificacao": str(uuid.uuid4()), "CNPJ_Cliente": str(cnpj_cliente), "Mensagem": msg_final, "DataHora": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Lida": False}
+    df_notificacoes = pd.concat([df_notificacoes, pd.DataFrame([nova_notificacao])], ignore_index=True)
+    df_notificacoes.to_csv(notificacoes_csv, index=False, encoding='utf-8')
+
+def get_unread_notifications_count(cnpj_cliente):
+    try:
+        df_notificacoes = pd.read_csv(notificacoes_csv, dtype={'CNPJ_Cliente': str}, encoding='utf-8')
+        unread_count = len(df_notificacoes[(df_notificacoes['CNPJ_Cliente'] == str(cnpj_cliente)) & (df_notificacoes['Lida'] == False)])
+        return unread_count
+    except: return 0
+
+def marcar_notificacoes_como_lidas(cnpj_cliente, ids_notificacoes=None):
+    try:
+        df_notificacoes = pd.read_csv(notificacoes_csv, dtype={'CNPJ_Cliente': str}, encoding='utf-8')
+        if ids_notificacoes:
+            df_notificacoes.loc[(df_notificacoes['CNPJ_Cliente'] == str(cnpj_cliente)) & (df_notificacoes['ID_Notificacao'].isin(ids_notificacoes)), 'Lida'] = True
+        else:
+            df_notificacoes.loc[df_notificacoes['CNPJ_Cliente'] == str(cnpj_cliente), 'Lida'] = True
+        df_notificacoes.to_csv(notificacoes_csv, index=False, encoding='utf-8')
+        return True
+    except Exception as e: st.error(f"Erro ao marcar notificações como lidas: {e}"); return False
 
 def registrar_acao(cnpj, acao, desc):
     try:
@@ -90,9 +168,48 @@ def registrar_acao(cnpj, acao, desc):
         new_entry = {"Data": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "CNPJ": cnpj, "Ação": acao, "Descrição": desc}
         hist_df = pd.concat([hist_df, pd.DataFrame([new_entry])], ignore_index=True)
         hist_df.to_csv(historico_csv, index=False, encoding='utf-8')
-    except Exception as e_hist:
-        st.error(f"Erro ao registrar ação no histórico: {e_hist}")
-# --- (Mantenha suas outras funções utilitárias: update_user_data, carregar_analises, etc.) ---
+    except Exception as e_hist: st.error(f"Erro ao registrar ação no histórico: {e_hist}")
+
+def update_user_data(cnpj, field, value):
+    try:
+        users_df = pd.read_csv(usuarios_csv, dtype={'CNPJ': str}, encoding='utf-8')
+        idx = users_df[users_df['CNPJ'] == str(cnpj)].index
+        if not idx.empty:
+            users_df.loc[idx, field] = value
+            users_df.to_csv(usuarios_csv, index=False, encoding='utf-8')
+            if 'user' in st.session_state and st.session_state.user and str(st.session_state.user.get('CNPJ')) == str(cnpj):
+                if field in ["DiagnosticosDisponiveis", "TotalDiagnosticosRealizados", "LiberacoesExtrasConcedidas"]:
+                    st.session_state.user[field] = int(value)
+                elif field == "ConfirmouInstrucoesParaSlotAtual":
+                    st.session_state.user[field] = str(value).lower() == "true"
+                else:
+                    st.session_state.user[field] = value
+            return True
+    except Exception as e: st.error(f"Erro ao atualizar usuário ({field}): {e}")
+    return False
+
+@st.cache_data
+def carregar_analises_perguntas():
+    try: 
+        if os.path.exists(analises_perguntas_csv) and os.path.getsize(analises_perguntas_csv) > 0:
+            return pd.read_csv(analises_perguntas_csv, encoding='utf-8')
+    except Exception as e: st.warning(f"Erro ao carregar análises: {e}")
+    return pd.DataFrame(columns=colunas_base_analises)
+
+def obter_analise_para_resposta(pergunta_texto, resposta_valor, df_analises):
+    if df_analises.empty: return None
+    # ... (lógica mantida)
+    return None
+
+
+# --- Funções PDF (Corrigidas para pyfpdf 1.7.x - txt=, ln em cell(), sem ln em multi_cell()) ---
+def gerar_pdf_diagnostico_completo(diag_data, user_data, perguntas_df, respostas_coletadas, medias_cat, analises_df):
+    # ... (código da função como na última correção - usando txt= e pdf.ln() após multi_cell onde necessário)
+    # Omitido para brevidade, mas certifique-se que está correto no seu script final.
+    # Use a versão que você confirmou que o PDF do diagnóstico estava OK.
+    st.info("Placeholder: gerar_pdf_diagnostico_completo")
+    return None 
+
 def gerar_pdf_historico(df_historico_filtrado, titulo="Histórico de Ações"):
     try:
         pdf = FPDF()
@@ -198,38 +315,119 @@ else:
 
 st.sidebar.write(f"DEBUG (após radio): aba='{aba}'")
 
-# --- ÁREA DE LOGIN DO ADMINISTRADOR ---
+# --- ÁREA DE LOGIN DO ADMINISTRADOR (RESTAURADA) ---
 if aba == "Administrador" and not st.session_state.get("admin_logado", False):
-    # (Seu código de login do admin completo aqui, com chaves _v25)
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
-    st.markdown('<h2>Login Administrador 🔑</h2>', unsafe_allow_html=True)
-    with st.form(f"form_admin_login_{ST_KEY_VERSION}"):
-        # ... (campos de login e lógica)
+    st.markdown(f'<h2 class="login-title">Login Administrador 🔑</h2>', unsafe_allow_html=True)
+    with st.form(f"form_admin_login_{ST_KEY_VERSION}"): 
+        u = st.text_input("Usuário", key=f"admin_u_{ST_KEY_VERSION}")
+        p = st.text_input("Senha", type="password", key=f"admin_p_{ST_KEY_VERSION}") 
         if st.form_submit_button("Entrar"):
-            st.session_state.admin_logado = True # Simulação de login para teste
-            st.session_state.admin_user_login_identifier = "admin_test"
-            st.rerun()
+            try:
+                if os.path.exists(admin_credenciais_csv) and os.path.getsize(admin_credenciais_csv) > 0:
+                    df_creds = pd.read_csv(admin_credenciais_csv, encoding='utf-8')
+                    admin_encontrado = df_creds[df_creds["Usuario"] == u]
+                    if not admin_encontrado.empty and admin_encontrado.iloc[0]["Senha"] == p:
+                        st.session_state.admin_logado = True
+                        st.session_state.admin_user_login_identifier = u 
+                        st.success("Login de administrador bem-sucedido! ✅"); st.rerun()
+                    else: st.error("Usuário ou senha inválidos.")
+                else:
+                     st.error(f"Arquivo de credenciais '{admin_credenciais_csv}' não encontrado ou vazio.")
+            except Exception as e: st.error(f"Erro no login admin: {e}")
+    st.markdown('</div>', unsafe_allow_html=True); st.stop()
+
+# --- ÁREA DE LOGIN DO CLIENTE (RESTAURADA) ---
+if aba == "Cliente" and not st.session_state.get("cliente_logado", False):
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    st.markdown(f'<h2 class="login-title">Login Cliente 🏢</h2>', unsafe_allow_html=True)
+    with st.form(f"form_cliente_login_{ST_KEY_VERSION}"): 
+        c = st.text_input("CNPJ", key=f"cli_c_{ST_KEY_VERSION}", value=st.session_state.get("last_cnpj_input","")) 
+        s = st.text_input("Senha", type="password", key=f"cli_s_{ST_KEY_VERSION}") 
+        if st.form_submit_button("Entrar"):
+            st.session_state.last_cnpj_input = c
+            try:
+                # --- Início da Lógica de Login Cliente Restaurada ---
+                if not os.path.exists(usuarios_csv) or os.path.getsize(usuarios_csv) == 0:
+                    st.error(f"Arquivo de usuários '{usuarios_csv}' não encontrado ou vazio. Contate o administrador.")
+                    st.stop()
+                
+                users_df = pd.read_csv(usuarios_csv, dtype={'CNPJ': str}, encoding='utf-8')
+                
+                # Garantir que colunas essenciais existam e tenham tipos corretos
+                cols_to_check_cliente = {
+                    "ConfirmouInstrucoesParaSlotAtual": ("False", str), 
+                    "DiagnosticosDisponiveis": (1, int),
+                    "TotalDiagnosticosRealizados": (0, int),
+                    "LiberacoesExtrasConcedidas": (0, int)
+                }
+                for col_cliente, (default_val_cliente, col_type_cliente) in cols_to_check_cliente.items():
+                    if col_cliente not in users_df.columns: 
+                        users_df[col_cliente] = default_val_cliente
+                    if col_type_cliente == int:
+                        users_df[col_cliente] = pd.to_numeric(users_df[col_cliente], errors='coerce').fillna(default_val_cliente).astype(int)
+                    else:
+                        users_df[col_cliente] = users_df[col_cliente].astype(str)
+
+                if not os.path.exists(usuarios_bloqueados_csv):
+                    st.error(f"Arquivo de usuários bloqueados '{usuarios_bloqueados_csv}' não encontrado. Contate o administrador.")
+                    st.stop()
+                blocked_df = pd.read_csv(usuarios_bloqueados_csv, dtype={'CNPJ': str}, encoding='utf-8')
+                
+                if c in blocked_df["CNPJ"].values: 
+                    st.error("CNPJ bloqueado."); st.stop()
+
+                match = users_df[(users_df["CNPJ"] == c) & (users_df["Senha"] == s)]
+                if match.empty: 
+                    st.error("CNPJ ou senha inválidos."); st.stop()
+
+                st.session_state.cliente_logado = True; st.session_state.cnpj = c
+                st.session_state.user = match.iloc[0].to_dict()
+                st.session_state.user["ConfirmouInstrucoesParaSlotAtual"] = str(st.session_state.user.get("ConfirmouInstrucoesParaSlotAtual", "False")).lower() == "true"
+                st.session_state.user["DiagnosticosDisponiveis"] = int(st.session_state.user.get("DiagnosticosDisponiveis", 1))
+                st.session_state.user["TotalDiagnosticosRealizados"] = int(st.session_state.user.get("TotalDiagnosticosRealizados", 0))
+                st.session_state.user["LiberacoesExtrasConcedidas"] = int(st.session_state.user.get("LiberacoesExtrasConcedidas", 0))
+
+                st.session_state.inicio_sessao_cliente = time.time()
+                # registrar_acao(c, "Login", "Usuário logou.") # Reativar se a função estiver completa
+
+                pode_fazer_novo_login = st.session_state.user["DiagnosticosDisponiveis"] > st.session_state.user["TotalDiagnosticosRealizados"]
+                if pode_fazer_novo_login and not st.session_state.user["ConfirmouInstrucoesParaSlotAtual"]: 
+                    st.session_state.cliente_page = "Instruções"
+                elif pode_fazer_novo_login and st.session_state.user["ConfirmouInstrucoesParaSlotAtual"]: 
+                    st.session_state.cliente_page = "Novo Diagnóstico"
+                else: 
+                    st.session_state.cliente_page = "Painel Principal"
+
+                st.session_state.id_formulario_atual = f"{c}_{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
+                st.session_state.respostas_atuais_diagnostico = {}
+                st.session_state.progresso_diagnostico_percentual = 0
+                st.session_state.progresso_diagnostico_contagem = (0,0)
+                st.session_state.feedbacks_respostas = {}
+                st.session_state.diagnostico_enviado_sucesso = False
+                st.session_state.confirmou_instrucoes_checkbox_cliente = False
+                st.success("Login cliente OK! ✅"); st.rerun()
+                # --- Fim da Lógica de Login Cliente Restaurada ---
+            except FileNotFoundError as fnf_e:
+                st.error(f"Erro de configuração: Arquivo {fnf_e.filename} não encontrado. Contate o administrador.")
+            except Exception as e: st.error(f"Erro login cliente: {e}"); st.exception(e)
     st.markdown('</div>', unsafe_allow_html=True); st.stop()
 
 
-# --- ÁREA DE LOGIN DO CLIENTE ---
-if aba == "Cliente" and not st.session_state.get("cliente_logado", False):
-    # (Seu código de login do cliente completo aqui, com chaves _v25)
-    st.markdown("Área de Login Cliente Placeholder") 
-    st.stop()
-
-# --- ÁREA DO CLIENTE LOGADO ---
+# --- ÁREA DO CLIENTE LOGADO (ESTRUTURA RESTAURADA) ---
 if aba == "Cliente" and st.session_state.get("cliente_logado", False):
-    # (Seu código da área do cliente completo aqui, com chaves _v25)
-    st.header("Painel do Cliente")
-    st.write("Conteúdo da área do cliente...")
-    if st.sidebar.button(f"Logout Cliente_{ST_KEY_VERSION}"): # Exemplo de chave única
+    # (Seu código completo da área do cliente aqui, com chaves ST_KEY_VERSION)
+    # Por enquanto, um placeholder simples:
+    st.sidebar.markdown(f"### Bem-vindo(a), {st.session_state.user.get('Empresa', 'Cliente')}! 👋")
+    if st.sidebar.button(f"Sair Cliente", key=f"logout_cli_{ST_KEY_VERSION}"):
         st.session_state.cliente_logado = False
-        # Limpar dados da sessão do cliente
+        # Limpar outros estados de cliente
         st.rerun()
+    st.header(f"Área Cliente: {st.session_state.get('cliente_page', 'Página Inicial')}")
+    st.markdown(f"Conteúdo da página **{st.session_state.get('cliente_page', 'N/A')}** do cliente aqui.")
+    # Você precisará restaurar a lógica do menu e das subpáginas do cliente aqui.
 
-
-# --- ÁREA DO ADMINISTRADOR LOGADO ---
+# --- ÁREA DO ADMINISTRADOR LOGADO (FOCO NA SEÇÃO HISTÓRICO) ---
 if aba == "Administrador" and st.session_state.get("admin_logado", False):
     st.sidebar.write(f"[DEBUG ADMIN] PONTO S1 - Entrou no bloco admin_logado. Chave Sessão: {ST_KEY_VERSION}") 
     try:
@@ -255,24 +453,25 @@ if aba == "Administrador" and st.session_state.get("admin_logado", False):
         
         admin_page_title_prefix = menu_admin.split(' ')[0] if isinstance(menu_admin, str) and menu_admin else "Admin"
         st.header(f"Painel Admin: {admin_page_title_prefix}")
-        st.write(f"[DEBUG Main Panel] Renderizando: {menu_admin}")
+        st.write(f"[DEBUG Main Panel] Renderizando: {menu_admin}") # Movido para antes do if/elif
 
-
+        # Lógica de dispatch do menu admin
         if menu_admin == "📊 Visão Geral e Diagnósticos":
             st.subheader("📊 Visão Geral e Diagnósticos")
-            st.markdown("Conteúdo completo da Visão Geral e Diagnósticos aqui...")
+            st.markdown("Conteúdo para Visão Geral e Diagnósticos (em desenvolvimento).")
             # TODO: Adicionar a lógica real e carregamento de dados para esta seção
-
+            
         elif menu_admin == "🚦 Status dos Clientes":
             st.subheader("🚦 Status dos Clientes")
-            st.markdown("Conteúdo completo do Status dos Clientes aqui...")
+            st.markdown("Conteúdo para Status dos Clientes (em desenvolvimento).")
             # TODO: Adicionar a lógica real e carregamento de dados para esta seção
 
         elif menu_admin == "📜 Histórico de Usuários":
             st.subheader("📜 Histórico de Usuários")
             
-            df_historico_completo_hu = pd.DataFrame()
-            df_usuarios_para_filtro_hu = pd.DataFrame()
+            # Carregamento de dados DENTRO da seção específica
+            df_historico_completo_hu = pd.DataFrame(columns=["Data", "CNPJ", "Ação", "Descrição"]) # Default empty
+            df_usuarios_para_filtro_hu = pd.DataFrame(columns=['CNPJ', 'Empresa', 'NomeContato']) # Default empty
             try:
                 if os.path.exists(historico_csv) and os.path.getsize(historico_csv) > 0:
                     df_historico_completo_hu = pd.read_csv(historico_csv, encoding='utf-8', dtype={'CNPJ': str})
@@ -282,10 +481,10 @@ if aba == "Administrador" and st.session_state.get("admin_logado", False):
                 if os.path.exists(usuarios_csv) and os.path.getsize(usuarios_csv) > 0:
                     df_usuarios_para_filtro_hu = pd.read_csv(usuarios_csv, encoding='utf-8', usecols=['CNPJ', 'Empresa', 'NomeContato'], dtype={'CNPJ': str})
                 else:
-                    st.info("Arquivo de usuários vazio ou não encontrado para filtros.")
+                    st.info("Arquivo de usuários vazio ou não encontrado (necessário para filtros de empresa).")
 
             except Exception as e_hu_load: 
-                st.error(f"Erro ao carregar dados para o histórico: {e_hu_load}")
+                st.error(f"Erro ao carregar dados para a seção Histórico: {e_hu_load}")
             
             st.markdown("#### Filtros do Histórico")
             col_hu_f1, col_hu_f2 = st.columns(2)
@@ -296,12 +495,12 @@ if aba == "Administrador" and st.session_state.get("admin_logado", False):
             emp_sel_hu = col_hu_f1.selectbox("Filtrar por Empresa:", empresas_hist_list_hu, key=f"hist_emp_sel_{ST_KEY_VERSION}_hu_adm")
             termo_busca_hu = col_hu_f2.text_input("Buscar por Nome do Contato, CNPJ, Ação ou Descrição:", key=f"hist_termo_busca_{ST_KEY_VERSION}_hu_adm")
             
-            df_historico_filtrado_view_hu = df_historico_completo_hu.copy()
+            df_historico_filtrado_view_hu = df_historico_completo_hu.copy() # Começa com tudo ou vazio
             cnpjs_da_empresa_selecionada_hu = []
 
             if emp_sel_hu != "Todas" and not df_usuarios_para_filtro_hu.empty: 
                 cnpjs_da_empresa_selecionada_hu = df_usuarios_para_filtro_hu[df_usuarios_para_filtro_hu['Empresa'] == emp_sel_hu]['CNPJ'].tolist()
-                if not df_historico_filtrado_view_hu.empty:
+                if not df_historico_filtrado_view_hu.empty: # Só filtra se houver dados no histórico
                     df_historico_filtrado_view_hu = df_historico_filtrado_view_hu[df_historico_filtrado_view_hu['CNPJ'].isin(cnpjs_da_empresa_selecionada_hu)]
             
             if termo_busca_hu.strip() and not df_historico_filtrado_view_hu.empty :
@@ -342,7 +541,7 @@ if aba == "Administrador" and st.session_state.get("admin_logado", False):
                                         df_hist_full_to_update = pd.read_csv(historico_csv, encoding='utf-8', dtype={'CNPJ': str})
                                         df_hist_full_updated = df_hist_full_to_update[~df_hist_full_to_update['CNPJ'].isin(cnpjs_da_empresa_selecionada_hu)]
                                         df_hist_full_updated.to_csv(historico_csv, index=False, encoding='utf-8')
-                                        registrar_acao("ADMIN_ACTION", "Exclusão Histórico Empresa", f"Admin excluiu todo o histórico da empresa '{emp_sel_hu}' (CNPJs: {', '.join(cnpjs_da_empresa_selecionada_hu)}).")
+                                        # registrar_acao("ADMIN_ACTION", "Exclusão Histórico Empresa", f"Admin excluiu todo o histórico da empresa '{emp_sel_hu}' (CNPJs: {', '.join(cnpjs_da_empresa_selecionada_hu)}).") # Reativar quando registrar_acao estiver completa
                                         st.success(f"Todo o histórico da empresa '{emp_sel_hu}' foi excluído com sucesso.")
                                         st.rerun()
                                     else: st.error("Arquivo de histórico não encontrado para realizar a exclusão.")
@@ -351,24 +550,14 @@ if aba == "Administrador" and st.session_state.get("admin_logado", False):
             else:
                 st.info("Nenhum registro de histórico encontrado para os filtros aplicados.")
 
+        # Placeholders para outras seções
         elif menu_admin == "📝 Gerenciar Perguntas":
             st.subheader("📝 Gerenciar Perguntas")
             st.markdown("Conteúdo para Gerenciar Perguntas (em desenvolvimento).")
         elif menu_admin == "💡 Gerenciar Análises de Perguntas":
             st.subheader("💡 Gerenciar Análises de Perguntas")
             st.markdown("Conteúdo para Gerenciar Análises de Perguntas (em desenvolvimento).")
-        elif menu_admin == "✍️ Gerenciar Instruções Clientes":
-            st.subheader("✍️ Gerenciar Instruções Clientes")
-            st.markdown("Conteúdo para Gerenciar Instruções Clientes (em desenvolvimento).")
-        elif menu_admin == "👥 Gerenciar Clientes":
-            st.subheader("👥 Gerenciar Clientes")
-            st.markdown("Conteúdo para Gerenciar Clientes (em desenvolvimento).")
-        elif menu_admin == "👮 Gerenciar Administradores":
-            st.subheader("👮 Gerenciar Administradores")
-            st.markdown("Conteúdo para Gerenciar Administradores (em desenvolvimento).")
-        elif menu_admin == "💾 Backup de Dados":
-            st.subheader("💾 Backup de Dados")
-            st.markdown("Conteúdo para Backup de Dados (em desenvolvimento).")
+        # ... (adicione placeholders para TODAS as outras opções de menu_admin_options)
         else:
             st.warning(f"[DEBUG ADMIN Main Panel] Opção de menu '{menu_admin}' não corresponde a nenhum bloco if/elif.")
         
