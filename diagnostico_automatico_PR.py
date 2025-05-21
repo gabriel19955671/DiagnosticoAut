@@ -736,7 +736,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         st.session_state.force_sidebar_rerun_after_notif_read_v19 = False
         st.rerun()
 
-    # >>>>> CORREÇÃO APLICADA AQUI: <<<<<
+    # >>>>> CORREÇÃO APLICADA AQUI <<<<<
     if st.sidebar.button(⬅️ Sair do Portal Cliente", key="logout_cliente_v19", use_container_width=True):
         keys_to_clear = [k for k in st.session_state.keys() if k not in ['admin_logado', 'last_cnpj_input']]
         for key in keys_to_clear: del st.session_state[key]
@@ -1361,7 +1361,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
     st.sidebar.success("🟢 Admin Logado")
 
-    if st.sidebar.button(⬅️ Sair do Portal Cliente", key="logout_cliente_v19", use_container_width=True):
+    if st.sidebar.button("🚪 Sair do Painel Admin", key="logout_admin_v19", use_container_width=True):
         st.session_state.admin_logado = False
         st.toast("Logout de admin realizado.", icon="👋")
         st.rerun()
