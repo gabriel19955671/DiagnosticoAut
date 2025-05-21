@@ -13,14 +13,13 @@ import uuid
 
 st.set_page_config(page_title="Portal de Diagnóstico", layout="wide", initial_sidebar_state="expanded")
 
-# !!!!! PASSO DE DEPURAÇÃO MAIS IMPORTANTE !!!!!
-# !!!!! O BLOCO DE CSS ABAIXO ESTÁ COMENTADO. !!!!!
-# !!!!! TESTE O APLICATIVO COM ELE COMENTADO. !!!!!
-# !!!!! SE O CONTEÚDO APARECER, O PROBLEMA É O SEU CSS. !!!!!
+# !!!!! PASSO DE DEPURAÇÃO CRUCIAL !!!!!
+# !!!!! COMENTE O BLOCO DE CSS ABAIXO PARA TESTAR SE ELE ESTÁ CAUSANDO A INVISIBILIDADE !!!!!
+# !!!!! Se o conteúdo aparecer após comentar, o problema é 100% seu CSS. !!!!!
 """
 st.markdown(f\""" 
 <style>
-{'''
+{''' 
 .login-container { max-width: 400px; margin: 60px auto 0 auto; padding: 40px; border-radius: 8px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-family: 'Segoe UI', sans-serif; }
 .login-container h2 { text-align: center; margin-bottom: 30px; font-weight: 600; font-size: 26px; color: #2563eb; }
 .stButton>button { border-radius: 6px; background-color: #2563eb; color: white; font-weight: 500; padding: 0.5rem 1.2rem; margin-top: 0.5rem; }
@@ -46,47 +45,22 @@ st.title("🔒 Portal de Diagnóstico")
 admin_credenciais_csv = "admins.csv"
 usuarios_csv = "usuarios.csv"
 arquivo_csv = "diagnosticos_clientes.csv"
-usuarios_bloqueados_csv = "usuarios_bloqueados.csv"
-perguntas_csv = "perguntas_formulario.csv"
-historico_csv = "historico_clientes.csv"
-analises_perguntas_csv = "analises_perguntas.csv"
-notificacoes_csv = "notificacoes.csv"
-instrucoes_txt_file = "instrucoes_clientes.txt"
-LOGOS_DIR = "client_logos"
-ST_KEY_VERSION = "v26_css_test" # Chave atualizada
+# ... (resto das suas definições de arquivos)
+ST_KEY_VERSION = "v26_css_focus" 
 
-# --- Inicialização do Session State ---
-default_session_state = {
-    "admin_logado": False, "cliente_logado": False, "diagnostico_enviado_sucesso": False,
-    "inicio_sessao_cliente": None, "cliente_page": "Instruções", "cnpj": None, "user": None,
-    "admin_user_login_identifier": None, "last_cnpj_input": "" 
-} # Removido outras chaves não essenciais para este teste
+# --- Inicialização do Session State e Funções Utilitárias ---
+# --- COLOQUE O CÓDIGO COMPLETO DESSAS SEÇÕES AQUI (omitido por brevidade) ---
+# --- Certifique-se que inicializar_csv, registrar_acao, e as funções PDF estão corretas ---
+# Exemplo (mantenha suas versões completas):
+default_session_state = { "admin_logado": False, "cliente_logado": False, "admin_user_login_identifier": None, "last_cnpj_input":""} # Simplificado
 for key, value in default_session_state.items():
-    if key not in st.session_state:
-        st.session_state[key] = value
+    if key not in st.session_state: st.session_state[key] = value
+def inicializar_csv(filepath, columns, defaults=None): pass
+def registrar_acao(cnpj, acao, desc): pass
+def gerar_pdf_historico(df, titulo): st.info(f"Geraria PDF para: {titulo}"); return "dummy_path.pdf" # Placeholder
+# --- FIM DAS FUNÇÕES UTILITÁRIAS ---
 
-# --- Funções Utilitárias (Simples Placeholders para este teste) ---
-def sanitize_column_name(name): return str(name).replace(" ","_") 
-def pdf_safe_text_output(text): return str(text)
-def inicializar_csv(filepath, columns, defaults=None):
-    if not os.path.exists(filepath):
-        pd.DataFrame(columns=columns).to_csv(filepath, index=False, encoding='utf-8')
-        # st.sidebar.warning(f"Arquivo {filepath} criado.") # DEBUG
-# --- Fim das Funções Utilitárias Simplificadas ---
-
-try:
-    inicializar_csv(admin_credenciais_csv, ["Usuario", "Senha"])
-    # ... (inicialize outros CSVs essenciais para login se necessário) ...
-    if not (os.path.exists(admin_credenciais_csv) and os.path.getsize(admin_credenciais_csv) > 0):
-        # Criar admin padrão se não existir, para facilitar o teste
-        pd.DataFrame([{"Usuario": "admin", "Senha": "admin"}]).to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
-        st.sidebar.info("Admin padrão (admin/admin) criado para teste.")
-
-except Exception as e_init:
-    st.error(f"Erro fatal na inicialização dos arquivos CSV: {e_init}")
-    st.exception(e_init); st.stop()
-
-# --- Lógica de Login e Navegação Principal ---
+# --- Lógica de Login e Navegação Principal (Restaurada) ---
 if st.session_state.get("trigger_rerun_global"): 
     st.session_state.trigger_rerun_global = False; st.rerun()
 
@@ -100,9 +74,9 @@ else:
     aba = "Cliente"
 st.sidebar.write(f"DEBUG (após radio): aba='{aba}'")
 
-# --- ÁREA DE LOGIN DO ADMINISTRADOR (Usando lógica CSV) ---
+# --- ÁREA DE LOGIN DO ADMINISTRADOR (RESTAURADA) ---
 if aba == "Administrador" and not st.session_state.get("admin_logado", False):
-    st.markdown('<div class="login-container">', unsafe_allow_html=True) # Ainda pode ser afetado por CSS se não comentado
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
     st.markdown(f'<h2 class="login-title">Login Administrador 🔑</h2>', unsafe_allow_html=True)
     with st.form(f"form_admin_login_{ST_KEY_VERSION}"): 
         u = st.text_input("Usuário", key=f"admin_u_{ST_KEY_VERSION}")
@@ -122,20 +96,24 @@ if aba == "Administrador" and not st.session_state.get("admin_logado", False):
             except Exception as e: st.error(f"Erro no login admin: {e}")
     st.markdown('</div>', unsafe_allow_html=True); st.stop()
 
-# --- ÁREA DE LOGIN DO CLIENTE (Placeholder) ---
+# --- ÁREA DE LOGIN DO CLIENTE (RESTAURADA - coloque seu código completo) ---
 if aba == "Cliente" and not st.session_state.get("cliente_logado", False):
-    st.markdown("Área de Login Cliente Placeholder") 
-    st.stop()
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    st.markdown(f'<h2 class="login-title">Login Cliente 🏢</h2>', unsafe_allow_html=True)
+    # --- COLOQUE SEU FORMULÁRIO DE LOGIN DO CLIENTE E LÓGICA AQUI ---
+    st.markdown("Formulário de login do cliente aqui...") # Placeholder
+    st.markdown('</div>', unsafe_allow_html=True); st.stop()
 
-# --- ÁREA DO CLIENTE LOGADO (Placeholder) ---
+# --- ÁREA DO CLIENTE LOGADO (RESTAURADA - coloque seu código completo) ---
 if aba == "Cliente" and st.session_state.get("cliente_logado", False):
+    # --- COLOQUE O CÓDIGO COMPLETO DA ÁREA DO CLIENTE AQUI ---
     st.header(f"Painel Cliente Placeholder")
-    st.markdown("Conteúdo da área do cliente placeholder...")
-    if st.sidebar.button(f"Logout Cliente_{ST_KEY_VERSION}"):
+    st.markdown("Conteúdo da área do cliente...")
+    if st.sidebar.button(f"Logout Cliente {ST_KEY_VERSION}"): # Exemplo
         st.session_state.cliente_logado = False; st.rerun()
 
 
-# --- ÁREA DO ADMINISTRADOR LOGADO (FOCO NA RENDERIZAÇÃO BÁSICA) ---
+# --- ÁREA DO ADMINISTRADOR LOGADO (COM HISTÓRICO RESTAURADO E OUTROS PLACEHOLDERS) ---
 if aba == "Administrador" and st.session_state.get("admin_logado", False):
     st.sidebar.write(f"[DEBUG ADMIN] PONTO S1 - Entrou no bloco admin_logado.") 
     try:
@@ -157,70 +135,91 @@ if aba == "Administrador" and st.session_state.get("admin_logado", False):
             menu_admin_options, 
             key=f"admin_menu_selectbox_{ST_KEY_VERSION}_adm" 
         )
-        st.sidebar.info(f"[DEBUG Sidebar] Opção Selecionada: '{menu_admin}'")
+        st.sidebar.info(f"[DEBUG Sidebar] Opção: '{menu_admin}'")
         
-        # --- Conteúdo Principal (Main Panel) ---
-        st.write("[DEBUG Main Panel] PONTO MP0 - IMEDIATAMENTE ANTES DO HEADER") 
-
-        admin_page_title = "Painel Admin (Default Header)" # Default
-        if isinstance(menu_admin, str) and menu_admin:
-            try:
-                admin_page_title = f"Painel Admin: {menu_admin.split(' ')[0]}"
-            except IndexError: 
-                admin_page_title = f"Painel Admin: {menu_admin}"
-        st.header(admin_page_title)
-        st.write(f"[DEBUG Main Panel] PONTO MP1 - APÓS Header. Título: '{admin_page_title}'")
-
-        st.write(f"[DEBUG Main Panel] PONTO MP2 - Antes do dispatch. menu_admin = '{menu_admin}'")
+        admin_page_title_prefix = menu_admin.split(' ')[0] if isinstance(menu_admin, str) and menu_admin else "Admin"
+        st.header(f"Painel Admin: {admin_page_title_prefix}")
+        st.write(f"[DEBUG Main Panel] Renderizando: {menu_admin}")
 
         if menu_admin == "📊 Visão Geral e Diagnósticos":
             st.subheader("📊 Visão Geral e Diagnósticos")
-            st.markdown("Conteúdo placeholder para Visão Geral e Diagnósticos.")
+            st.markdown("Conteúdo para Visão Geral e Diagnósticos (em desenvolvimento).")
             
         elif menu_admin == "🚦 Status dos Clientes":
             st.subheader("🚦 Status dos Clientes")
-            st.markdown("Conteúdo placeholder para Status dos Clientes.")
+            st.markdown("Conteúdo para Status dos Clientes (em desenvolvimento).")
 
         elif menu_admin == "📜 Histórico de Usuários":
             st.subheader("📜 Histórico de Usuários")
-            st.markdown("Conteúdo placeholder para Histórico de Usuários.")
-            st.markdown("Se esta mensagem aparecer, o dispatch para Histórico está funcionando.")
-            if st.button(f"Botão Teste Histórico", key=f"btn_teste_hist_{ST_KEY_VERSION}"):
-                st.info("Botão de teste do histórico clicado.")
+            
+            df_historico_completo_hu = pd.DataFrame(columns=["Data", "CNPJ", "Ação", "Descrição"])
+            df_usuarios_para_filtro_hu = pd.DataFrame(columns=['CNPJ', 'Empresa', 'NomeContato'])
+            try:
+                if os.path.exists(historico_csv) and os.path.getsize(historico_csv) > 0:
+                    df_historico_completo_hu = pd.read_csv(historico_csv, encoding='utf-8', dtype={'CNPJ': str})
+                
+                if os.path.exists(usuarios_csv) and os.path.getsize(usuarios_csv) > 0: # Carregar para filtro de empresa
+                    df_usuarios_para_filtro_hu = pd.read_csv(usuarios_csv, encoding='utf-8', usecols=['CNPJ', 'Empresa', 'NomeContato'], dtype={'CNPJ': str})
+            except Exception as e_hu_load: 
+                st.error(f"Erro ao carregar dados para Histórico: {e_hu_load}")
+            
+            st.markdown("#### Filtros do Histórico")
+            col_hu_f1, col_hu_f2 = st.columns(2)
+            empresas_hist_list_hu = ["Todas"]
+            if not df_usuarios_para_filtro_hu.empty and 'Empresa' in df_usuarios_para_filtro_hu.columns: 
+                empresas_hist_list_hu.extend(sorted(df_usuarios_para_filtro_hu['Empresa'].astype(str).unique().tolist()))
+            
+            emp_sel_hu = col_hu_f1.selectbox("Filtrar por Empresa:", empresas_hist_list_hu, key=f"hist_emp_sel_{ST_KEY_VERSION}_hu_adm")
+            termo_busca_hu = col_hu_f2.text_input("Buscar em Descrição, Ação ou CNPJ:", key=f"hist_termo_busca_{ST_KEY_VERSION}_hu_adm")
+            
+            df_historico_filtrado_view_hu = df_historico_completo_hu.copy() 
+            cnpjs_da_empresa_selecionada_hu = []
 
+            if emp_sel_hu != "Todas" and not df_usuarios_para_filtro_hu.empty: 
+                cnpjs_da_empresa_selecionada_hu = df_usuarios_para_filtro_hu[df_usuarios_para_filtro_hu['Empresa'] == emp_sel_hu]['CNPJ'].tolist()
+                if not df_historico_filtrado_view_hu.empty:
+                    df_historico_filtrado_view_hu = df_historico_filtrado_view_hu[df_historico_filtrado_view_hu['CNPJ'].isin(cnpjs_da_empresa_selecionada_hu)]
+            
+            if termo_busca_hu.strip() and not df_historico_filtrado_view_hu.empty :
+                busca_lower_hu = termo_busca_hu.strip().lower()
+                df_historico_filtrado_view_hu = df_historico_filtrado_view_hu[
+                    df_historico_filtrado_view_hu['CNPJ'].astype(str).str.lower().str.contains(busca_lower_hu, na=False) | 
+                    df_historico_filtrado_view_hu['Ação'].astype(str).str.lower().str.contains(busca_lower_hu, na=False) | 
+                    df_historico_filtrado_view_hu['Descrição'].astype(str).str.lower().str.contains(busca_lower_hu, na=False)
+                ]
+            
+            st.markdown("#### Registros do Histórico")
+            if not df_historico_filtrado_view_hu.empty:
+                st.dataframe(df_historico_filtrado_view_hu.sort_values(by="Data", ascending=False))
+                if st.button("📄 Baixar Histórico Filtrado (PDF)", key=f"download_hist_filtrado_pdf_{ST_KEY_VERSION}_hu_adm"):
+                    # (A função gerar_pdf_historico deve estar completa e funcional)
+                    pdf_path_hist = gerar_pdf_historico(df_historico_filtrado_view_hu, f"Histórico - {emp_sel_hu}")
+                    if pdf_path_hist:
+                        with open(pdf_path_hist, "rb") as f_pdf_hist: 
+                            st.download_button(label="Download PDF Confirmado", data=f_pdf_hist, file_name=f"historico_{sanitize_column_name(emp_sel_hu)}.pdf", mime="application/pdf", key=f"confirm_download_hist_pdf_{ST_KEY_VERSION}_hu_adm")
+                        try: os.remove(pdf_path_hist) 
+                        except: pass
+                
+                if emp_sel_hu != "Todas" and not df_historico_filtrado_view_hu.empty and cnpjs_da_empresa_selecionada_hu:
+                    st.markdown("---")
+                    st.markdown(f"#### 🗑️ Resetar Histórico da Empresa: {emp_sel_hu}")
+                    # ... (lógica de exclusão como antes) ...
+            else:
+                st.info("Nenhum registro de histórico encontrado para os filtros aplicados.")
+
+        # Placeholders para outras seções
         elif menu_admin == "📝 Gerenciar Perguntas":
             st.subheader("📝 Gerenciar Perguntas")
-            st.markdown("Conteúdo placeholder para Gerenciar Perguntas.")
-
-        elif menu_admin == "💡 Gerenciar Análises de Perguntas":
-            st.subheader("💡 Gerenciar Análises de Perguntas")
-            st.markdown("Conteúdo placeholder para Gerenciar Análises de Perguntas.")
-            
-        elif menu_admin == "✍️ Gerenciar Instruções Clientes":
-            st.subheader("✍️ Gerenciar Instruções Clientes")
-            st.markdown("Conteúdo placeholder para Gerenciar Instruções Clientes.")
-
-        elif menu_admin == "👥 Gerenciar Clientes":
-            st.subheader("👥 Gerenciar Clientes")
-            st.markdown("Conteúdo placeholder para Gerenciar Clientes.")
-
-        elif menu_admin == "👮 Gerenciar Administradores":
-            st.subheader("👮 Gerenciar Administradores")
-            st.markdown("Conteúdo placeholder para Gerenciar Administradores.")
-
-        elif menu_admin == "💾 Backup de Dados":
-            st.subheader("💾 Backup de Dados")
-            st.markdown("Conteúdo placeholder para Backup de Dados.")
-        
+            st.markdown("Conteúdo para Gerenciar Perguntas (em desenvolvimento).")
+        # ... (adicione placeholders para TODAS as outras opções de menu_admin_options)
         else:
-            st.warning(f"[DEBUG Main Panel] Opção de menu '{menu_admin}' não corresponde a nenhum bloco if/elif.")
+            st.warning(f"[DEBUG ADMIN Main Panel] Opção de menu '{menu_admin}' não corresponde a nenhum bloco if/elif.")
         
-        st.write(f"[DEBUG Main Panel] PONTO MP3 - Após dispatch do menu") # Renomeado para MP3
+        st.write(f"[DEBUG ADMIN Main Panel] PONTO MP4 - Após dispatch do menu")
 
     except Exception as e_outer_admin_critical:
         st.error(f"Um erro crítico ocorreu na área administrativa: {e_outer_admin_critical}")
         st.exception(e_outer_admin_critical)
-        st.write(f"[DEBUG Main Panel] PONTO MP_EXCEPT - Dentro do except e_outer_admin_critical ({e_outer_admin_critical})") 
 
-if not st.session_state.get("admin_logado", False) and not st.session_state.get("cliente_logado", False) and ('aba' not in locals() or aba is None): # Verificação mais robusta para aba
+if not st.session_state.get("admin_logado", False) and not st.session_state.get("cliente_logado", False) and ('aba' not in locals() or aba is None):
     st.info("Fallback final: Selecione se você é Administrador ou Cliente para continuar.")
