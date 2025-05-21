@@ -44,7 +44,7 @@ analises_perguntas_csv = "analises_perguntas.csv"
 notificacoes_csv = "notificacoes.csv"
 instrucoes_txt_file = "instrucoes_clientes.txt"
 LOGOS_DIR = "client_logos"
-ST_KEY_VERSION = "v21"
+ST_KEY_VERSION = "v22"
 
 default_session_state = {
     "admin_logado": False, "cliente_logado": False, "diagnostico_enviado_sucesso": False,
@@ -358,42 +358,39 @@ def gerar_pdf_historico(df_historico_filtrado, titulo="Histórico de Ações"):
         if desc_width <= 0 : desc_width = page_width_effective * 0.3 
         col_widths_config["Descrição"] = max(20, desc_width) 
 
-        pdf.set_fill_color(200, 220, 255) # Definir cor de preenchimento para o cabeçalho
+        pdf.set_fill_color(200, 220, 255) # Definir cor de preenchimento para o cabeçalho uma vez
 
         for header in headers_to_print_hist:
-            pdf.cell(w=col_widths_config.get(header, 30), h=7, txt=pdf_safe_text_output(header), border=1, ln=0, align="C", fill=True) # fill=True aqui
+            pdf.cell(w=col_widths_config.get(header, 30), h=7, txt=pdf_safe_text_output(header), border=1, ln=0, align="C", fill=True)
         pdf.ln(7) 
-        # Não precisa restaurar fill_color se as células de dados não usarem fill=True
+        # Não é necessário restaurar a cor de preenchimento se as células de dados não usarem fill=True ou se definirem sua própria cor
 
         pdf.set_font("Arial", "", 8)
         line_height_for_multicell = 5 
 
         for _, row_data in df_historico_filtrado.iterrows():
             y_start_current_row = pdf.get_y()
-            max_cell_height_in_row = line_height_for_multicell
+            max_cell_height_in_row = line_height_for_multicell # Altura mínima
 
-            # Estimar altura da linha (simplificado)
             for header_key_calc in headers_to_print_hist:
                 cell_text_calc = str(row_data.get(header_key_calc, ""))
                 cell_w_calc = col_widths_config.get(header_key_calc, 30)
-                num_lines = 1 # Pelo menos uma linha
+                num_lines = 1
                 if cell_w_calc > 0 and pdf.get_string_width(cell_text_calc) > cell_w_calc:
-                    # Estimativa muito básica para contagem de linhas
                     try:
                         words = cell_text_calc.split(' ')
                         temp_line_for_calc = ""
                         num_l_calc = 1
                         for word in words:
-                            # Adicionar uma pequena margem para get_string_width
-                            if pdf.get_string_width(temp_line_for_calc + word + " ") > cell_w_calc - 2 : # -2 para pequena margem interna
+                            if pdf.get_string_width(temp_line_for_calc + word + " ") > cell_w_calc - 2 : 
                                 num_l_calc +=1
                                 temp_line_for_calc = word + " "
                             else:
                                 temp_line_for_calc += word + " "
                         num_lines = num_l_calc
-                    except: # Fallback
-                        num_lines = int(pdf.get_string_width(cell_text_calc) / cell_w_calc) + 1
-
+                    except: 
+                        num_lines = int(pdf.get_string_width(cell_text_calc) / cell_w_calc) + 1 if cell_w_calc > 0 else 1
+                
                 current_cell_content_height = num_lines * line_height_for_multicell
                 max_cell_height_in_row = max(max_cell_height_in_row, current_cell_content_height)
             
@@ -415,8 +412,8 @@ def gerar_pdf_historico(df_historico_filtrado, titulo="Histórico de Ações"):
                 cell_content = str(row_data.get(header_key_draw, ""))
                 cell_w = col_widths_config.get(header_key_draw, 30)
                 
-                pdf.rect(current_x, y_start_current_row, cell_w, current_row_total_height) # Desenha a borda/retângulo
-                pdf.multi_cell(w=cell_w, h=line_height_for_multicell, txt=pdf_safe_text_output(cell_content), border=0, align="L", ln=0) # fill=False por padrão
+                pdf.rect(current_x, y_start_current_row, cell_w, current_row_total_height)
+                pdf.multi_cell(w=cell_w, h=line_height_for_multicell, txt=pdf_safe_text_output(cell_content), border=0, align="L", ln=0) 
                 current_x += cell_w 
             
             pdf.set_y(y_start_current_row + current_row_total_height)
@@ -464,14 +461,88 @@ if aba == "Administrador" and not st.session_state.admin_logado:
 
 # --- ÁREA DE LOGIN DO CLIENTE ---
 if aba == "Cliente" and not st.session_state.cliente_logado:
-    # ... (Código de login do cliente com chaves _v21 - OMITIDO PARA BREVIDADE)
-    pass
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    st.markdown('<h2 class="login-title">Login Cliente 🏢</h2>', unsafe_allow_html=True)
+    with st.form(f"form_cliente_login_{ST_KEY_VERSION}"): 
+        c = st.text_input("CNPJ", key=f"cli_c_{ST_KEY_VERSION}", value=st.session_state.get("last_cnpj_input","")) 
+        s = st.text_input("Senha", type="password", key=f"cli_s_{ST_KEY_VERSION}") 
+        if st.form_submit_button("Entrar"):
+            st.session_state.last_cnpj_input = c
+            try:
+                users_df = pd.read_csv(usuarios_csv, dtype={'CNPJ': str}, encoding='utf-8')
+                for col, default_val_user, col_type in [
+                    ("ConfirmouInstrucoesParaSlotAtual", "False", str),
+                    ("DiagnosticosDisponiveis", 1, int),
+                    ("TotalDiagnosticosRealizados", 0, int),
+                    ("LiberacoesExtrasConcedidas", 0, int)
+                ]:
+                    if col not in users_df.columns: users_df[col] = default_val_user
+                    if col_type == int:
+                        users_df[col] = pd.to_numeric(users_df[col], errors='coerce').fillna(default_val_user).astype(int)
+                    else:
+                        users_df[col] = users_df[col].astype(str)
+
+                blocked_df = pd.read_csv(usuarios_bloqueados_csv, dtype={'CNPJ': str}, encoding='utf-8')
+                if c in blocked_df["CNPJ"].values: st.error("CNPJ bloqueado."); st.stop()
+
+                match = users_df[(users_df["CNPJ"] == c) & (users_df["Senha"] == s)]
+                if match.empty: st.error("CNPJ ou senha inválidos."); st.stop()
+
+                st.session_state.cliente_logado = True; st.session_state.cnpj = c
+                st.session_state.user = match.iloc[0].to_dict()
+                # ... (resto da lógica de login do cliente) ...
+                st.session_state.user["ConfirmouInstrucoesParaSlotAtual"] = str(st.session_state.user.get("ConfirmouInstrucoesParaSlotAtual", "False")).lower() == "true"
+                st.session_state.user["DiagnosticosDisponiveis"] = int(st.session_state.user.get("DiagnosticosDisponiveis", 1))
+                st.session_state.user["TotalDiagnosticosRealizados"] = int(st.session_state.user.get("TotalDiagnosticosRealizados", 0))
+                st.session_state.user["LiberacoesExtrasConcedidas"] = int(st.session_state.user.get("LiberacoesExtrasConcedidas", 0))
+                st.session_state.inicio_sessao_cliente = time.time()
+                registrar_acao(c, "Login", "Usuário logou.")
+                pode_fazer_novo_login = st.session_state.user["DiagnosticosDisponiveis"] > st.session_state.user["TotalDiagnosticosRealizados"]
+                if pode_fazer_novo_login and not st.session_state.user["ConfirmouInstrucoesParaSlotAtual"]: st.session_state.cliente_page = "Instruções"
+                elif pode_fazer_novo_login and st.session_state.user["ConfirmouInstrucoesParaSlotAtual"]: st.session_state.cliente_page = "Novo Diagnóstico"
+                else: st.session_state.cliente_page = "Painel Principal"
+                st.session_state.id_formulario_atual = f"{c}_{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
+                st.session_state.respostas_atuais_diagnostico = {}; st.session_state.progresso_diagnostico_percentual = 0; st.session_state.progresso_diagnostico_contagem = (0,0); st.session_state.feedbacks_respostas = {}; st.session_state.diagnostico_enviado_sucesso = False; st.session_state.confirmou_instrucoes_checkbox_cliente = False
+                st.success("Login cliente OK! ✅"); st.rerun()
+            except FileNotFoundError as fnf_e:
+                st.error(f"Erro de configuração: Arquivo {fnf_e.filename} não encontrado. Contate o administrador.")
+            except Exception as e: st.error(f"Erro login cliente: {e}"); st.exception(e)
+    st.markdown('</div>', unsafe_allow_html=True); st.stop()
 
 # --- ÁREA DO CLIENTE LOGADO ---
 if aba == "Cliente" and st.session_state.cliente_logado:
-    # ... (Código da área do cliente com chaves _v21 - OMITIDO PARA BREVIDADE)
+    # ... (Lógica da área do cliente com chaves _v21 - OMITIDO PARA BREVIDADE)
     # Certifique-se de atualizar todas as chaves de widget aqui para f"..._{ST_KEY_VERSION}"
-    pass
+    # Por exemplo, a lógica do menu:
+    st.sidebar.markdown(f"### Bem-vindo(a), {st.session_state.user.get('Empresa', 'Cliente')}! 👋")
+    # ... (expander de perfil) ...
+    unread_notif_count_val = get_unread_notifications_count(st.session_state.cnpj)
+    notif_menu_label_val = "🔔 Notificações"
+    if unread_notif_count_val > 0: notif_menu_label_val = f"🔔 Notificações ({unread_notif_count_val})"
+    menu_options_cli_val = ["📖 Instruções", "📝 Novo Diagnóstico", "📊 Painel Principal", notif_menu_label_val]
+    # ... (lógica para determinar current_idx_cli_val) ...
+    try: current_idx_cli_val = menu_options_cli_val.index(st.session_state.get("cliente_page", "Instruções")) # Simplificado
+    except ValueError: current_idx_cli_val = 0 
+    selected_page_cli_raw_val = st.sidebar.radio("Menu Cliente", menu_options_cli_val, index=current_idx_cli_val, key=f"cli_menu_{ST_KEY_VERSION}") 
+    # ... (resto da lógica do menu cliente e páginas)
+    # O conteúdo específico de cada página do cliente (Instruções, Painel Principal, etc.)
+    # foi omitido aqui, mas deve usar chaves com ST_KEY_VERSION.
+    if st.session_state.cliente_page == "Instruções":
+        st.subheader("📖 Instruções do Sistema de Diagnóstico")
+        st.markdown("Conteúdo da página de instruções aqui...")
+        # (Exemplo de chave)
+        st.checkbox("Li e concordo", key=f"cliente_inst_check_{ST_KEY_VERSION}")
+    elif st.session_state.cliente_page == "Painel Principal":
+        st.subheader("📊 Painel Principal do Cliente")
+        st.markdown("Conteúdo do painel principal aqui...")
+    elif st.session_state.cliente_page == "Novo Diagnóstico":
+        st.subheader("📝 Formulário de Novo Diagnóstico")
+        st.markdown("Conteúdo do novo diagnóstico aqui...")
+    elif st.session_state.cliente_page == "Notificações":
+        st.subheader("🔔 Minhas Notificações")
+        st.markdown("Conteúdo das notificações aqui...")
+    pass # Fim da área do cliente (omitida para brevidade)
+
 
 # --- ÁREA DO ADMINISTRADOR LOGADO ---
 if aba == "Administrador" and st.session_state.admin_logado:
@@ -502,7 +573,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                     if dtype_col == int: df_usuarios_admin_temp_load[col] = pd.to_numeric(df_usuarios_admin_temp_load[col], errors='coerce').fillna(default).astype(int)
                     else: df_usuarios_admin_temp_load[col] = df_usuarios_admin_temp_load[col].astype(str)
                 df_usuarios_admin_geral = df_usuarios_admin_temp_load
-        except FileNotFoundError: st.sidebar.error(f"Arquivo de usuários '{usuarios_csv}' não encontrado.")
+        except FileNotFoundError: st.sidebar.warning(f"Arquivo de usuários '{usuarios_csv}' não encontrado.") # Mudado para warning
         except Exception as e_load_users_adm_global: st.sidebar.error(f"Erro ao carregar usuários para admin: {e_load_users_adm_global}")
 
         diagnosticos_df_admin_orig_view = pd.DataFrame() 
@@ -516,11 +587,20 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 if not diagnosticos_df_admin_orig_view.empty: admin_data_carregada_view_sucesso = True
             except Exception as e_adm_load_diag: 
                 st.error(f"ERRO AO CARREGAR ARQUIVO DE DIAGNÓSTICOS ('{arquivo_csv}'): {e_adm_load_diag}")
-                # st.exception(e_adm_load_diag) # Consider removing st.exception if it halts too early
+                # Não usar st.exception() aqui para não parar o script completamente, permitindo que outras partes do menu funcionem.
 
-        # Lógica de dispatch do menu admin
         try:
-            if menu_admin == "📜 Histórico de Usuários":
+            if menu_admin == "📊 Visão Geral e Diagnósticos":
+                st.subheader("Visão Geral e Indicadores de Diagnósticos")
+                # ... (Lógica completa desta seção com chaves ST_KEY_VERSION)
+                st.markdown("Conteúdo da Visão Geral e Diagnósticos aqui...")
+            
+            elif menu_admin == "🚦 Status dos Clientes":
+                st.subheader("Status de Diagnósticos dos Clientes")
+                # ... (Lógica completa desta seção com chaves ST_KEY_VERSION)
+                st.markdown("Conteúdo do Status dos Clientes aqui...")
+
+            elif menu_admin == "📜 Histórico de Usuários":
                 st.subheader("📜 Histórico de Ações")
                 df_historico_completo_hu = pd.DataFrame()
                 df_usuarios_para_filtro_hu = pd.DataFrame()
@@ -601,38 +681,36 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 else:
                     st.info("Nenhum registro de histórico encontrado para os filtros aplicados.")
             
-            # Adicionar stubs para outras seções do admin para que o NameError não ocorra
-            # se o código para elas for omitido na resposta, mas o menu_admin as referenciar.
-            elif menu_admin == "📊 Visão Geral e Diagnósticos":
-                st.write("Conteúdo de Visão Geral e Diagnósticos (a ser preenchido/revisado).")
-                # Coloque aqui a lógica completa para esta seção, com chaves _v21
-            elif menu_admin == "🚦 Status dos Clientes":
-                st.write("Conteúdo de Status dos Clientes (a ser preenchido/revisado).")
-                # Coloque aqui a lógica completa para esta seção, com chaves _v21
             elif menu_admin == "📝 Gerenciar Perguntas":
-                st.write("Conteúdo de Gerenciar Perguntas (a ser preenchido/revisado).")
-                # Coloque aqui a lógica completa para esta seção, com chaves _v21
+                st.subheader("Gerenciar Perguntas do Diagnóstico")
+                st.markdown("Conteúdo de Gerenciar Perguntas aqui...")
+                # ... (Lógica completa desta seção com chaves ST_KEY_VERSION)
             elif menu_admin == "💡 Gerenciar Análises de Perguntas":
-                st.write("Conteúdo de Gerenciar Análises de Perguntas (a ser preenchido/revisado).")
-                # Coloque aqui a lógica completa para esta seção, com chaves _v21
+                st.subheader("Gerenciar Análises Vinculadas às Perguntas")
+                st.markdown("Conteúdo de Gerenciar Análises aqui...")
+                # ... (Lógica completa desta seção com chaves ST_KEY_VERSION)
             elif menu_admin == "✍️ Gerenciar Instruções Clientes":
-                st.write("Conteúdo de Gerenciar Instruções Clientes (a ser preenchido/revisado).")
-                # Coloque aqui a lógica completa para esta seção, com chaves _v21
+                st.subheader("Gerenciar Instruções para Clientes")
+                st.markdown("Conteúdo de Gerenciar Instruções aqui...")
+                # ... (Lógica completa desta seção com chaves ST_KEY_VERSION)
             elif menu_admin == "👥 Gerenciar Clientes":
-                st.write("Conteúdo de Gerenciar Clientes (a ser preenchido/revisado).")
-                # Coloque aqui a lógica completa para esta seção, com chaves _v21
+                st.subheader("Gerenciar Clientes")
+                st.markdown("Conteúdo de Gerenciar Clientes aqui...")
+                # ... (Lógica completa desta seção com chaves ST_KEY_VERSION)
             elif menu_admin == "👮 Gerenciar Administradores":
-                st.write("Conteúdo de Gerenciar Administradores (a ser preenchido/revisado).")
-                # Coloque aqui a lógica completa para esta seção, com chaves _v21
+                st.subheader("Gerenciar Administradores")
+                st.markdown("Conteúdo de Gerenciar Administradores aqui...")
+                # ... (Lógica completa desta seção com chaves ST_KEY_VERSION)
             elif menu_admin == "💾 Backup de Dados":
-                st.write("Conteúdo de Backup de Dados (a ser preenchido/revisado).")
-                # Coloque aqui a lógica completa para esta seção, com chaves _v21
+                st.subheader("Backup de Dados do Sistema")
+                st.markdown("Conteúdo de Backup de Dados aqui...")
+                # ... (Lógica completa desta seção com chaves ST_KEY_VERSION)
             else:
-                st.warning(f"Opção de menu '{menu_admin}' não reconhecida.")
+                st.warning(f"Opção de menu '{menu_admin}' não reconhecida ou em desenvolvimento.")
 
         except Exception as e_admin_menu_dispatch:
             st.error(f"Ocorreu um erro na funcionalidade '{menu_admin}': {e_admin_menu_dispatch}")
-            st.exception(e_admin_menu_dispatch) 
+            # st.exception(e_admin_menu_dispatch) # Mostrar o traceback pode ajudar a depurar
             
     except Exception as e_outer_admin_critical:
         st.error(f"Um erro crítico e inesperado ocorreu na área administrativa: {e_outer_admin_critical}")
