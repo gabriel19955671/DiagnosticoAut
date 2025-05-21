@@ -736,7 +736,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         st.session_state.force_sidebar_rerun_after_notif_read_v19 = False
         st.rerun()
 
-    # CORREÇÃO APLICADA AQUI:
+    # >>>>> CORREÇÃO APLICADA AQUI: <<<<<
     if st.sidebar.button(⬅️ Sair do Portal Cliente", key="logout_cliente_v19", use_container_width=True):
         keys_to_clear = [k for k in st.session_state.keys() if k not in ['admin_logado', 'last_cnpj_input']]
         for key in keys_to_clear: del st.session_state[key]
@@ -850,7 +850,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         df_cliente_diags_raw = df_antigos[df_antigos["CNPJ"] == st.session_state.cnpj]
 
         if not df_cliente_diags_raw.empty:
-            df_cliente_diags = df_cliente_diags_raw.sort_values(by="Data", ascending=False).copy() # Use .copy()
+            df_cliente_diags = df_cliente_diags_raw.sort_values(by="Data", ascending=False).copy() 
             latest_diag_data = df_cliente_diags.iloc[0].to_dict()
 
             st.markdown("#### 📊 Visão Geral do Último Diagnóstico")
@@ -945,8 +945,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                 
                 for idx_row_diag, row_diag_data in df_cliente_diags.iterrows():
                     with st.expander(f"📅 {row_diag_data['Data']} - {row_diag_data['Empresa']}"):
-                        # ... (Conteúdo do expander para cada diagnóstico antigo - como na versão anterior)
-                        st.markdown('<div class="custom-card" style="padding-top: 10px; padding-bottom: 10px;">', unsafe_allow_html=True) # CARD INÍCIO
+                        st.markdown('<div class="custom-card" style="padding-top: 10px; padding-bottom: 10px;">', unsafe_allow_html=True)
                         cols_metricas = st.columns(2)
                         cols_metricas[0].metric("Média Geral", f"{pd.to_numeric(row_diag_data.get('Média Geral'), errors='coerce'):.2f}" if pd.notna(row_diag_data.get('Média Geral')) else "N/A")
                         cols_metricas[1].metric("GUT Média (G*U*T)", f"{pd.to_numeric(row_diag_data.get('GUT Média'), errors='coerce'):.2f}" if pd.notna(row_diag_data.get('GUT Média')) else "N/A")
@@ -1456,7 +1455,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         total_clientes_cadastrados_vg = len(df_usuarios_admin_geral) if not df_usuarios_admin_geral.empty else 0
         kpi_cols_v19[0].metric("👥 Clientes Cadastrados", total_clientes_cadastrados_vg)
 
-        clientes_sem_comentario_adm, clientes_com_comentario_adm = 0, 0 # Inicializa
+        clientes_sem_comentario_adm, clientes_com_comentario_adm = 0, 0
         if admin_data_carregada_view_sucesso:
             total_diagnosticos_sistema_vg = len(diagnosticos_df_admin_orig_view)
             kpi_cols_v19[1].metric("📋 Diagnósticos Realizados", total_diagnosticos_sistema_vg)
