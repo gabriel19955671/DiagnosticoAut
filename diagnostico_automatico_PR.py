@@ -1361,7 +1361,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
     st.sidebar.success("🟢 Admin Logado")
 
-    if st.sidebar.button("🚪 Sair do Painel Admin", key="logout_admin_v19", use_container_width=True):
+    if st.sidebar.button(⬅️ Sair do Portal Cliente", key="logout_cliente_v19", use_container_width=True):
         st.session_state.admin_logado = False
         st.toast("Logout de admin realizado.", icon="👋")
         st.rerun()
