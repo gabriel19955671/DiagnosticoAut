@@ -558,8 +558,8 @@ if aba == "Cliente" and not st.session_state.cliente_logado:
 
                 pode_fazer_novo_login = st.session_state.user["DiagnosticosDisponiveis"] > st.session_state.user["TotalDiagnosticosRealizados"]
                 st.session_state.cliente_page = "Instruções" if not st.session_state.user["JaVisualizouInstrucoes"] \
-                                                else ("Novo Diagnóstico" if pode_fazer_novo_login \
-                                                else "Painel Principal")
+                                                 else ("Novo Diagnóstico" if pode_fazer_novo_login \
+                                                 else "Painel Principal")
 
                 st.session_state.id_formulario_atual = f"{c}_{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
                 st.session_state.respostas_atuais_diagnostico = {}
@@ -624,9 +624,9 @@ if aba == "Cliente" and st.session_state.cliente_logado:
     for key_page, val_page_display in menu_options_cli_map.items():
         if val_page_display == selected_page_cli_raw: # Compara com o valor que pode ter o contador
             if key_page == "Notificações": # Caso especial para notificações
-                 selected_page_cli_clean = "Notificações"
+                selected_page_cli_clean = "Notificações"
             else:
-                 selected_page_cli_clean = key_page
+                selected_page_cli_clean = key_page
             break
     
     if selected_page_cli_clean and selected_page_cli_clean != st.session_state.cliente_page :
@@ -635,7 +635,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         st.rerun()
 
 
-    if st.sidebar.button(⬅️ Sair do Portal Cliente", key="logout_cliente_v19", use_container_width=True):
+    if st.sidebar.button("Sair do Portal Cliente", icon="⬅️", key="logout_cliente_v19", use_container_width=True):
         keys_to_clear = [k for k in st.session_state.keys() if k not in ['admin_logado', 'last_cnpj_input']]
         for key in keys_to_clear: del st.session_state[key]
         for key_d, value_d in default_session_state.items():
@@ -651,9 +651,9 @@ if aba == "Cliente" and st.session_state.cliente_logado:
             with open(instrucoes_custom_path, "r", encoding="utf-8") as f:
                 instrucoes_content_md = f.read()
         elif os.path.exists(instrucoes_default_path):
-             with open(instrucoes_default_path, "r", encoding="utf-8") as f:
+            with open(instrucoes_default_path, "r", encoding="utf-8") as f:
                 instrucoes_content_md = f.read()
-             st.caption("Exibindo instruções padrão. O administrador pode personalizar este texto.")
+            st.caption("Exibindo instruções padrão. O administrador pode personalizar este texto.")
         else:
             instrucoes_content_md = "As instruções não estão disponíveis no momento. Por favor, contate o administrador."
         st.markdown(instrucoes_content_md, unsafe_allow_html=True)
@@ -666,14 +666,14 @@ if aba == "Cliente" and st.session_state.cliente_logado:
             st.rerun()
 
     elif st.session_state.cliente_page == "Notificações":
-        st.subheader(menu_options_cli_map["Notificações"])
+        st.subheader(menu_options_cli_map["Notificações"].split(" (")[0]) # Remove count for header
         ids_para_marcar_como_lidas_on_display = []
         try:
             df_notificacoes_todas = pd.read_csv(notificacoes_csv, dtype={'CNPJ_Cliente': str})
             if not df_notificacoes_todas.empty and 'Lida' in df_notificacoes_todas.columns:
                 df_notificacoes_todas['Lida'] = df_notificacoes_todas['Lida'].astype(str).str.lower().map({'true': True, 'false': False, '': False, 'nan': False}).fillna(False)
             else:
-                 df_notificacoes_todas = pd.DataFrame(columns=colunas_base_notificacoes)
+                df_notificacoes_todas = pd.DataFrame(columns=colunas_base_notificacoes)
 
             minhas_notificacoes = df_notificacoes_todas[
                 df_notificacoes_todas["CNPJ_Cliente"] == st.session_state.cnpj
@@ -713,7 +713,6 @@ if aba == "Cliente" and st.session_state.cliente_logado:
 
 
     elif st.session_state.cliente_page == "Painel Principal":
-        # ... (código do Painel Principal, incluindo os novos gráficos)
         st.subheader(menu_options_cli_map["Painel Principal"])
         if st.session_state.diagnostico_enviado_sucesso:
             st.success("🎯 Seu último diagnóstico foi enviado e processado com sucesso!")
@@ -790,7 +789,6 @@ if aba == "Cliente" and st.session_state.cliente_logado:
             st.divider()
 
         st.markdown("#### 📁 Diagnósticos Anteriores")
-        # ... (código para exibir diagnósticos anteriores, igual à v18, com chaves _v19) ...
         try:
             if df_cliente_diags_raw.empty: st.info("Nenhum diagnóstico anterior.")
             else:
@@ -863,10 +861,10 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                             if pdf_path_antigo:
                                 with open(pdf_path_antigo, "rb") as f_antigo:
                                     st.download_button("Clique para Baixar", f_antigo,
-                                                      file_name=f"diag_{sanitize_column_name(row_diag_data['Empresa'])}_{str(row_diag_data['Data']).replace(':','-').replace(' ','_')}.pdf",
-                                                      mime="application/pdf",
-                                                      key=f"dl_confirm_antigo_v19_{idx_row_diag}_{time.time()}",
-                                                      icon="📄")
+                                                        file_name=f"diag_{sanitize_column_name(row_diag_data['Empresa'])}_{str(row_diag_data['Data']).replace(':','-').replace(' ','_')}.pdf",
+                                                        mime="application/pdf",
+                                                        key=f"dl_confirm_antigo_v19_{idx_row_diag}_{time.time()}",
+                                                        icon="📄")
                                 registrar_acao(st.session_state.cnpj, "Download PDF (Painel)", f"Baixou PDF de {row_diag_data['Data']}")
                             else: st.error("Erro ao gerar PDF para este diagnóstico.")
                         st.markdown('</div>', unsafe_allow_html=True)
@@ -1174,7 +1172,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
     st.sidebar.success("🟢 Admin Logado")
 
-    if st.sidebar.button("🚪 Sair do Painel Admin", key="logout_admin_v19", use_container_width=True):
+    if st.sidebar.button("Sair do Painel Admin", icon="🚪", key="logout_admin_v19", use_container_width=True):
         st.session_state.admin_logado = False
         st.toast("Logout de admin realizado.", icon="👋")
         st.rerun()
@@ -1246,7 +1244,6 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
 
     if menu_admin == "Visão Geral e Diagnósticos":
-        # ... (código da Visão Geral, incluindo Dashboards, igual à v18, com chaves _v19) ...
         diagnosticos_df_admin_orig_view = pd.DataFrame()
         admin_data_carregada_view_sucesso = False
 
@@ -1516,7 +1513,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             key="instrucoes_editor_v19"
         )
 
-        if st.button("💾 Salvar Instruções", key="save_instrucoes_v19", icon="💾", use_container_width=True):
+        if st.button("Salvar Instruções", key="save_instrucoes_v19", icon="💾", use_container_width=True):
             try:
                 with open(instrucoes_custom_path, "w", encoding="utf-8") as f:
                     f.write(edited_text)
@@ -1525,11 +1522,6 @@ if aba == "Administrador" and st.session_state.admin_logado:
             except Exception as e_save_instr:
                 st.error(f"Erro ao salvar as instruções: {e_save_instr}")
 
-    # ... (Restante das seções admin: Histórico, Gerenciar Perguntas, Análises, Clientes, Admins)
-    # Certifique-se de que as chaves dos widgets nessas seções também sejam atualizadas para _v19 para consistência.
-    # O código para essas seções é similar ao da versão _v18, apenas com as chaves atualizadas.
-    # Por brevidade, vou omitir a repetição dessas seções aqui, mas elas devem seguir o mesmo padrão de atualização de chaves.
-    # Exemplo para "Histórico de Usuários":
     elif menu_admin == "Histórico de Usuários":
         try:
             df_historico_completo_hu = pd.read_csv(historico_csv, encoding='utf-8', dtype={'CNPJ': str})
@@ -1579,13 +1571,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         else:
             st.info("Nenhum registro de histórico encontrado para os filtros aplicados.")
 
-    # ... (Continue para as outras seções admin: "Gerenciar Perguntas", "Gerenciar Análises...", "Gerenciar Clientes", "Gerenciar Administradores")
-    # Lembre-se de atualizar as chaves dos widgets para _v19 em cada uma dessas seções.
-    # Exemplo para Gerenciar Perguntas (apenas a parte da chave):
     elif menu_admin == "Gerenciar Perguntas":
-        # ... (código da aba)
-        # novo_p_text_admin = cols_edit_perg[0].text_area("Texto da Pergunta:", value=str(row_p_admin["Pergunta"]), key=f"edit_p_txt_v19_gp_{i_p_admin}", height=100)
-        # (e assim por diante para todas as chaves)
         tabs_perg_admin = st.tabs(["📋 Perguntas Atuais", "➕ Adicionar Nova Pergunta"])
         try:
             perguntas_df_admin_gp = pd.read_csv(perguntas_csv, encoding='utf-8')
@@ -1621,7 +1607,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                                 perguntas_df_admin_gp = perguntas_df_admin_gp.drop(i_p_admin).reset_index(drop=True)
                                 perguntas_df_admin_gp.to_csv(perguntas_csv, index=False, encoding='utf-8')
                                 st.toast(f"Pergunta {i_p_admin} removida.", icon="🗑️"); st.rerun()
-                        st.divider()
+                    st.divider()
         with tabs_perg_admin[1]:
             with st.form("form_nova_pergunta_admin_v19_gp"):
                 st.subheader("➕ Adicionar Nova Pergunta")
