@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime, date
 import os
 import time
-from fpdf import FPDF
+from fpdf import FPDF # Mantendo FPDF, assumindo pyfpdf 1.7.x com base nos erros
 import tempfile
 import re
 import json
@@ -14,7 +14,7 @@ import uuid
 # !!! st.set_page_config() DEVE SER O PRIMEIRO COMANDO STREAMLIT !!!
 st.set_page_config(page_title="Portal de Diagnóstico", layout="wide", initial_sidebar_state="expanded")
 
-# CSS
+# CSS (mantido como antes)
 st.markdown("""
 <style>
 .login-container { max-width: 400px; margin: 60px auto 0 auto; padding: 40px; border-radius: 8px; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-family: 'Segoe UI', sans-serif; }
@@ -47,6 +47,7 @@ analises_perguntas_csv = "analises_perguntas.csv"
 notificacoes_csv = "notificacoes.csv"
 instrucoes_txt_file = "instrucoes_clientes.txt"
 LOGOS_DIR = "client_logos"
+ST_KEY_VERSION = "v21" # Para versionar chaves de widget
 
 # --- Inicialização do Session State ---
 default_session_state = {
@@ -56,7 +57,8 @@ default_session_state = {
     "respostas_atuais_diagnostico": {}, "id_formulario_atual": None,
     "pdf_gerado_path": None, "pdf_gerado_filename": None,
     "feedbacks_respostas": {},
-    "confirmou_instrucoes_checkbox_cliente": False
+    "confirmou_instrucoes_checkbox_cliente": False,
+    "admin_user_login_identifier": None # Adicionado para rastrear o admin logado
 }
 for key, value in default_session_state.items():
     if key not in st.session_state:
@@ -362,52 +364,64 @@ def gerar_pdf_historico(df_historico_filtrado, titulo="Histórico de Ações"):
         
         current_total_width_for_others = sum(col_widths_config.get(h,0) for h in headers_to_print_hist if h != "Descrição")
         desc_width = page_width_effective - current_total_width_for_others
-        if desc_width <= 0 : desc_width = page_width_effective * 0.3 
+        if desc_width <= 0 : desc_width = page_width_effective * 0.3 # Fallback
         col_widths_config["Descrição"] = max(20, desc_width) 
 
+        # Salvar e definir cor de preenchimento para o cabeçalho
         original_fill_color_r, original_fill_color_g, original_fill_color_b = pdf.fill_color.r, pdf.fill_color.g, pdf.fill_color.b
-        pdf.set_fill_color(200, 220, 255)
+        pdf.set_fill_color(200, 220, 255) 
 
         for header in headers_to_print_hist:
             pdf.cell(w=col_widths_config.get(header, 30), h=7, txt=pdf_safe_text_output(header), border=1, ln=0, align="C", fill=True)
         pdf.ln(7) 
-        pdf.set_fill_color(original_fill_color_r, original_fill_color_g, original_fill_color_b)
+        pdf.set_fill_color(original_fill_color_r, original_fill_color_g, original_fill_color_b) # Restaurar cor
 
         pdf.set_font("Arial", "", 8)
-        line_height_for_multicell = 5 
+        line_height_for_multicell = 5 # Altura de uma linha de texto dentro de uma multi_cell
 
         for _, row_data in df_historico_filtrado.iterrows():
             y_start_current_row = pdf.get_y()
             
-            # Estimar altura da linha (muito simplificado para pyfpdf 1.7.x sem split_only)
-            max_lines_in_this_row = 1
+            # Estimativa da altura da linha (muito simplificado para pyfpdf 1.7.x)
+            # Esta é a parte mais complexa sem 'split_only'.
+            # A abordagem mais segura é desenhar cada célula e depois mover o Y.
+            max_cell_height_in_row = line_height_for_multicell
+
+            # Pré-calcular a altura máxima da linha
+            # (Este loop é para estimar a altura, não para desenhar)
             for header_key_calc in headers_to_print_hist:
                 cell_text_calc = str(row_data.get(header_key_calc, ""))
                 cell_w_calc = col_widths_config.get(header_key_calc, 30)
-                if cell_w_calc > 0 and pdf.get_string_width(cell_text_calc) > cell_w_calc:
-                    # Estimativa grosseira: cada char ~ 0.3 * font_size (em unidades de largura)
-                    # Número de chars por linha ~ cell_w_calc / (pdf.font_size_pt * 0.3 * pdf.k) (aproximado)
-                    # Esta estimativa é muito básica e pode não ser precisa.
-                    try:
-                        # Tenta contar palavras e quebras, mais robusto que contagem de char
-                        words = cell_text_calc.split(' ')
-                        temp_line_for_calc = ""
-                        num_l_calc = 1
-                        for word in words:
-                            if pdf.get_string_width(temp_line_for_calc + word + " ") > cell_w_calc:
-                                num_l_calc +=1
-                                temp_line_for_calc = word + " "
-                            else:
-                                temp_line_for_calc += word + " "
-                        est_lines = num_l_calc
-                    except Exception: # Fallback se get_string_width falhar ou algo assim
-                        est_lines = len(cell_text_calc) // (cell_w_calc / 2) if cell_w_calc > 0 else 1 # Muito grosseiro
-                    max_lines_in_this_row = max(max_lines_in_this_row, int(est_lines))
-            
-            current_row_height = max_lines_in_this_row * line_height_for_multicell
-            current_row_height = max(current_row_height, line_height_for_multicell) 
+                
+                num_lines = 1
+                if cell_w_calc > 0:
+                    words = cell_text_calc.split(' ')
+                    current_line_width = 0
+                    current_line_str = ""
+                    for word in words:
+                        word_width = pdf.get_string_width(word + " ")
+                        if current_line_width + word_width > cell_w_calc:
+                            if current_line_str: # Se a linha atual não está vazia
+                                num_lines += 1
+                                current_line_str = word + " "
+                                current_line_width = word_width
+                            else: # Palavra única é maior que a largura da célula
+                                # Contar quantas vezes a palavra quebra (muito simplificado)
+                                num_lines += int(word_width / cell_w_calc) 
+                                current_line_str = "" 
+                                current_line_width = 0
 
-            if y_start_current_row + current_row_height > pdf.page_break_trigger and not pdf.in_footer:
+                        else:
+                            current_line_str += word + " "
+                            current_line_width += word_width
+                
+                current_cell_content_height = num_lines * line_height_for_multicell
+                max_cell_height_in_row = max(max_cell_height_in_row, current_cell_content_height)
+
+            current_row_total_height = max(max_cell_height_in_row, line_height_for_multicell)
+
+            # Verificar quebra de página
+            if y_start_current_row + current_row_total_height > pdf.page_break_trigger and not pdf.in_footer:
                 pdf.add_page()
                 y_start_current_row = pdf.get_y() 
                 pdf.set_font("Arial", "B", 8)
@@ -424,15 +438,13 @@ def gerar_pdf_historico(df_historico_filtrado, titulo="Histórico de Ações"):
                 cell_content = str(row_data.get(header_key_draw, ""))
                 cell_w = col_widths_config.get(header_key_draw, 30)
                 
-                # Desenha o retângulo da borda para a altura calculada da linha
-                pdf.rect(current_x, y_start_current_row, cell_w, current_row_height)
-                # Desenha o texto dentro do retângulo, permitindo que multi_cell ajuste a altura interna se necessário
-                # mas o h aqui é a altura da linha de texto individual dentro do multi_cell
+                # Desenhar borda para a altura total da linha
+                pdf.rect(current_x, y_start_current_row, cell_w, current_row_total_height)
+                # Desenhar texto com multi_cell (h=line_height_for_multicell para o espaçamento interno)
                 pdf.multi_cell(w=cell_w, h=line_height_for_multicell, txt=pdf_safe_text_output(cell_content), border=0, align="L", ln=0) 
-                                                                                                                        # border=0 aqui porque já desenhamos com rect
                 current_x += cell_w 
             
-            pdf.set_y(y_start_current_row + current_row_height)
+            pdf.set_y(y_start_current_row + current_row_total_height)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
             pdf_path = tmpfile.name
@@ -440,122 +452,338 @@ def gerar_pdf_historico(df_historico_filtrado, titulo="Histórico de Ações"):
         return pdf_path
     except Exception as e_pdf_hist:
         st.error(f"Erro ao gerar PDF do histórico: {e_pdf_hist}")
-        st.exception(e_pdf_hist)
+        st.exception(e_pdf_hist) # Mostrar o traceback completo no Streamlit
         return None
 
 
-# --- Lógica de Login e Navegação Principal --- (Chaves de widget v20)
+# --- Lógica de Login e Navegação Principal --- (Chaves de widget v21)
 if st.session_state.get("trigger_rerun_global"): st.session_state.trigger_rerun_global = False; st.rerun()
 
 if not st.session_state.admin_logado and not st.session_state.cliente_logado:
-    aba = st.radio("Você é:", ["Administrador", "Cliente"], horizontal=True, key="tipo_usuario_radio_v20") 
+    aba = st.radio("Você é:", ["Administrador", "Cliente"], horizontal=True, key=f"tipo_usuario_radio_{ST_KEY_VERSION}") 
 elif st.session_state.admin_logado: aba = "Administrador"
-else: aba = "Cliente"
+else: aba = "Cliente" # Este else pode ser o problema se acessado antes do login admin definir menu_admin
 
-# ... (Restante do código, com todas as chaves de widget atualizadas para _v20)
-# Por exemplo:
-# form_admin_login_v20, admin_u_v20, admin_p_v20
-# form_cliente_login_v20, cli_c_v20, cli_s_v20
-# cli_menu_v20
-# confirma_leitura_inst_v20_cb, btn_instrucoes_v20_prosseguir
-# E assim por diante para TODAS as chaves de widget no código.
+# --- ÁREA DE LOGIN DO ADMINISTRADOR ---
+if aba == "Administrador" and not st.session_state.admin_logado:
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    st.markdown('<h2 class="login-title">Login Administrador 🔑</h2>', unsafe_allow_html=True)
+    with st.form(f"form_admin_login_{ST_KEY_VERSION}"): 
+        u = st.text_input("Usuário", key=f"admin_u_{ST_KEY_VERSION}"); p = st.text_input("Senha", type="password", key=f"admin_p_{ST_KEY_VERSION}") 
+        if st.form_submit_button("Entrar"):
+            try:
+                df_creds = pd.read_csv(admin_credenciais_csv, encoding='utf-8')
+                admin_encontrado = df_creds[df_creds["Usuario"] == u]
+                if not admin_encontrado.empty and admin_encontrado.iloc[0]["Senha"] == p:
+                    st.session_state.admin_logado = True
+                    st.session_state.admin_user_login_identifier = u 
+                    st.success("Login de administrador bem-sucedido! ✅"); st.rerun()
+                else: st.error("Usuário ou senha inválidos.")
+            except FileNotFoundError: st.error(f"Arquivo de credenciais de admin não encontrado: {admin_credenciais_csv}")
+            except Exception as e: st.error(f"Erro no login admin: {e}")
+    st.markdown('</div>', unsafe_allow_html=True); st.stop()
 
-# --- ÁREA DO ADMINISTRADOR LOGADO (Trecho relevante para histórico) ---
+# --- ÁREA DE LOGIN DO CLIENTE ---
+if aba == "Cliente" and not st.session_state.cliente_logado:
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    st.markdown('<h2 class="login-title">Login Cliente 🏢</h2>', unsafe_allow_html=True)
+    with st.form(f"form_cliente_login_{ST_KEY_VERSION}"): 
+        c = st.text_input("CNPJ", key=f"cli_c_{ST_KEY_VERSION}", value=st.session_state.get("last_cnpj_input","")) 
+        s = st.text_input("Senha", type="password", key=f"cli_s_{ST_KEY_VERSION}") 
+        if st.form_submit_button("Entrar"):
+            st.session_state.last_cnpj_input = c
+            try:
+                users_df = pd.read_csv(usuarios_csv, dtype={'CNPJ': str}, encoding='utf-8')
+                for col, default_val_user, col_type in [
+                    ("ConfirmouInstrucoesParaSlotAtual", "False", str),
+                    ("DiagnosticosDisponiveis", 1, int),
+                    ("TotalDiagnosticosRealizados", 0, int),
+                    ("LiberacoesExtrasConcedidas", 0, int)
+                ]:
+                    if col not in users_df.columns: users_df[col] = default_val_user
+                    if col_type == int:
+                        users_df[col] = pd.to_numeric(users_df[col], errors='coerce').fillna(default_val_user).astype(int)
+                    else:
+                        users_df[col] = users_df[col].astype(str)
+
+                blocked_df = pd.read_csv(usuarios_bloqueados_csv, dtype={'CNPJ': str}, encoding='utf-8')
+                if c in blocked_df["CNPJ"].values: st.error("CNPJ bloqueado."); st.stop()
+
+                match = users_df[(users_df["CNPJ"] == c) & (users_df["Senha"] == s)]
+                if match.empty: st.error("CNPJ ou senha inválidos."); st.stop()
+
+                st.session_state.cliente_logado = True; st.session_state.cnpj = c
+                st.session_state.user = match.iloc[0].to_dict()
+                st.session_state.user["ConfirmouInstrucoesParaSlotAtual"] = str(st.session_state.user.get("ConfirmouInstrucoesParaSlotAtual", "False")).lower() == "true"
+                st.session_state.user["DiagnosticosDisponiveis"] = int(st.session_state.user.get("DiagnosticosDisponiveis", 1))
+                st.session_state.user["TotalDiagnosticosRealizados"] = int(st.session_state.user.get("TotalDiagnosticosRealizados", 0))
+                st.session_state.user["LiberacoesExtrasConcedidas"] = int(st.session_state.user.get("LiberacoesExtrasConcedidas", 0))
+
+                st.session_state.inicio_sessao_cliente = time.time()
+                registrar_acao(c, "Login", "Usuário logou.")
+
+                pode_fazer_novo_login = st.session_state.user["DiagnosticosDisponiveis"] > st.session_state.user["TotalDiagnosticosRealizados"]
+                if pode_fazer_novo_login and not st.session_state.user["ConfirmouInstrucoesParaSlotAtual"]: st.session_state.cliente_page = "Instruções"
+                elif pode_fazer_novo_login and st.session_state.user["ConfirmouInstrucoesParaSlotAtual"]: st.session_state.cliente_page = "Novo Diagnóstico"
+                else: st.session_state.cliente_page = "Painel Principal"
+
+                st.session_state.id_formulario_atual = f"{c}_{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
+                st.session_state.respostas_atuais_diagnostico = {}; st.session_state.progresso_diagnostico_percentual = 0; st.session_state.progresso_diagnostico_contagem = (0,0); st.session_state.feedbacks_respostas = {}; st.session_state.diagnostico_enviado_sucesso = False; st.session_state.confirmou_instrucoes_checkbox_cliente = False
+                st.success("Login cliente OK! ✅"); st.rerun()
+            except FileNotFoundError as fnf_e:
+                st.error(f"Erro de configuração: Arquivo {fnf_e.filename} não encontrado. Contate o administrador.")
+            except Exception as e: st.error(f"Erro login cliente: {e}"); st.exception(e)
+    st.markdown('</div>', unsafe_allow_html=True); st.stop()
+
+# --- ÁREA DO CLIENTE LOGADO ---
+if aba == "Cliente" and st.session_state.cliente_logado:
+    if "user" not in st.session_state or st.session_state.user is None or \
+       "cnpj" not in st.session_state or st.session_state.cnpj is None:
+        st.error("Erro de sessão. Por favor, faça o login novamente.")
+        client_keys_to_clear_on_error = [k for k in default_session_state.keys() if k != 'admin_logado']
+        for key_to_clear in client_keys_to_clear_on_error:
+            if key_to_clear in st.session_state: del st.session_state[key_to_clear]
+        for key_d, value_d in default_session_state.items():
+             if key_d != 'admin_logado': st.session_state[key_d] = value_d
+        st.session_state.cliente_logado = False
+        st.rerun()
+
+    st.sidebar.markdown(f"### Bem-vindo(a), {st.session_state.user.get('Empresa', 'Cliente')}! 👋")
+    with st.sidebar.expander("Meu Perfil", expanded=False):
+        logo_cliente_path = find_client_logo_path(st.session_state.cnpj)
+        if logo_cliente_path: st.image(logo_cliente_path, width=100)
+        st.write(f"**Empresa:** {st.session_state.user.get('Empresa', 'N/D')}")
+        st.write(f"**CNPJ:** {st.session_state.cnpj}")
+        st.write(f"**Contato:** {st.session_state.user.get('NomeContato', 'N/D')}")
+        st.write(f"**Telefone:** {st.session_state.user.get('Telefone', 'N/D')}")
+        diagnosticos_restantes_perfil = st.session_state.user.get('DiagnosticosDisponiveis', 0) - st.session_state.user.get('TotalDiagnosticosRealizados', 0)
+        st.write(f"**Diagnósticos Restantes:** {max(0, diagnosticos_restantes_perfil)}")
+        st.write(f"**Total Realizados:** {st.session_state.user.get('TotalDiagnosticosRealizados', 0)}")
+
+    unread_notif_count_val = get_unread_notifications_count(st.session_state.cnpj)
+    notif_menu_label_val = "🔔 Notificações"
+    if unread_notif_count_val > 0: notif_menu_label_val = f"🔔 Notificações ({unread_notif_count_val})"
+    menu_options_cli_val = ["📖 Instruções", "📝 Novo Diagnóstico", "📊 Painel Principal", notif_menu_label_val]
+    pode_fazer_novo_sidebar_val = st.session_state.user.get("DiagnosticosDisponiveis", 0) > st.session_state.user.get("TotalDiagnosticosRealizados", 0)
+    confirmou_instrucoes_sidebar_val = st.session_state.user.get("ConfirmouInstrucoesParaSlotAtual", False)
+    instrucoes_pendentes_obrigatorias_val = pode_fazer_novo_sidebar_val and not confirmou_instrucoes_sidebar_val
+    effective_cliente_page = st.session_state.cliente_page
+    if instrucoes_pendentes_obrigatorias_val and st.session_state.cliente_page != "Instruções": effective_cliente_page = "Instruções"
+    current_page_for_radio = effective_cliente_page
+    if current_page_for_radio == "Notificações": current_page_for_radio = notif_menu_label_val
+    try: current_idx_cli_val = menu_options_cli_val.index(current_page_for_radio)
+    except ValueError: current_idx_cli_val = 0; st.session_state.cliente_page = "Instruções" 
+    selected_page_cli_raw_val = st.sidebar.radio("Menu Cliente", menu_options_cli_val, index=current_idx_cli_val, key=f"cli_menu_{ST_KEY_VERSION}") 
+    selected_page_cli_actual = "Notificações" if "Notificações" in selected_page_cli_raw_val else selected_page_cli_raw_val
+    if selected_page_cli_actual != st.session_state.cliente_page:
+        if instrucoes_pendentes_obrigatorias_val and selected_page_cli_actual != "Instruções": st.sidebar.warning("Por favor, confirme a leitura das instruções para prosseguir.")
+        else: st.session_state.cliente_page = selected_page_cli_actual; st.rerun()
+    if st.sidebar.button("⬅️ Sair do Portal Cliente", key=f"logout_cliente_{ST_KEY_VERSION}"): 
+        client_keys_to_clear = [k for k in default_session_state.keys() if k not in ['admin_logado', 'admin_user_login_identifier']] # Não limpar admin_user_login_identifier
+        for key_to_clear in client_keys_to_clear:
+            if key_to_clear in st.session_state:
+                del st.session_state[key_to_clear] 
+        for key_d, value_d in default_session_state.items(): 
+            if key_d not in ['admin_logado', 'admin_user_login_identifier']:
+                st.session_state[key_d] = value_d
+        st.session_state.cliente_logado = False
+        st.rerun()
+
+    if st.session_state.cliente_page == "Instruções":
+        st.subheader("📖 Instruções do Sistema de Diagnóstico")
+        default_instructions_text = """**Bem-vindo ao Portal de Diagnóstico Empresarial!** (Texto Padrão) ... """ 
+        instructions_to_display = default_instructions_text
+        try:
+            if os.path.exists(instrucoes_txt_file) and os.path.getsize(instrucoes_txt_file) > 0:
+                with open(instrucoes_txt_file, "r", encoding="utf-8") as f:
+                    custom_instructions = f.read()
+                    if custom_instructions.strip(): instructions_to_display = custom_instructions
+        except Exception as e: st.warning(f"Não foi possível carregar as instruções personalizadas: {e}. Exibindo instruções padrão.")
+        st.markdown(instructions_to_display)
+        if st.session_state.user:
+            pode_fazer_novo_inst_page_val = st.session_state.user.get("DiagnosticosDisponiveis", 0) > st.session_state.user.get("TotalDiagnosticosRealizados", 0)
+            if pode_fazer_novo_inst_page_val:
+                st.session_state.confirmou_instrucoes_checkbox_cliente = st.checkbox("Declaro que li e compreendi todas as instruções fornecidas para a realização deste diagnóstico.", value=st.session_state.get("confirmou_instrucoes_checkbox_cliente", False), key=f"confirma_leitura_inst_{ST_KEY_VERSION}_cb") 
+                if st.button("Prosseguir para o Diagnóstico", key=f"btn_instrucoes_{ST_KEY_VERSION}_prosseguir", disabled=not st.session_state.confirmou_instrucoes_checkbox_cliente): 
+                    if st.session_state.confirmou_instrucoes_checkbox_cliente:
+                        update_user_data(st.session_state.cnpj, "ConfirmouInstrucoesParaSlotAtual", "True")
+                        st.session_state.cliente_page = "Novo Diagnóstico"; st.session_state.confirmou_instrucoes_checkbox_cliente = False; st.rerun()
+            else:
+                st.info("Você não possui diagnósticos disponíveis no momento.")
+                if st.button("Ir para o Painel Principal", key=f"ir_painel_inst_sem_diag_{ST_KEY_VERSION}"): st.session_state.cliente_page = "Painel Principal"; st.rerun() 
+        else: st.error("Erro de sessão do usuário. Por favor, faça login novamente.")
+    
+    elif st.session_state.cliente_page == "Painel Principal":
+        # ... (Lógica do Painel Principal com chaves atualizadas para ST_KEY_VERSION)
+        st.subheader("📊 Painel Principal do Cliente")
+        # Exemplo de atualização de chave:
+        # if st.button("📄 Baixar PDF deste Diagnóstico", key=f"dl_pdf_antigo_{ST_KEY_VERSION}_pp_{idx_row_diag}"):
+        pass # Omitido para brevidade, usar a lógica anterior com chaves atualizadas
+
+    elif st.session_state.cliente_page == "Novo Diagnóstico":
+        # ... (Lógica do Novo Diagnóstico com chaves atualizadas para ST_KEY_VERSION)
+        st.subheader("📝 Formulário de Novo Diagnóstico")
+        # Exemplo de atualização de chave:
+        # if st.button("✔️ Concluir e Enviar Diagnóstico", key=f"enviar_diag_final_cliente_{ST_KEY_VERSION}_nd"):
+        pass # Omitido para brevidade
+
+    elif st.session_state.cliente_page == "Notificações":
+        # ... (Lógica de Notificações com chaves atualizadas para ST_KEY_VERSION)
+        st.subheader("🔔 Minhas Notificações")
+        # Exemplo de atualização de chave:
+        # if 'notif_page_loaded_once_{ST_KEY_VERSION}_c' not in st.session_state:
+        pass # Omitido para brevidade
+
+# --- ÁREA DO ADMINISTRADOR LOGADO ---
 if aba == "Administrador" and st.session_state.admin_logado:
     try:
-        # ... (código inicial da área admin, carregamento de dados, menu, etc. com chaves _v20) ...
-        # Exemplo: key="admin_menu_selectbox_v20_adm"
+        try: st.sidebar.image("https://via.placeholder.com/150x75.png?text=Sua+Logo+Admin", width=150) 
+        except Exception as e_img_admin: st.sidebar.caption(f"Logo admin não carregada: {e_img_admin}")
         
-        # --- Bloco do Histórico de Usuários ---
-        if menu_admin == "📜 Histórico de Usuários": # Certifique-se que 'menu_admin' está definido
-            st.subheader("📜 Histórico de Ações")
-            df_historico_completo_hu = pd.DataFrame()
-            df_usuarios_para_filtro_hu = pd.DataFrame()
+        st.sidebar.success("🟢 Admin Logado")
+        if st.sidebar.button("🚪 Sair do Painel Admin", key=f"logout_admin_{ST_KEY_VERSION}_adm"): 
+            st.session_state.admin_logado = False
+            if 'admin_user_login_identifier' in st.session_state:
+                del st.session_state.admin_user_login_identifier
+            st.rerun() 
+        
+        menu_admin_options = ["📊 Visão Geral e Diagnósticos", "🚦 Status dos Clientes", "📜 Histórico de Usuários",
+                              "📝 Gerenciar Perguntas", "💡 Gerenciar Análises de Perguntas",
+                              "✍️ Gerenciar Instruções Clientes",
+                              "👥 Gerenciar Clientes", "👮 Gerenciar Administradores", "💾 Backup de Dados"]
+        # DEFINIÇÃO DE menu_admin ANTES DO SEU USO
+        menu_admin = st.sidebar.selectbox("Funcionalidades Admin:", menu_admin_options, key=f"admin_menu_selectbox_{ST_KEY_VERSION}_adm") 
+        st.header(f"{menu_admin.split(' ')[0]} {menu_admin.split(' ', 1)[1]}")
+        
+        # Carregamento de dados gerais para o painel admin (se necessário antes do dispatch)
+        df_usuarios_admin_geral = pd.DataFrame(columns=colunas_base_usuarios) 
+        try:
+            if os.path.exists(usuarios_csv) and os.path.getsize(usuarios_csv) > 0:
+                df_usuarios_admin_temp_load = pd.read_csv(usuarios_csv, dtype={'CNPJ': str}, encoding='utf-8')
+                for col, default, dtype_col in [("ConfirmouInstrucoesParaSlotAtual", "False", str), ("DiagnosticosDisponiveis", 1, int), ("TotalDiagnosticosRealizados", 0, int), ("LiberacoesExtrasConcedidas", 0, int)]:
+                    if col not in df_usuarios_admin_temp_load.columns: df_usuarios_admin_temp_load[col] = default
+                    if dtype_col == int: df_usuarios_admin_temp_load[col] = pd.to_numeric(df_usuarios_admin_temp_load[col], errors='coerce').fillna(default).astype(int)
+                    else: df_usuarios_admin_temp_load[col] = df_usuarios_admin_temp_load[col].astype(str)
+                df_usuarios_admin_geral = df_usuarios_admin_temp_load
+        except FileNotFoundError: st.sidebar.error(f"Arquivo de usuários '{usuarios_csv}' não encontrado.")
+        except Exception as e_load_users_adm_global: st.sidebar.error(f"Erro ao carregar usuários para admin: {e_load_users_adm_global}")
+
+        diagnosticos_df_admin_orig_view = pd.DataFrame() 
+        admin_data_carregada_view_sucesso = False
+        if not os.path.exists(arquivo_csv) or os.path.getsize(arquivo_csv) == 0 : 
+            st.warning(f"Arquivo de diagnósticos ('{arquivo_csv}') não encontrado ou vazio.")
+        else:
             try:
-                if os.path.exists(historico_csv) and os.path.getsize(historico_csv) > 0:
-                    df_historico_completo_hu = pd.read_csv(historico_csv, encoding='utf-8', dtype={'CNPJ': str})
-                if os.path.exists(usuarios_csv) and os.path.getsize(usuarios_csv) > 0:
-                    df_usuarios_para_filtro_hu = pd.read_csv(usuarios_csv, encoding='utf-8', usecols=['CNPJ', 'Empresa', 'NomeContato'], dtype={'CNPJ': str})
-            except Exception as e_hu: 
-                st.error(f"Erro ao carregar dados para o histórico: {e_hu}")
-            
-            st.markdown("#### Filtros do Histórico")
-            col_hu_f1, col_hu_f2 = st.columns(2)
-            empresas_hist_list_hu = ["Todas"]
-            if not df_usuarios_para_filtro_hu.empty and 'Empresa' in df_usuarios_para_filtro_hu.columns: 
-                empresas_hist_list_hu.extend(sorted(df_usuarios_para_filtro_hu['Empresa'].astype(str).unique().tolist()))
-            
-            emp_sel_hu = col_hu_f1.selectbox("Filtrar por Empresa:", empresas_hist_list_hu, key="hist_emp_sel_v20_hu_adm")
-            termo_busca_hu = col_hu_f2.text_input("Buscar por Nome do Contato, CNPJ, Ação ou Descrição:", key="hist_termo_busca_v20_hu_adm")
-            
-            df_historico_filtrado_view_hu = df_historico_completo_hu.copy()
-            cnpjs_da_empresa_selecionada_hu = []
+                diagnosticos_df_admin_orig_view = pd.read_csv(arquivo_csv, encoding='utf-8', dtype={'CNPJ': str})
+                if 'Data' in diagnosticos_df_admin_orig_view.columns: diagnosticos_df_admin_orig_view['Data'] = pd.to_datetime(diagnosticos_df_admin_orig_view['Data'], errors='coerce')
+                if not diagnosticos_df_admin_orig_view.empty: admin_data_carregada_view_sucesso = True
+            except Exception as e_adm_load_diag: st.error(f"ERRO AO CARREGAR ARQUIVO DE DIAGNÓSTICOS ('{arquivo_csv}'): {e_adm_load_diag}"); st.exception(e_adm_load_diag)
 
-            if emp_sel_hu != "Todas" and not df_usuarios_para_filtro_hu.empty: 
-                cnpjs_da_empresa_selecionada_hu = df_usuarios_para_filtro_hu[df_usuarios_para_filtro_hu['Empresa'] == emp_sel_hu]['CNPJ'].tolist()
+        # Lógica de dispatch do menu admin
+        try:
+            if menu_admin == "📊 Visão Geral e Diagnósticos":
+                # ... (Conteúdo de Visão Geral com chaves atualizadas para ST_KEY_VERSION)
+                # Exemplo de chave atualizada: key=f"admin_filtro_emp_{ST_KEY_VERSION}_vg"
+                pass # Omitido para brevidade
+            
+            elif menu_admin == "🚦 Status dos Clientes":
+                # ... (Conteúdo de Status dos Clientes com chaves atualizadas para ST_KEY_VERSION)
+                # Exemplo de chave atualizada: key=f"status_emp_sel_{ST_KEY_VERSION}"
+                pass # Omitido para brevidade
+
+            elif menu_admin == "📜 Histórico de Usuários":
+                st.subheader("📜 Histórico de Ações")
+                df_historico_completo_hu = pd.DataFrame()
+                df_usuarios_para_filtro_hu = pd.DataFrame()
+                try:
+                    if os.path.exists(historico_csv) and os.path.getsize(historico_csv) > 0:
+                        df_historico_completo_hu = pd.read_csv(historico_csv, encoding='utf-8', dtype={'CNPJ': str})
+                    if os.path.exists(usuarios_csv) and os.path.getsize(usuarios_csv) > 0:
+                        df_usuarios_para_filtro_hu = pd.read_csv(usuarios_csv, encoding='utf-8', usecols=['CNPJ', 'Empresa', 'NomeContato'], dtype={'CNPJ': str})
+                except Exception as e_hu: 
+                    st.error(f"Erro ao carregar dados para o histórico: {e_hu}")
+                
+                st.markdown("#### Filtros do Histórico")
+                col_hu_f1, col_hu_f2 = st.columns(2)
+                empresas_hist_list_hu = ["Todas"]
+                if not df_usuarios_para_filtro_hu.empty and 'Empresa' in df_usuarios_para_filtro_hu.columns: 
+                    empresas_hist_list_hu.extend(sorted(df_usuarios_para_filtro_hu['Empresa'].astype(str).unique().tolist()))
+                
+                emp_sel_hu = col_hu_f1.selectbox("Filtrar por Empresa:", empresas_hist_list_hu, key=f"hist_emp_sel_{ST_KEY_VERSION}_hu_adm")
+                termo_busca_hu = col_hu_f2.text_input("Buscar por Nome do Contato, CNPJ, Ação ou Descrição:", key=f"hist_termo_busca_{ST_KEY_VERSION}_hu_adm")
+                
+                df_historico_filtrado_view_hu = df_historico_completo_hu.copy()
+                cnpjs_da_empresa_selecionada_hu = []
+
+                if emp_sel_hu != "Todas" and not df_usuarios_para_filtro_hu.empty: 
+                    cnpjs_da_empresa_selecionada_hu = df_usuarios_para_filtro_hu[df_usuarios_para_filtro_hu['Empresa'] == emp_sel_hu]['CNPJ'].tolist()
+                    if not df_historico_filtrado_view_hu.empty:
+                        df_historico_filtrado_view_hu = df_historico_filtrado_view_hu[df_historico_filtrado_view_hu['CNPJ'].isin(cnpjs_da_empresa_selecionada_hu)]
+                
+                if termo_busca_hu.strip() and not df_historico_filtrado_view_hu.empty :
+                    busca_lower_hu = termo_busca_hu.strip().lower()
+                    cnpjs_match_nome_hu = []
+                    if not df_usuarios_para_filtro_hu.empty and 'NomeContato' in df_usuarios_para_filtro_hu.columns:
+                         cnpjs_match_nome_hu = df_usuarios_para_filtro_hu[df_usuarios_para_filtro_hu['NomeContato'].astype(str).str.lower().str.contains(busca_lower_hu, na=False)]['CNPJ'].tolist()
+                    
+                    df_historico_filtrado_view_hu = df_historico_filtrado_view_hu[
+                        df_historico_filtrado_view_hu['CNPJ'].isin(cnpjs_match_nome_hu) | 
+                        df_historico_filtrado_view_hu['CNPJ'].astype(str).str.lower().str.contains(busca_lower_hu) | 
+                        df_historico_filtrado_view_hu['Ação'].astype(str).str.lower().str.contains(busca_lower_hu, na=False) | 
+                        df_historico_filtrado_view_hu['Descrição'].astype(str).str.lower().str.contains(busca_lower_hu, na=False)
+                    ]
+                
+                st.markdown("#### Registros do Histórico")
                 if not df_historico_filtrado_view_hu.empty:
-                    df_historico_filtrado_view_hu = df_historico_filtrado_view_hu[df_historico_filtrado_view_hu['CNPJ'].isin(cnpjs_da_empresa_selecionada_hu)]
-            
-            if termo_busca_hu.strip() and not df_historico_filtrado_view_hu.empty :
-                busca_lower_hu = termo_busca_hu.strip().lower()
-                cnpjs_match_nome_hu = []
-                if not df_usuarios_para_filtro_hu.empty and 'NomeContato' in df_usuarios_para_filtro_hu.columns:
-                     cnpjs_match_nome_hu = df_usuarios_para_filtro_hu[df_usuarios_para_filtro_hu['NomeContato'].astype(str).str.lower().str.contains(busca_lower_hu, na=False)]['CNPJ'].tolist()
-                
-                df_historico_filtrado_view_hu = df_historico_filtrado_view_hu[
-                    df_historico_filtrado_view_hu['CNPJ'].isin(cnpjs_match_nome_hu) | 
-                    df_historico_filtrado_view_hu['CNPJ'].astype(str).str.lower().str.contains(busca_lower_hu) | 
-                    df_historico_filtrado_view_hu['Ação'].astype(str).str.lower().str.contains(busca_lower_hu, na=False) | 
-                    df_historico_filtrado_view_hu['Descrição'].astype(str).str.lower().str.contains(busca_lower_hu, na=False)
-                ]
-            
-            st.markdown("#### Registros do Histórico")
-            if not df_historico_filtrado_view_hu.empty:
-                st.dataframe(df_historico_filtrado_view_hu.sort_values(by="Data", ascending=False))
-                if st.button("📄 Baixar Histórico Filtrado (PDF)", key="download_hist_filtrado_pdf_v20_hu_adm"):
-                    titulo_pdf_hist = f"Historico_Acoes_{sanitize_column_name(emp_sel_hu)}_{sanitize_column_name(termo_busca_hu) if termo_busca_hu else 'Todos'}_{datetime.now().strftime('%Y%m%d')}.pdf"
-                    pdf_path_hist = gerar_pdf_historico(df_historico_filtrado_view_hu, titulo=f"Histórico ({emp_sel_hu} - Busca: {termo_busca_hu or 'N/A'})")
-                    if pdf_path_hist:
-                        with open(pdf_path_hist, "rb") as f_pdf_hist: 
-                            st.download_button(label="Download Confirmado", data=f_pdf_hist, file_name=titulo_pdf_hist, mime="application/pdf", key="confirm_download_hist_pdf_v20_hu_adm")
-                        try: os.remove(pdf_path_hist) 
-                        except: pass
-                
-                # --- FUNCIONALIDADE: Excluir (Resetar) Histórico da Empresa Filtrada ---
-                if emp_sel_hu != "Todas" and not df_historico_filtrado_view_hu.empty and cnpjs_da_empresa_selecionada_hu: # Só mostrar se uma empresa específica está filtrada
-                    st.markdown("---")
-                    st.markdown(f"#### 🗑️ Resetar Histórico da Empresa: {emp_sel_hu}")
-                    with st.expander(f"⚠️ ATENÇÃO: Excluir TODO o histórico da Empresa '{emp_sel_hu}'"):
-                        st.warning(f"Esta ação é irreversível e removerá TODOS os registros de histórico associados à empresa '{emp_sel_hu}' (CNPJs: {', '.join(cnpjs_da_empresa_selecionada_hu)}).")
-                        
-                        # Adicionar um campo de texto para confirmação extra
-                        confirm_text_delete_hist = st.text_input(f"Para confirmar, digite o nome da empresa '{emp_sel_hu}' exatamente como mostrado:", key=f"confirm_text_delete_hist_emp_{emp_sel_hu}_v20").strip()
-                        
-                        if st.button(f"🗑️ Excluir Histórico de '{emp_sel_hu}' AGORA", type="primary", key=f"btn_delete_hist_emp_{emp_sel_hu}_v20", disabled=(confirm_text_delete_hist != emp_sel_hu)):
-                            if confirm_text_delete_hist == emp_sel_hu:
-                                try:
-                                    if os.path.exists(historico_csv):
-                                        df_hist_full = pd.read_csv(historico_csv, encoding='utf-8', dtype={'CNPJ': str})
-                                        # Manter apenas os registros que NÃO pertencem aos CNPJs da empresa selecionada
-                                        df_hist_full_updated = df_hist_full[~df_hist_full['CNPJ'].isin(cnpjs_da_empresa_selecionada_hu)]
-                                        df_hist_full_updated.to_csv(historico_csv, index=False, encoding='utf-8')
-                                        registrar_acao("ADMIN_ACTION", "Exclusão Histórico Empresa", f"Admin excluiu todo o histórico da empresa '{emp_sel_hu}' (CNPJs: {', '.join(cnpjs_da_empresa_selecionada_hu)}).")
-                                        st.success(f"Todo o histórico da empresa '{emp_sel_hu}' foi excluído com sucesso.")
-                                        st.rerun()
-                                    else:
-                                        st.error("Arquivo de histórico não encontrado para realizar a exclusão.")
-                                except Exception as e_del_hist:
-                                    st.error(f"Erro ao excluir o histórico da empresa: {e_del_hist}")
-                            else:
-                                st.error("O nome da empresa digitado para confirmação está incorreto.")
-            else:
-                st.info("Nenhum registro de histórico encontrado para os filtros aplicados.")
-        
-        # ... (Restante das seções do admin, como Gerenciar Perguntas, Clientes, etc.)
-        # Lembre-se de atualizar TODAS as chaves de widget para _v20 em todo o script.
-        # O código completo das outras seções é omitido aqui para manter o foco.
+                    st.dataframe(df_historico_filtrado_view_hu.sort_values(by="Data", ascending=False))
+                    if st.button("📄 Baixar Histórico Filtrado (PDF)", key=f"download_hist_filtrado_pdf_{ST_KEY_VERSION}_hu_adm"):
+                        titulo_pdf_hist = f"Historico_Acoes_{sanitize_column_name(emp_sel_hu)}_{sanitize_column_name(termo_busca_hu) if termo_busca_hu else 'Todos'}_{datetime.now().strftime('%Y%m%d')}.pdf"
+                        pdf_path_hist = gerar_pdf_historico(df_historico_filtrado_view_hu, titulo=f"Histórico ({emp_sel_hu} - Busca: {termo_busca_hu or 'N/A'})")
+                        if pdf_path_hist:
+                            with open(pdf_path_hist, "rb") as f_pdf_hist: 
+                                st.download_button(label="Download Confirmado", data=f_pdf_hist, file_name=titulo_pdf_hist, mime="application/pdf", key=f"confirm_download_hist_pdf_{ST_KEY_VERSION}_hu_adm")
+                            try: os.remove(pdf_path_hist) 
+                            except: pass
+                    
+                    if emp_sel_hu != "Todas" and not df_historico_filtrado_view_hu.empty and cnpjs_da_empresa_selecionada_hu:
+                        st.markdown("---")
+                        st.markdown(f"#### 🗑️ Resetar Histórico da Empresa: {emp_sel_hu}")
+                        with st.expander(f"⚠️ ATENÇÃO: Excluir TODO o histórico da Empresa '{emp_sel_hu}'"):
+                            st.warning(f"Esta ação é irreversível e removerá TODOS os registros de histórico associados à empresa '{emp_sel_hu}' (CNPJs: {', '.join(cnpjs_da_empresa_selecionada_hu)}).")
+                            
+                            confirm_text_delete_hist = st.text_input(f"Para confirmar, digite o nome da empresa '{emp_sel_hu}' exatamente como mostrado:", key=f"confirm_text_delete_hist_emp_{emp_sel_hu}_{ST_KEY_VERSION}").strip()
+                            
+                            if st.button(f"🗑️ Excluir Histórico de '{emp_sel_hu}' AGORA", type="primary", key=f"btn_delete_hist_emp_{emp_sel_hu}_{ST_KEY_VERSION}", disabled=(confirm_text_delete_hist != emp_sel_hu)):
+                                if confirm_text_delete_hist == emp_sel_hu:
+                                    try:
+                                        if os.path.exists(historico_csv):
+                                            df_hist_full = pd.read_csv(historico_csv, encoding='utf-8', dtype={'CNPJ': str})
+                                            df_hist_full_updated = df_hist_full[~df_hist_full['CNPJ'].isin(cnpjs_da_empresa_selecionada_hu)]
+                                            df_hist_full_updated.to_csv(historico_csv, index=False, encoding='utf-8')
+                                            registrar_acao("ADMIN_ACTION", "Exclusão Histórico Empresa", f"Admin excluiu todo o histórico da empresa '{emp_sel_hu}' (CNPJs: {', '.join(cnpjs_da_empresa_selecionada_hu)}).")
+                                            st.success(f"Todo o histórico da empresa '{emp_sel_hu}' foi excluído com sucesso.")
+                                            st.rerun()
+                                        else:
+                                            st.error("Arquivo de histórico não encontrado para realizar a exclusão.")
+                                    except Exception as e_del_hist:
+                                        st.error(f"Erro ao excluir o histórico da empresa: {e_del_hist}")
+                                else:
+                                    st.error("O nome da empresa digitado para confirmação está incorreto.")
+                else:
+                    st.info("Nenhum registro de histórico encontrado para os filtros aplicados.")
 
-    except Exception as e_outer_admin_critical: # Exceção geral para a área admin
+            # ... (Restante das seções do admin, como Gerenciar Perguntas, Clientes, etc. com chaves _v21)
+            # Por exemplo:
+            elif menu_admin == "📝 Gerenciar Perguntas":
+                # ... (lógica com chaves key=f"xxx_{ST_KEY_VERSION}_yyy")
+                pass
+            # ... e assim por diante para todas as outras seções do admin.
+
+        except Exception as e_admin_menu_dispatch:
+            st.error(f"Ocorreu um erro na funcionalidade '{menu_admin}': {e_admin_menu_dispatch}")
+            st.exception(e_admin_menu_dispatch) 
+            
+    except Exception as e_outer_admin_critical:
         st.error(f"Um erro crítico e inesperado ocorreu na área administrativa: {e_outer_admin_critical}")
         st.exception(e_outer_admin_critical) 
 
