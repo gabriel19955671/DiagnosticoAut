@@ -489,18 +489,19 @@ def inicializar_csv(filepath, columns, defaults=None):
             df_init = pd.DataFrame(columns=columns)
             if defaults:
                 # Se for o admin_credenciais_csv e o df está sendo criado vazio, adiciona a linha de defaults (superadmin)
-                if filepath == admin_credenciais_csv and not df_init.empty: # Isto é um pouco redundante com a lógica posterior, mas garante a linha default.
-                    pass # A lógica de criar o superadmin será tratada depois se o arquivo ainda estiver vazio.
+                if filepath == admin_credenciais_csv: # Garantir que a linha default seja adicionada
+                    default_row_data = {}
+                    for col_name in columns:
+                        val = defaults.get(col_name)
+                        default_row_data[col_name] = robust_str_to_bool(val) if col_name in ALL_ADMIN_PERMISSION_KEYS else val
+                    df_init = pd.DataFrame([default_row_data], columns=columns)
                 else:
                     for col, default_val in defaults.items():
                         if col in columns:
                             if pd.isna(default_val):
                                 df_init[col] = pd.Series(dtype='object')
                             else:
-                                if filepath == admin_credenciais_csv and col in ALL_ADMIN_PERMISSION_KEYS:
-                                    df_init[col] = pd.Series(dtype=bool) # Garante tipo booleano para permissões
-                                else:
-                                    df_init[col] = pd.Series(dtype=type(default_val))
+                                df_init[col] = pd.Series(dtype=type(default_val)) # O tipo booleano já será tratado
                             if len(df_init[col]) == 0 and not pd.isna(default_val) :
                                 df_init.loc[0, col] = default_val
                                 df_init = df_init.iloc[0:0]
@@ -513,38 +514,40 @@ def inicializar_csv(filepath, columns, defaults=None):
             elif filepath in [usuarios_csv, usuarios_bloqueados_csv, arquivo_csv, notificacoes_csv, historico_csv, pesquisa_satisfacao_respostas_csv]:
                 if 'CNPJ' in columns: dtype_spec['CNPJ'] = str
                 if 'CNPJ_Cliente' in columns: dtype_spec['CNPJ_Cliente'] = str
-            # ... outras especificações de dtype ...
+            if filepath == notificacoes_csv and 'ID_Diagnostico_Relacionado' in columns:
+                dtype_spec['ID_Diagnostico_Relacionado'] = str
+            if filepath == arquivo_csv and 'ID_Diagnostico' in columns:
+                dtype_spec['ID_Diagnostico'] = str
+            if filepath == pesquisa_satisfacao_respostas_csv and 'ID_Diagnostico_Associado' in columns:
+                dtype_spec['ID_Diagnostico_Associado'] = str
 
             try:
                 df_init = pd.read_csv(filepath, encoding='utf-8', dtype=dtype_spec if dtype_spec else None)
             except Exception as read_e:
                 st.warning(f"Problema ao ler {filepath} ({read_e}), tentando recriar com colunas esperadas.")
-                # Recriar com defaults se a leitura falhar completamente
                 df_init = pd.DataFrame(columns=columns)
                 if defaults:
-                     # Adiciona uma linha com defaults se o DataFrame estiver sendo recriado
                     if filepath == admin_credenciais_csv:
                         default_row_data = {}
                         for col_name in columns:
-                            default_row_data[col_name] = defaults.get(col_name)
+                            val = defaults.get(col_name)
+                            default_row_data[col_name] = robust_str_to_bool(val) if col_name in ALL_ADMIN_PERMISSION_KEYS else val
                         df_init = pd.DataFrame([default_row_data], columns=columns)
-                    else: # Para outros CSVs, mantenha a lógica anterior de preenchimento de tipo
+                    else:
                         for col, default_val in defaults.items():
                             if col in columns:
                                 if pd.isna(default_val): df_init[col] = pd.Series(dtype='object')
                                 else: df_init[col] = pd.Series(dtype=type(default_val))
-
                 df_init.to_csv(filepath, index=False, encoding='utf-8')
                 df_init = pd.read_csv(filepath, encoding='utf-8', dtype=dtype_spec if dtype_spec else None)
 
 
-            # Conversão robusta para booleano para colunas de permissão após a leitura
             if filepath == admin_credenciais_csv:
                 for perm_col_load in ALL_ADMIN_PERMISSION_KEYS:
                     if perm_col_load in df_init.columns:
                         df_init[perm_col_load] = df_init[perm_col_load].apply(robust_str_to_bool)
-                    else: # Adicionar coluna se não existir e preencher com False
-                        df_init[perm_col_load] = False
+                    else:
+                        df_init[perm_col_load] = False # Adicionar como False se ausente
 
 
             made_changes = False
@@ -556,37 +559,35 @@ def inicializar_csv(filepath, columns, defaults=None):
 
                     if len(df_init) > 0 and not df_init.empty:
                         insert_values = [default_val] * len(df_init)
-                        if col_dtype == bool: # Para colunas de permissão booleanas
+                        if col_dtype == bool:
                             insert_values = [robust_str_to_bool(default_val)] * len(df_init)
-                        df_init.insert(loc=min(col_idx, len(df_init.columns)), column=col_name, value=pd.Series(insert_values, dtype=col_dtype, index=df_init.index))
-                    else:
+                        # Usar pd.Series para inserção para melhor controle de tipo e evitar erros com pd.NA
+                        df_init.insert(loc=min(col_idx, len(df_init.columns)),
+                                       column=col_name,
+                                       value=pd.Series(insert_values, index=df_init.index, dtype=col_dtype if col_dtype != bool else object).astype(col_dtype))
+                    else: # df_init é vazio
                         df_init[col_name] = pd.Series(dtype=col_dtype)
-                        if not pd.isna(default_val) and df_init.empty:
-                            df_init.loc[0, col_name] = robust_str_to_bool(default_val) if col_dtype == bool else default_val
-                            df_init = df_init.iloc[0:0]
+                        # Se o df_init for recriado e estiver vazio, e houver defaults, eles já foram adicionados acima.
+                        # Esta parte é mais para garantir o tipo da coluna se ela for adicionada a um df vazio sem defaults.
                     made_changes = True
             if made_changes:
                 df_init.to_csv(filepath, index=False, encoding='utf-8')
-    except pd.errors.EmptyDataError:
+    except pd.errors.EmptyDataError: # Se o arquivo existir mas estiver completamente vazio
         df_init = pd.DataFrame(columns=columns)
         if defaults:
-            # Adiciona uma linha com defaults se o DataFrame estiver sendo criado de um EmptyDataError
-            if filepath == admin_credenciais_csv:
+            if filepath == admin_credenciais_csv: # Garante que a linha default de admin seja criada
                 default_row_data = {}
                 for col_name in columns:
                      val = defaults.get(col_name)
                      default_row_data[col_name] = robust_str_to_bool(val) if col_name in ALL_ADMIN_PERMISSION_KEYS else val
                 df_init = pd.DataFrame([default_row_data], columns=columns)
-            else: # Para outros CSVs
+            else:
                 for col, default_val in defaults.items():
                     if col in columns:
                         if pd.isna(default_val): df_init[col] = pd.Series(dtype='object')
                         else: df_init[col] = pd.Series(dtype=type(default_val))
-                        if len(df_init[col]) == 0 and not pd.isna(default_val):
-                            df_init.loc[0, col] = default_val
-                            df_init = df_init.iloc[0:0]
         df_init.to_csv(filepath, index=False, encoding='utf-8')
-    except Exception as e: st.error(f"Erro crítico ao inicializar {filepath}: {e}"); raise
+    except Exception as e: st.error(f"Erro crítico ao inicializar {filepath}: {e}"); st.exception(e); raise
 
 try:
     inicializar_csv(usuarios_bloqueados_csv, ["CNPJ"])
@@ -596,43 +597,35 @@ try:
         admin_defaults[perm_key] = True
     inicializar_csv(admin_credenciais_csv, colunas_base_admin_credenciais, defaults=admin_defaults)
 
+    # Verificação e correção do admin_credenciais.csv APÓS inicializar_csv
     try:
-        df_admins_check_init = pd.read_csv(admin_credenciais_csv, encoding='utf-8')
-        if df_admins_check_init.empty:
-            # O inicializar_csv já deveria ter adicionado a linha padrão se 'defaults' foi fornecido e o arquivo era novo.
-            # Mas, como uma segurança extra, se ainda estiver vazio:
-            st.warning(f"Arquivo {admin_credenciais_csv} encontrado vazio após inicialização. Tentando adicionar superadmin padrão.")
-            super_admin_data_init = {"Usuario": "admin", "Senha": "admin"} # Redefinir aqui também
-            for perm_key_s in ALL_ADMIN_PERMISSION_KEYS:
-                super_admin_data_init[perm_key_s] = True
-            df_super_admin_init = pd.DataFrame([super_admin_data_init], columns=colunas_base_admin_credenciais)
-            for perm_col_s in ALL_ADMIN_PERMISSION_KEYS: # Assegurar tipo bool
-                 df_super_admin_init[perm_col_s] = df_super_admin_init[perm_col_s].apply(robust_str_to_bool)
-            df_super_admin_init.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
-            print("INFO: Superadministrador padrão ('admin'/'admin') recriado devido a arquivo vazio.")
-        else: # Garantir que admins existentes tenham todas as colunas de permissão
-            made_changes_admin_perms_init = False
-            for perm_key_init in ALL_ADMIN_PERMISSION_KEYS:
-                if perm_key_init not in df_admins_check_init.columns:
-                    df_admins_check_init[perm_key_init] = False # Adiciona com False para admins existentes
-                    made_changes_admin_perms_init = True
-                # Aplicar conversão robusta para garantir que sejam booleanos
-                df_admins_check_init[perm_key_init] = df_admins_check_init[perm_key_init].apply(robust_str_to_bool)
+        df_admins_post_init = pd.read_csv(admin_credenciais_csv, encoding='utf-8')
+        if df_admins_post_init.empty:
+            st.warning(f"Arquivo {admin_credenciais_csv} está vazio após a inicialização. Recriando superadmin padrão.")
+            super_admin_data_post = {"Usuario": "admin", "Senha": "admin"}
+            for pk in ALL_ADMIN_PERMISSION_KEYS: super_admin_data_post[pk] = True
+            df_super_admin_post = pd.DataFrame([super_admin_data_post], columns=colunas_base_admin_credenciais)
+            df_super_admin_post.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
+            print("INFO: Superadministrador padrão ('admin'/'admin') recriado (arquivo estava vazio).")
+        else:
+            made_changes_post_init = False
+            for perm_key_post in ALL_ADMIN_PERMISSION_KEYS:
+                if perm_key_post not in df_admins_post_init.columns:
+                    df_admins_post_init[perm_key_post] = False # Default para False se coluna ausente
+                    made_changes_post_init = True
+                df_admins_post_init[perm_key_post] = df_admins_post_init[perm_key_post].apply(robust_str_to_bool)
+            if made_changes_post_init:
+                df_admins_post_init.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
+    except pd.errors.EmptyDataError: # Se o arquivo estiver totalmente vazio (sem cabeçalhos)
+        st.warning(f"Arquivo {admin_credenciais_csv} causou EmptyDataError. Recriando superadmin padrão.")
+        super_admin_data_empty = {"Usuario": "admin", "Senha": "admin"}
+        for pk in ALL_ADMIN_PERMISSION_KEYS: super_admin_data_empty[pk] = True
+        df_super_admin_empty = pd.DataFrame([super_admin_data_empty], columns=colunas_base_admin_credenciais)
+        df_super_admin_empty.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
+        print("INFO: Superadministrador padrão ('admin'/'admin') criado (EmptyDataError).")
+    except Exception as e_admin_post_init:
+        st.error(f"Erro na verificação pós-inicialização do {admin_credenciais_csv}: {e_admin_post_init}")
 
-            if made_changes_admin_perms_init:
-                df_admins_check_init.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
-    except pd.errors.EmptyDataError: # Se read_csv falhar com EmptyDataError
-        st.warning(f"Arquivo {admin_credenciais_csv} resultou em EmptyDataError. Tentando adicionar superadmin padrão.")
-        super_admin_data_init = {"Usuario": "admin", "Senha": "admin"}
-        for perm_key_s in ALL_ADMIN_PERMISSION_KEYS:
-            super_admin_data_init[perm_key_s] = True
-        df_super_admin_init = pd.DataFrame([super_admin_data_init], columns=colunas_base_admin_credenciais)
-        for perm_col_s in ALL_ADMIN_PERMISSION_KEYS: # Assegurar tipo bool
-            df_super_admin_init[perm_col_s] = df_super_admin_init[perm_col_s].apply(robust_str_to_bool)
-        df_super_admin_init.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
-        print("INFO: Superadministrador padrão ('admin'/'admin') criado devido a EmptyDataError.")
-    except Exception as e_admin_init_check:
-        st.error(f"Erro ao verificar/criar superadministrador durante inicialização: {e_admin_init_check}")
 
     inicializar_csv(usuarios_csv, colunas_base_usuarios,
                     defaults={"JaVisualizouInstrucoes": "False", "DiagnosticosDisponiveis": 1, "TotalDiagnosticosRealizados": 0})
@@ -647,7 +640,7 @@ try:
 
 except Exception as e_init:
     st.error(f"Falha na inicialização de arquivos CSV: {e_init}")
-    st.exception(e_init) # Adicionado para mais detalhes no traceback
+    st.exception(e_init)
     st.stop()
 
 # --- Funções Utilitárias (registrar_acao, update_user_data, etc. mantidas) ---
@@ -669,7 +662,7 @@ def update_user_data(cnpj, field, value):
                 if field in ["DiagnosticosDisponiveis", "TotalDiagnosticosRealizados"]:
                     st.session_state.user[field] = int(value)
                 elif field == "JaVisualizouInstrucoes":
-                    st.session_state.user[field] = str(value).lower() == "true"
+                    st.session_state.user[field] = robust_str_to_bool(value)
                 else:
                     st.session_state.user[field] = value
             return True
@@ -702,8 +695,8 @@ def carregar_pesquisa_perguntas():
         df = pd.read_csv(pesquisa_satisfacao_perguntas_csv, encoding='utf-8')
         if "ID_PerguntaPesquisa" not in df.columns:
             df["ID_PerguntaPesquisa"] = [str(uuid.uuid4()) for _ in range(len(df))]
-        if "Ativa" not in df.columns: df["Ativa"] = True
-        df["Ativa"] = df["Ativa"].apply(robust_str_to_bool) # Usar conversão robusta
+        if "Ativa" not in df.columns: df["Ativa"] = True # Default
+        df["Ativa"] = df["Ativa"].apply(robust_str_to_bool)
         if "Ordem" not in df.columns: df["Ordem"] = 0
         df["Ordem"] = pd.to_numeric(df["Ordem"], errors='coerce').fillna(0).astype(int)
         if "OpcoesRespostaJSON" not in df.columns: df["OpcoesRespostaJSON"] = "[]"
@@ -897,7 +890,7 @@ if not st.session_state.admin_logado and not st.session_state.cliente_logado:
             "Você é:",
             ["Administrador", "Cliente"],
             horizontal=True,
-            key="tipo_usuario_radio_v23_login_selection",
+            key="tipo_usuario_radio_v23_login_selection", # Chave atualizada
             index=["Administrador", "Cliente"].index(st.session_state.login_selection_aba),
             label_visibility="collapsed"
         )
@@ -910,7 +903,7 @@ if not st.session_state.admin_logado and not st.session_state.cliente_logado:
             if os.path.exists(login_logo_to_display):
                 st.image(login_logo_to_display, width=180)
             st.markdown('<h2 class="login-title">Login Administrador</h2>', unsafe_allow_html=True)
-            with st.form("form_admin_login_v23_final"):
+            with st.form("form_admin_login_v23_final"): # Chave atualizada
                 u = st.text_input("Usuário", key="admin_u_v23_final_input")
                 p = st.text_input("Senha", type="password", key="admin_p_v23_final_input")
                 if st.form_submit_button("Entrar", use_container_width=True, icon="🔑"):
@@ -919,7 +912,7 @@ if not st.session_state.admin_logado and not st.session_state.cliente_logado:
                         for perm_col_login in ALL_ADMIN_PERMISSION_KEYS:
                             if perm_col_login not in df_creds.columns:
                                 df_creds[perm_col_login] = False
-                            df_creds[perm_col_login] = df_creds[perm_col_login].apply(robust_str_to_bool) # Usar conversão robusta
+                            df_creds[perm_col_login] = df_creds[perm_col_login].apply(robust_str_to_bool)
 
                         if not df_creds.empty:
                             admin_match = df_creds[(df_creds["Usuario"] == u) & (df_creds["Senha"] == p)]
@@ -948,7 +941,7 @@ if not st.session_state.admin_logado and not st.session_state.cliente_logado:
             if os.path.exists(login_logo_to_display):
                 st.image(login_logo_to_display, width=180)
             st.markdown('<h2 class="login-title">Login Cliente</h2>', unsafe_allow_html=True)
-            with st.form("form_cliente_login_v23_final"):
+            with st.form("form_cliente_login_v23_final"): # Chave atualizada
                 c = st.text_input("CNPJ", key="cli_c_v23_final_input", value=st.session_state.get("last_cnpj_input",""))
                 s = st.text_input("Senha", type="password", key="cli_s_v23_final_input")
                 if st.form_submit_button("Entrar", use_container_width=True, icon="👤"):
@@ -983,7 +976,6 @@ if not st.session_state.admin_logado and not st.session_state.cliente_logado:
                                     st.session_state.cliente_page = "Novo Diagnóstico" if pode_fazer_novo_login else "Painel Principal"
 
                                 st.session_state.id_formulario_atual = f"{c}_{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
-                                # Resetar estados específicos do diagnóstico
                                 st.session_state.respostas_atuais_diagnostico = {}
                                 st.session_state.progresso_diagnostico_percentual = 0
                                 st.session_state.progresso_diagnostico_contagem = (0,0)
@@ -1025,15 +1017,14 @@ else:
     st.stop()
 
 
-# --- ÁREA DO CLIENTE LOGADO (Mantida como estava) ---
+# --- ÁREA DO CLIENTE LOGADO ---
 if aba == "Cliente" and st.session_state.cliente_logado:
-    # ... (Código da área do cliente, sem alterações nesta etapa)
     if 'user' not in st.session_state or not st.session_state.user:
         st.error("Erro de sessão do usuário. Por favor, faça login novamente.")
         st.session_state.cliente_logado = False
         st.rerun()
 
-    if not robust_str_to_bool(st.session_state.user.get("JaVisualizouInstrucoes", False)): # Usar conversão robusta
+    if not robust_str_to_bool(st.session_state.user.get("JaVisualizouInstrucoes", False)):
         st.session_state.cliente_page = "Instruções"
 
     st.sidebar.markdown(f"### Bem-vindo(a), {st.session_state.user.get('Empresa', 'Cliente')}!")
@@ -1044,7 +1035,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         st.write(f"**CNPJ:** {st.session_state.cnpj}")
         st.write(f"**Contato:** {st.session_state.user.get('NomeContato', 'N/D')}")
         st.write(f"**Telefone:** {st.session_state.user.get('Telefone', 'N/D')}")
-        
+
         total_slots = st.session_state.user.get('DiagnosticosDisponiveis', 0)
         realizados = st.session_state.user.get('TotalDiagnosticosRealizados', 0)
         restantes = max(0, total_slots - realizados)
@@ -1057,7 +1048,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         try:
             df_notif_check = pd.read_csv(notificacoes_csv, dtype={'CNPJ_Cliente': str, 'ID_Diagnostico_Relacionado': str})
             if not df_notif_check.empty and 'Lida' in df_notif_check.columns:
-                df_notif_check['Lida'] = df_notif_check['Lida'].apply(robust_str_to_bool) # Usar conversão robusta
+                df_notif_check['Lida'] = df_notif_check['Lida'].apply(robust_str_to_bool)
                 notificacoes_nao_lidas_count = len(df_notif_check[
                     (df_notif_check["CNPJ_Cliente"] == st.session_state.cnpj) &
                     (df_notif_check["Lida"] == False)
@@ -1073,16 +1064,16 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         "Instruções": "📖 Instruções",
         "Novo Diagnóstico": "📋 Novo Diagnóstico",
         "Painel Principal": "🏠 Painel Principal",
-        "Suporte/FAQ": "💬 Suporte/FAQ", 
-        "Pesquisa de Satisfação": "🌟 Pesquisa de Satisfação", 
+        "Suporte/FAQ": "💬 Suporte/FAQ",
+        "Pesquisa de Satisfação": "🌟 Pesquisa de Satisfação",
         "Notificações": notificacoes_label
     }
-    
+
     if not robust_str_to_bool(st.session_state.user.get("JaVisualizouInstrucoes", False)):
         menu_options_cli_map = {"Instruções": "📖 Instruções"}
-        if st.session_state.cliente_page != "Instruções": 
+        if st.session_state.cliente_page != "Instruções":
             st.session_state.cliente_page = "Instruções"
-            st.rerun() 
+            st.rerun()
     else:
         menu_options_cli_map = menu_options_cli_map_full.copy()
         pode_fazer_novo = st.session_state.user.get("DiagnosticosDisponiveis", 0) > st.session_state.user.get("TotalDiagnosticosRealizados", 0)
@@ -1092,7 +1083,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
             del menu_options_cli_map["Novo Diagnóstico"]
 
     menu_options_cli_display = list(menu_options_cli_map.values())
-    
+
     if st.session_state.cliente_page not in menu_options_cli_map.keys():
         st.session_state.cliente_page = "Instruções" if not robust_str_to_bool(st.session_state.user.get("JaVisualizouInstrucoes", False)) else "Painel Principal"
 
@@ -1101,68 +1092,72 @@ if aba == "Cliente" and st.session_state.cliente_logado:
     if default_display_option and default_display_option in menu_options_cli_display:
         try:
             current_idx_cli = menu_options_cli_display.index(default_display_option)
-        except ValueError: 
-            current_idx_cli = 0 
-            if menu_options_cli_display: 
+        except ValueError:
+            current_idx_cli = 0
+            if menu_options_cli_display:
                 for key_p, val_p in menu_options_cli_map.items():
                     if val_p == menu_options_cli_display[0]:
                         st.session_state.cliente_page = key_p
                         break
-    elif menu_options_cli_display: 
+    elif menu_options_cli_display:
         current_idx_cli = 0
         for key_page_fallback, val_page_display_fallback in menu_options_cli_map.items():
             if val_page_display_fallback == menu_options_cli_display[0]:
                 st.session_state.cliente_page = key_page_fallback
                 break
 
-    selected_page_cli_raw = st.sidebar.radio("Menu Cliente", menu_options_cli_display, index=current_idx_cli, key="cli_menu_v23_final_conditional_key")
-    
+    selected_page_cli_raw = st.sidebar.radio("Menu Cliente", menu_options_cli_display, index=current_idx_cli, key="cli_menu_v23_final_conditional_key") # Chave atualizada
+
     selected_page_cli_clean = ""
-    for key_page, val_page_display in menu_options_cli_map.items(): 
-        if val_page_display == selected_page_cli_raw: 
-            if key_page == "Notificações": 
+    for key_page, val_page_display in menu_options_cli_map.items():
+        if val_page_display == selected_page_cli_raw:
+            if key_page == "Notificações":
                 selected_page_cli_clean = "Notificações"
             else:
                 selected_page_cli_clean = key_page
             break
-    
+
     if selected_page_cli_clean and selected_page_cli_clean != st.session_state.cliente_page :
         st.session_state.cliente_page = selected_page_cli_clean
-        st.session_state.force_sidebar_rerun_after_notif_read_v19 = False 
-        st.session_state.target_diag_data_for_expansion = None 
+        st.session_state.force_sidebar_rerun_after_notif_read_v19 = False
+        st.session_state.target_diag_data_for_expansion = None
         st.rerun()
 
-    if st.sidebar.button("Sair do Portal Cliente", icon="⬅️", key="logout_cliente_v23_final_btn", use_container_width=True):
-        keys_to_clear = [k for k in st.session_state.keys() if k not in ['admin_logado', 'last_cnpj_input', 'login_selection_aba']] 
-        for key_item in keys_to_clear: del st.session_state[key_item] 
+    if st.sidebar.button("Sair do Portal Cliente", icon="⬅️", key="logout_cliente_v23_final_btn", use_container_width=True): # Chave atualizada
+        keys_to_clear = [k for k in st.session_state.keys() if k not in ['admin_logado', 'last_cnpj_input', 'login_selection_aba']]
+        for key_item in keys_to_clear: del st.session_state[key_item]
         for key_d, value_d in default_session_state.items():
             if key_d not in ['admin_logado', 'last_cnpj_input', 'login_selection_aba']: st.session_state[key_d] = value_d
         st.session_state.cliente_logado = False
         st.toast("Logout realizado.", icon="👋")
         st.rerun()
-    
-    # --- CLIENT PAGE CONTENT (Mantido como estava no original, com as devidas verificações de permissão se aplicável) ---
+
+    # --- CLIENT PAGE CONTENT ---
     if st.session_state.cliente_page == "Instruções":
         st.header("📖 Instruções do Portal")
-        # ... (código da página de instruções)
+        # ... (código da página)
     elif st.session_state.cliente_page == "Novo Diagnóstico":
         st.header("📋 Novo Diagnóstico Empresarial")
-        # ... (código da página de novo diagnóstico)
+        # ... (código da página)
     elif st.session_state.cliente_page == "Painel Principal":
         st.header("🏠 Painel Principal do Cliente")
-        # ... (código da página do painel principal)
+        # ... (código da página)
     elif st.session_state.cliente_page == "Suporte/FAQ":
         st.header("💬 Suporte e Perguntas Frequentes (FAQ)")
-        # ... (código da página de FAQ)
+        # ... (código da página)
     elif st.session_state.cliente_page == "Pesquisa de Satisfação":
         st.header("🌟 Pesquisa de Satisfação")
-        # ... (código da página de pesquisa de satisfação)
+        # ... (código da página)
     elif st.session_state.cliente_page == "Notificações":
         st.header(notificacoes_label.replace(f"({notificacoes_nao_lidas_count} Nova(s))", "").strip())
-        # ... (código da página de notificações)
+        # ... (código da página)
+
 
 # --- ÁREA DO ADMINISTRADOR LOGADO ---
 if aba == "Administrador" and st.session_state.admin_logado:
+    SESSION_KEY_FOR_ADMIN_PAGE = "admin_current_page_text_key_v23_final_sess"
+    WIDGET_KEY_SB_ADMIN_MENU = "sb_admin_menu_v23_final_widget_key"
+
     admin_logo_path_sidebar = CUSTOM_LOGIN_LOGO_PATH if os.path.exists(CUSTOM_LOGIN_LOGO_PATH) else DEFAULT_LOGIN_LOGO_PATH
     if os.path.exists(admin_logo_path_sidebar):
         st.sidebar.image(admin_logo_path_sidebar, use_container_width=True, width=150)
@@ -1171,15 +1166,12 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
     st.sidebar.success(f"🟢 Admin Logado: {st.session_state.admin_user_details.get('Usuario', '')}")
 
-    # Função auxiliar para verificar permissão (movida para o escopo do admin logado)
     def has_admin_permission(permission_key):
         if 'admin_user_details' in st.session_state and st.session_state.admin_user_details is not None:
-            # Adicionar um st.write para debug se necessário:
-            # st.sidebar.write(f"Verificando {permission_key}: {st.session_state.admin_user_details.get(permission_key, False)}")
             return st.session_state.admin_user_details.get(permission_key, False)
         return False
 
-    if st.sidebar.button("Sair do Painel Admin", icon="🚪", key="logout_admin_v23_final_button", use_container_width=True):
+    if st.sidebar.button("Sair do Painel Admin", icon="🚪", key="logout_admin_v23_final_button", use_container_width=True): # Chave atualizada
         admin_keys_to_clear = ["admin_logado", "admin_user_details", SESSION_KEY_FOR_ADMIN_PAGE]
         for key in admin_keys_to_clear:
             if key in st.session_state:
@@ -1218,10 +1210,8 @@ if aba == "Administrador" and st.session_state.admin_logado:
     admin_page_text_keys = list(allowed_admin_pages_map.keys())
     admin_options_for_display = [f"{allowed_admin_pages_map[key]} {key}" for key in admin_page_text_keys]
 
-    SESSION_KEY_FOR_ADMIN_PAGE = "admin_current_page_text_key_v23_final_sess"
-    WIDGET_KEY_SB_ADMIN_MENU = "sb_admin_menu_v23_final_widget_key"
 
-    def admin_menu_on_change_final_v23():
+    def admin_menu_on_change_final_v23(): # Chave atualizada
         selected_display_value = st.session_state.get(WIDGET_KEY_SB_ADMIN_MENU)
         if selected_display_value is None: return
 
@@ -1245,14 +1235,13 @@ if aba == "Administrador" and st.session_state.admin_logado:
             expected_display_value_for_current_page = f"{allowed_admin_pages_map.get(current_admin_page_text_key_for_index, '')} {current_admin_page_text_key_for_index}"
             current_admin_menu_index = admin_options_for_display.index(expected_display_value_for_current_page)
         except (ValueError, KeyError):
-            if admin_page_text_keys: # Se ainda houver chaves permitidas
+            if admin_page_text_keys:
                 st.session_state[SESSION_KEY_FOR_ADMIN_PAGE] = admin_page_text_keys[0]
                 current_admin_page_text_key_for_index = admin_page_text_keys[0]
                 expected_display_value_for_current_page = f"{allowed_admin_pages_map[current_admin_page_text_key_for_index]} {current_admin_page_text_key_for_index}"
                 current_admin_menu_index = admin_options_for_display.index(expected_display_value_for_current_page)
-            else: # Nenhuma opção válida, o que não deveria acontecer devido à verificação anterior
+            else:
                 current_admin_page_text_key_for_index = None
-
 
     if admin_options_for_display:
         st.sidebar.selectbox(
@@ -1260,7 +1249,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             options=admin_options_for_display,
             index=current_admin_menu_index,
             key=WIDGET_KEY_SB_ADMIN_MENU,
-            on_change=admin_menu_on_change_final_v23
+            on_change=admin_menu_on_change_final_v23 # Chave atualizada
         )
 
     menu_admin = st.session_state.get(SESSION_KEY_FOR_ADMIN_PAGE)
@@ -1331,11 +1320,11 @@ if aba == "Administrador" and st.session_state.admin_logado:
         # ... (código da seção)
     elif menu_admin == "Gerenciar Administradores":
         if not has_admin_permission("Perm_GerenciarAdministradores"): st.error("Acesso negado."); st.stop()
-        # --- Código da seção Gerenciar Administradores (já implementado com as correções anteriores) ---
+        # --- Código da seção Gerenciar Administradores ---
         st.subheader("Gerenciar Contas de Administrador")
         try:
             df_admins_ga = pd.read_csv(admin_credenciais_csv, encoding='utf-8')
-            for perm_col in ALL_ADMIN_PERMISSION_KEYS: 
+            for perm_col in ALL_ADMIN_PERMISSION_KEYS:
                 if perm_col not in df_admins_ga.columns:
                     df_admins_ga[perm_col] = False
                 df_admins_ga[perm_col] = df_admins_ga[perm_col].apply(robust_str_to_bool)
@@ -1346,7 +1335,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         st.info("Adicione, edite ou remova contas de administrador e suas permissões. Cuidado: A remoção é permanente.")
 
         with st.expander("➕ Adicionar Novo Administrador"):
-            with st.form("form_add_new_admin_v24"): # Chave do formulário atualizada
+            with st.form("form_add_new_admin_v24"):
                 st.write("##### Detalhes do Novo Administrador")
                 new_admin_user = st.text_input("Usuário*", key="new_admin_user_v24")
                 new_admin_pass = st.text_input("Senha*", type="password", key="new_admin_pass_v24")
@@ -1358,14 +1347,12 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 col_idx = 0
                 for perm_key in ALL_ADMIN_PERMISSION_KEYS:
                     perm_label = perm_key.replace("Perm_", "").replace("Gerenciar", "Ger. ").replace("Diagnostico", "Diag.").replace("Resultados", "Res.")
-                    # Para novos admins, default das permissões é False, exceto GerenciarAdministradores para o primeiro admin talvez
                     default_perm_val = False
                     if perm_key == "Perm_GerenciarAdministradores" and len(df_admins_ga[df_admins_ga['Perm_GerenciarAdministradores'] == True]) == 0:
-                         default_perm_val = True # Se não houver nenhum superadmin, o primeiro criado será um.
-                    
+                         default_perm_val = True
                     new_admin_permissions[perm_key] = perm_cols_widgets[col_idx % num_perm_cols].checkbox(perm_label, key=f"new_perm_{perm_key}_v24", value=default_perm_val)
                     col_idx += 1
-                
+
                 submitted_new_admin = st.form_submit_button("Adicionar Administrador")
                 if submitted_new_admin:
                     if not new_admin_user or not new_admin_pass:
@@ -1386,29 +1373,29 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
         st.markdown("---")
         st.write("##### Editar Administradores Existentes")
-        
+
         column_config_admins = {
             "Usuario": st.column_config.TextColumn("Usuário", disabled=True),
             "Senha": st.column_config.TextColumn("Senha (oculta)", disabled=True, help="Use a seção 'Alterar Senha' abaixo."),
         }
-        for perm_key_col_cfg in ALL_ADMIN_PERMISSION_KEYS: # Renomear variável para evitar conflito
+        for perm_key_col_cfg in ALL_ADMIN_PERMISSION_KEYS:
             perm_label = perm_key_col_cfg.replace("Perm_", "").replace("Gerenciar", "Ger. ").replace("Diagnostico", "Diag.").replace("Resultados", "Res.")
             column_config_admins[perm_key_col_cfg] = st.column_config.CheckboxColumn(perm_label, default=False)
 
         df_admins_display = df_admins_ga.copy()
         if "Senha" in df_admins_display.columns:
-            df_admins_display["Senha"] = "********" 
+            df_admins_display["Senha"] = "********"
 
         edited_df_admins_ga = st.data_editor(
             df_admins_display,
-            key="editor_admins_ga_v24_permissions", # Chave atualizada
+            key="editor_admins_ga_v24_permissions",
             column_config=column_config_admins,
             use_container_width=True,
             num_rows="dynamic",
-            disabled=["Usuario", "Senha"] 
+            disabled=["Usuario", "Senha"]
         )
 
-        if st.button("Salvar Alterações nos Administradores", key="save_admins_ga_v24_permissions", type="primary"): # Chave atualizada
+        if st.button("Salvar Alterações nos Administradores", key="save_admins_ga_v24_permissions", type="primary"):
             if edited_df_admins_ga["Usuario"].isnull().any() or (edited_df_admins_ga["Usuario"] == "").any():
                 st.error("Nome de usuário não pode ser vazio (verifique linhas adicionadas/removidas).")
             elif edited_df_admins_ga["Usuario"].duplicated().any():
@@ -1416,25 +1403,24 @@ if aba == "Administrador" and st.session_state.admin_logado:
             else:
                 final_df_to_save = pd.DataFrame(columns=colunas_base_admin_credenciais)
                 logged_admin_username_save = st.session_state.admin_user_details['Usuario']
-                
-                # Variável para checar se o admin logado tentou remover sua própria super permissão
                 logged_admin_lost_super_perm = False
 
                 for _, edited_row in edited_df_admins_ga.iterrows():
+                    # Encontrar a linha original pelo nome de usuário para preservar a senha real
                     original_admin_row = df_admins_ga[df_admins_ga['Usuario'] == edited_row['Usuario']]
                     if not original_admin_row.empty:
-                        new_row_data = original_admin_row.iloc[0].to_dict()
-                        for perm_key_update in ALL_ADMIN_PERMISSION_KEYS:
+                        new_row_data = original_admin_row.iloc[0].to_dict() # Pega senha original e permissões antigas
+                        for perm_key_update in ALL_ADMIN_PERMISSION_KEYS: # Atualiza permissões com base no editor
                             new_perm_value = robust_str_to_bool(edited_row.get(perm_key_update, False))
                             if edited_row['Usuario'] == logged_admin_username_save and \
                                perm_key_update == "Perm_GerenciarAdministradores" and \
-                               new_row_data[perm_key_update] == True and new_perm_value == False: # Tentativa de remover a própria super permissão
+                               new_row_data[perm_key_update] == True and new_perm_value == False:
                                 logged_admin_lost_super_perm = True
                             new_row_data[perm_key_update] = new_perm_value
                         final_df_to_save = pd.concat([final_df_to_save, pd.DataFrame([new_row_data])], ignore_index=True)
-                
-                # Verificar se o admin logado está tentando remover sua permissão de GerenciarAdministradores
-                # e se ele é o único com essa permissão
+                    # Linhas novas adicionadas via data_editor (se 'num_rows="dynamic"' e não desabilitado) não são esperadas aqui
+                    # pois temos um formulário dedicado para adicionar.
+
                 if logged_admin_lost_super_perm:
                     admins_with_super_perm_after_edit = final_df_to_save[final_df_to_save['Perm_GerenciarAdministradores'] == True]
                     if len(admins_with_super_perm_after_edit) == 0:
@@ -1443,7 +1429,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
                 final_df_to_save.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
                 st.success("Lista de administradores e suas permissões atualizada!")
-                
+
                 updated_admin_details_row = final_df_to_save[final_df_to_save['Usuario'] == logged_admin_username_save]
                 if not updated_admin_details_row.empty:
                     st.session_state.admin_user_details = updated_admin_details_row.iloc[0].to_dict()
@@ -1451,7 +1437,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
         st.markdown("---")
         st.subheader("Alterar Senha de Administrador")
-        with st.form("form_change_admin_password_v24"): # Chave atualizada
+        with st.form("form_change_admin_password_v24"):
             df_admins_current_ga = pd.read_csv(admin_credenciais_csv, encoding='utf-8')
             admins_list_cp = df_admins_current_ga["Usuario"].tolist()
             if not admins_list_cp:
@@ -1476,7 +1462,6 @@ if aba == "Administrador" and st.session_state.admin_logado:
                         else:
                             st.error("Administrador não encontrado.")
     else:
-        # Caso alguma página não esteja mapeada (não deve acontecer se a lógica do menu estiver correta)
         st.warning(f"Página administrativa '{menu_admin}' não reconhecida ou sem conteúdo definido.")
 
 
