@@ -8,7 +8,7 @@ import tempfile
 import re
 import json
 import plotly.express as px
-import uuid # Para IDs de análise
+import uuid # Para IDs de análise e SAC
 
 # !!! st.set_page_config() DEVE SER O PRIMEIRO COMANDO STREAMLIT !!!
 st.set_page_config(page_title="Portal de Diagnóstico", layout="wide", page_icon="📊")
@@ -171,6 +171,22 @@ body {
     border-bottom: 1px solid #eee;
     padding-bottom: 8px;
 }
+.sac-feedback-button button {
+    background-color: #f0f0f0;
+    color: #333;
+    border: 1px solid #ccc;
+    margin-right: 5px;
+    padding: 0.3rem 0.8rem;
+}
+.sac-feedback-button button:hover {
+    background-color: #e0e0e0;
+}
+.sac-feedback-button button.active {
+    background-color: #2563eb;
+    color: white;
+    border-color: #2563eb;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -188,9 +204,9 @@ def create_radar_chart(data_dict, title="Radar Chart"):
     fig = px.line_polar(df_radar, r='r', theta='theta', line_close=True, template="seaborn")
     fig.update_traces(fill='toself', line=dict(color='#2563eb'))
     fig.update_layout(title={'text': title, 'x':0.5, 'xanchor': 'center'},
-                        polar=dict(radialaxis=dict(visible=True, range=[0, 5])),
-                        font=dict(family="Segoe UI, sans-serif"),
-                        margin=dict(l=50, r=50, t=70, b=50))
+                      polar=dict(radialaxis=dict(visible=True, range=[0, 5])),
+                      font=dict(family="Segoe UI, sans-serif"),
+                      margin=dict(l=50, r=50, t=70, b=50))
     return fig
 
 def create_gut_barchart(gut_data_list, title="Top Prioridades (GUT)"):
@@ -202,10 +218,10 @@ def create_gut_barchart(gut_data_list, title="Top Prioridades (GUT)"):
                  color="Score", color_continuous_scale=px.colors.sequential.Blues_r,
                  labels={'Tarefa':'Tarefa/Pergunta', 'Score':'Score GUT'})
     fig.update_layout(yaxis={'categoryorder':'total ascending'},
-                        xaxis_title="Score GUT", yaxis_title="",
-                        font=dict(family="Segoe UI, sans-serif"),
-                        height=400 + len(df_gut)*20,
-                        margin=dict(l=250, r=20, t=70, b=20))
+                      xaxis_title="Score GUT", yaxis_title="",
+                      font=dict(family="Segoe UI, sans-serif"),
+                      height=400 + len(df_gut)*20,
+                      margin=dict(l=250, r=20, t=70, b=20))
     return fig
 
 def create_diagnostics_timeline_chart(df_diagnostics, title="Diagnósticos Realizados ao Longo do Tempo"):
@@ -243,7 +259,7 @@ def create_avg_category_scores_chart(df_diagnostics, title="Média de Scores por
                  color='Média_Score', color_continuous_scale=px.colors.sequential.Blues_r,
                  labels={'Categoria':'Categoria', 'Média_Score':'Média do Score'})
     fig.update_layout(xaxis_tickangle=-45, font=dict(family="Segoe UI, sans-serif"),
-                        yaxis=dict(range=[0,5.5]))
+                      yaxis=dict(range=[0,5.5]))
     return fig
 
 def create_client_engagement_pie(df_usuarios, title="Engajamento de Clientes (Nº de Diagnósticos)"):
@@ -281,6 +297,8 @@ analises_perguntas_csv = "analises_perguntas.csv"
 notificacoes_csv = "notificacoes.csv" 
 instrucoes_custom_path = "instrucoes_portal.md" 
 instrucoes_default_path = "instrucoes_portal_default.md"
+sac_perguntas_respostas_csv = "sac_perguntas_respostas.csv"
+sac_uso_feedback_csv = "sac_uso_feedback.csv"
 LOGOS_DIR = "client_logos"
 
 # --- Inicialização do Session State ---
@@ -290,7 +308,7 @@ default_session_state = {
     "progresso_diagnostico_percentual": 0, "progresso_diagnostico_contagem": (0,0),
     "respostas_atuais_diagnostico": {}, "id_formulario_atual": None,
     "pdf_gerado_path": None, "pdf_gerado_filename": None,
-    "feedbacks_respostas": {},
+    "feedbacks_respostas": {}, "sac_feedback_registrado": {}, # Adicionado para SAC
     "force_sidebar_rerun_after_notif_read_v19": False,
     "target_diag_data_for_expansion": None 
 }
@@ -320,6 +338,9 @@ colunas_base_usuarios = ["CNPJ", "Senha", "Empresa", "NomeContato", "Telefone",
 colunas_base_perguntas = ["Pergunta", "Categoria"]
 colunas_base_analises = ["ID_Analise", "TextoPerguntaOriginal", "TipoCondicao", "CondicaoValorMin", "CondicaoValorMax", "CondicaoValorExato", "TextoAnalise"]
 colunas_base_notificacoes = ["ID_Notificacao", "CNPJ_Cliente", "Timestamp", "Mensagem", "Lida", "ID_Diagnostico_Relacionado"] 
+colunas_base_sac_perguntas = ["ID_SAC_Pergunta", "Pergunta_SAC", "Resposta_SAC", "Categoria_SAC", "DataCriacao"]
+colunas_base_sac_uso_feedback = ["ID_Uso_SAC", "Timestamp", "CNPJ_Cliente", "ID_SAC_Pergunta", "Feedback_Util"]
+
 
 def inicializar_csv(filepath, columns, defaults=None):
     try:
@@ -331,7 +352,7 @@ def inicializar_csv(filepath, columns, defaults=None):
             df_init.to_csv(filepath, index=False, encoding='utf-8')
         else:
             try:
-                df_init = pd.read_csv(filepath, encoding='utf-8', dtype={'CNPJ': str, 'CNPJ_Cliente': str} if filepath in [usuarios_csv, usuarios_bloqueados_csv, arquivo_csv, notificacoes_csv] else None)
+                df_init = pd.read_csv(filepath, encoding='utf-8', dtype={'CNPJ': str, 'CNPJ_Cliente': str} if filepath in [usuarios_csv, usuarios_bloqueados_csv, arquivo_csv, notificacoes_csv, sac_uso_feedback_csv] else None)
             except ValueError as ve: # Attempt to handle older CSVs that might cause dtype issues
                 st.warning(f"Problema ao ler {filepath} com dtypes específicos ({ve}), tentando leitura genérica.")
                 df_init = pd.read_csv(filepath, encoding='utf-8') # Fallback to generic read
@@ -343,7 +364,7 @@ def inicializar_csv(filepath, columns, defaults=None):
                         if col in columns: df_init[col] = default_val
                 df_init.to_csv(filepath, index=False, encoding='utf-8')
                 # Re-read after potential recreation
-                df_init = pd.read_csv(filepath, encoding='utf-8', dtype={'CNPJ': str, 'CNPJ_Cliente': str} if filepath in [usuarios_csv, usuarios_bloqueados_csv, arquivo_csv, notificacoes_csv] else None)
+                df_init = pd.read_csv(filepath, encoding='utf-8', dtype={'CNPJ': str, 'CNPJ_Cliente': str} if filepath in [usuarios_csv, usuarios_bloqueados_csv, arquivo_csv, notificacoes_csv, sac_uso_feedback_csv] else None)
 
 
             made_changes = False
@@ -374,6 +395,8 @@ try:
     inicializar_csv(arquivo_csv, colunas_base_diagnosticos) 
     inicializar_csv(analises_perguntas_csv, colunas_base_analises)
     inicializar_csv(notificacoes_csv, colunas_base_notificacoes, defaults={"Lida": False, "ID_Diagnostico_Relacionado": None}) 
+    inicializar_csv(sac_perguntas_respostas_csv, colunas_base_sac_perguntas, defaults={"Categoria_SAC": "Geral", "DataCriacao": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
+    inicializar_csv(sac_uso_feedback_csv, colunas_base_sac_uso_feedback, defaults={"Feedback_Util": None})
 except Exception as e_init:
     st.error(f"Falha na inicialização de arquivos CSV: {e_init}")
     st.stop()
@@ -407,6 +430,29 @@ def update_user_data(cnpj, field, value):
 def carregar_analises_perguntas():
     try: return pd.read_csv(analises_perguntas_csv, encoding='utf-8')
     except (FileNotFoundError, pd.errors.EmptyDataError): return pd.DataFrame(columns=colunas_base_analises)
+
+@st.cache_data
+def carregar_sac_perguntas_respostas():
+    try:
+        df = pd.read_csv(sac_perguntas_respostas_csv, encoding='utf-8')
+        if "Categoria_SAC" not in df.columns: df["Categoria_SAC"] = "Geral"
+        if "DataCriacao" not in df.columns: df["DataCriacao"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        return df
+    except (FileNotFoundError, pd.errors.EmptyDataError):
+        return pd.DataFrame(columns=colunas_base_sac_perguntas)
+
+@st.cache_data
+def carregar_sac_uso_feedback():
+    try:
+        df = pd.read_csv(sac_uso_feedback_csv, encoding='utf-8', dtype={'CNPJ_Cliente': str})
+        if 'Feedback_Util' in df.columns:
+             df['Feedback_Util'] = df['Feedback_Util'].astype(str).str.lower().map({'true': True, 'false': False, 'nan': pd.NA, '': pd.NA}).astype('boolean') # boolean to handle NA
+        else:
+            df['Feedback_Util'] = pd.NA
+        return df
+    except (FileNotFoundError, pd.errors.EmptyDataError):
+        return pd.DataFrame(columns=colunas_base_sac_uso_feedback)
+
 
 def obter_analise_para_resposta(pergunta_texto, resposta_valor, df_analises):
     if df_analises.empty: return None
@@ -595,6 +641,7 @@ if aba == "Cliente" and not st.session_state.cliente_logado:
                 st.session_state.progresso_diagnostico_percentual = 0
                 st.session_state.progresso_diagnostico_contagem = (0,0)
                 st.session_state.feedbacks_respostas = {}
+                st.session_state.sac_feedback_registrado = {}
                 st.session_state.diagnostico_enviado_sucesso = False
                 st.session_state.target_diag_data_for_expansion = None 
 
@@ -647,7 +694,8 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         "Instruções": "📖 Instruções",
         "Novo Diagnóstico": "📋 Novo Diagnóstico",
         "Painel Principal": "🏠 Painel Principal",
-        "Notificações": notificacoes_label
+        "Notificações": notificacoes_label,
+        "SAC": "❓ SAC - Perguntas Frequentes" # Adicionado SAC
     }
     
     if not st.session_state.user.get("JaVisualizouInstrucoes", False):
@@ -684,6 +732,8 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         if val_page_display == selected_page_cli_raw: 
             if key_page == "Notificações": 
                 selected_page_cli_clean = "Notificações"
+            elif key_page == "SAC":
+                selected_page_cli_clean = "SAC"
             else:
                 selected_page_cli_clean = key_page
             break
@@ -728,6 +778,84 @@ if aba == "Cliente" and st.session_state.cliente_logado:
             pode_fazer_novo_inst = st.session_state.user.get("DiagnosticosDisponiveis", 0) > st.session_state.user.get("TotalDiagnosticosRealizados", 0)
             st.session_state.cliente_page = "Novo Diagnóstico" if pode_fazer_novo_inst else "Painel Principal"
             st.rerun()
+
+    elif st.session_state.cliente_page == "SAC":
+        st.subheader(menu_options_cli_map_full["SAC"])
+        df_sac_qa = carregar_sac_perguntas_respostas()
+
+        if df_sac_qa.empty:
+            st.info("Nenhuma pergunta frequente cadastrada no momento.")
+        else:
+            df_sac_qa_sorted = df_sac_qa.sort_values(by=["Categoria_SAC", "Pergunta_SAC"])
+            categorias_sac = df_sac_qa_sorted["Categoria_SAC"].unique()
+
+            search_term_sac = st.text_input("🔎 Procurar nas Perguntas Frequentes:", key="search_sac_cliente")
+            if search_term_sac:
+                df_sac_qa_sorted = df_sac_qa_sorted[
+                    df_sac_qa_sorted["Pergunta_SAC"].str.contains(search_term_sac, case=False, na=False) |
+                    df_sac_qa_sorted["Resposta_SAC"].str.contains(search_term_sac, case=False, na=False) |
+                    df_sac_qa_sorted["Categoria_SAC"].str.contains(search_term_sac, case=False, na=False)
+                ]
+                categorias_sac = df_sac_qa_sorted["Categoria_SAC"].unique()
+
+
+            if df_sac_qa_sorted.empty and search_term_sac:
+                 st.info(f"Nenhuma pergunta encontrada para '{search_term_sac}'.")
+
+
+            for categoria in categorias_sac:
+                st.markdown(f"#### {categoria}")
+                perguntas_na_categoria = df_sac_qa_sorted[df_sac_qa_sorted["Categoria_SAC"] == categoria]
+                for idx_sac, row_sac in perguntas_na_categoria.iterrows():
+                    with st.expander(f"{row_sac['Pergunta_SAC']}"):
+                        st.markdown(row_sac['Resposta_SAC'], unsafe_allow_html=True) # unsafe_allow_html if admin can add HTML in answers
+                        
+                        feedback_key_base = f"sac_feedback_{row_sac['ID_SAC_Pergunta']}"
+                        feedback_dado = st.session_state.sac_feedback_registrado.get(row_sac['ID_SAC_Pergunta'])
+
+                        cols_feedback = st.columns([1,1,8])
+                        with cols_feedback[0]:
+                            btn_class_util = "active" if feedback_dado == "util" else ""
+                            if st.button("👍 Útil", key=f"{feedback_key_base}_util", help="Esta resposta foi útil", use_container_width=True,
+                                         type="secondary" if feedback_dado != "util" else "primary"):
+                                try:
+                                    df_feedback = carregar_sac_uso_feedback()
+                                    novo_feedback = pd.DataFrame([{
+                                        "ID_Uso_SAC": str(uuid.uuid4()), "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                        "CNPJ_Cliente": st.session_state.cnpj, "ID_SAC_Pergunta": row_sac['ID_SAC_Pergunta'],
+                                        "Feedback_Util": True
+                                    }])
+                                    df_feedback = pd.concat([df_feedback, novo_feedback], ignore_index=True)
+                                    df_feedback.to_csv(sac_uso_feedback_csv, index=False, encoding='utf-8')
+                                    st.session_state.sac_feedback_registrado[row_sac['ID_SAC_Pergunta']] = "util"
+                                    st.toast("Obrigado pelo seu feedback!", icon="😊")
+                                    st.rerun() # To update button appearance
+                                except Exception as e_fb:
+                                    st.error(f"Erro ao registrar feedback: {e_fb}")
+                        with cols_feedback[1]:
+                            btn_class_nao_util = "active" if feedback_dado == "nao_util" else ""
+                            if st.button("👎 Não útil", key=f"{feedback_key_base}_nao_util", help="Esta resposta não foi útil", use_container_width=True,
+                                         type="secondary" if feedback_dado != "nao_util" else "primary"):
+                                try:
+                                    df_feedback = carregar_sac_uso_feedback()
+                                    novo_feedback = pd.DataFrame([{
+                                        "ID_Uso_SAC": str(uuid.uuid4()), "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                        "CNPJ_Cliente": st.session_state.cnpj, "ID_SAC_Pergunta": row_sac['ID_SAC_Pergunta'],
+                                        "Feedback_Util": False
+                                    }])
+                                    df_feedback = pd.concat([df_feedback, novo_feedback], ignore_index=True)
+                                    df_feedback.to_csv(sac_uso_feedback_csv, index=False, encoding='utf-8')
+                                    st.session_state.sac_feedback_registrado[row_sac['ID_SAC_Pergunta']] = "nao_util"
+                                    st.toast("Obrigado pelo seu feedback! Vamos melhorar.", icon="🛠️")
+                                    st.rerun() # To update button appearance
+                                except Exception as e_fb:
+                                    st.error(f"Erro ao registrar feedback: {e_fb}")
+                        
+                        if feedback_dado:
+                            with cols_feedback[2]:
+                                st.caption(f"Seu feedback ('{feedback_dado.replace('_', ' ').capitalize()}') foi registrado.")
+                st.markdown("---")
+
 
     elif st.session_state.cliente_page == "Notificações":
         st.subheader(menu_options_cli_map_full["Notificações"].split(" (")[0]) 
@@ -965,10 +1093,10 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                             if pdf_path_antigo:
                                 with open(pdf_path_antigo, "rb") as f_antigo:
                                     st.download_button("Clique para Baixar", f_antigo,
-                                                        file_name=f"diag_{sanitize_column_name(row_diag_data['Empresa'])}_{str(row_diag_data['Data']).replace(':','-').replace(' ','_')}.pdf",
-                                                        mime="application/pdf",
-                                                        key=f"dl_confirm_antigo_v19_{idx_row_diag}_{time.time()}",
-                                                        icon="📄")
+                                                       file_name=f"diag_{sanitize_column_name(row_diag_data['Empresa'])}_{str(row_diag_data['Data']).replace(':','-').replace(' ','_')}.pdf",
+                                                       mime="application/pdf",
+                                                       key=f"dl_confirm_antigo_v19_{idx_row_diag}_{time.time()}",
+                                                       icon="📄")
                                 registrar_acao(st.session_state.cnpj, "Download PDF (Painel)", f"Baixou PDF de {row_diag_data['Data']}")
                             else: st.error("Erro ao gerar PDF para este diagnóstico.")
                         st.markdown('</div>', unsafe_allow_html=True)
@@ -1008,7 +1136,9 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                         else:
                             st.info("Nenhuma ação prioritária (GUT > 0) identificada no último diagnóstico para o Kanban.")
                     else:
-                        st.info("Nenhum diagnóstico para gerar o Kanban.")
+                        st.info("Nenhuma ação prioritária (GUT > 0) identificada no último diagnóstico para o Kanban.")
+                else:
+                    st.info("Nenhum diagnóstico para gerar o Kanban.")
                 st.divider()
 
                 st.subheader("📈 Comparativo de Evolução das Médias")
@@ -1265,6 +1395,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                     st.session_state.progresso_diagnostico_percentual = 0
                     st.session_state.progresso_diagnostico_contagem = (0,total_perguntas_form)
                     st.session_state.feedbacks_respostas = {}
+                    st.session_state.sac_feedback_registrado = {} # Reset SAC feedback for new session potentially
                     st.session_state.cliente_page = "Painel Principal" 
                     st.rerun()
 
@@ -1289,6 +1420,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         "Gerenciar Clientes": "👥",
         "Gerenciar Perguntas": "📝",
         "Gerenciar Análises de Perguntas": "💡",
+        "Gerenciar SAC": "📞", # Adicionado Gerenciar SAC
         "Gerenciar Instruções": "⚙️",
         "Histórico de Usuários": "📜", 
         "Gerenciar Administradores": "👮"
@@ -1349,10 +1481,10 @@ if aba == "Administrador" and st.session_state.admin_logado:
         
         df_usuarios_admin_geral = df_usuarios_admin_temp_load
     except FileNotFoundError:
-        if menu_admin in ["Visão Geral e Diagnósticos", "Histórico de Usuários", "Gerenciar Clientes", "Gerenciar Notificações", "Relatório de Engajamento"]:
+        if menu_admin in ["Visão Geral e Diagnósticos", "Histórico de Usuários", "Gerenciar Clientes", "Gerenciar Notificações", "Relatório de Engajamento", "Gerenciar SAC"]:
             st.sidebar.error(f"Arquivo '{usuarios_csv}' não encontrado. Funcionalidades limitadas.")
     except Exception as e_load_users_adm_global:
-        if menu_admin in ["Visão Geral e Diagnósticos", "Histórico de Usuários", "Gerenciar Clientes", "Gerenciar Notificações", "Relatório de Engajamento"]:
+        if menu_admin in ["Visão Geral e Diagnósticos", "Histórico de Usuários", "Gerenciar Clientes", "Gerenciar Notificações", "Relatório de Engajamento", "Gerenciar SAC"]:
             st.sidebar.error(f"Erro ao carregar usuários para admin: {e_load_users_adm_global}")
 
 
@@ -1590,10 +1722,10 @@ if aba == "Administrador" and st.session_state.admin_logado:
                         if pdf_path_adm_d:
                             with open(pdf_path_adm_d, "rb") as f_adm_d:
                                 st.download_button("Download PDF Confirmado", f_adm_d,
-                                                  file_name=f"diag_{sanitize_column_name(row_diag_adm['Empresa'])}_{str(row_diag_adm['Data']).replace(':','-').replace(' ','_')}.pdf",
-                                                  mime="application/pdf",
-                                                  key=f"dl_confirm_adm_diag_v19_{idx_diag_adm}_{time.time()}", 
-                                                  icon="📄")
+                                                   file_name=f"diag_{sanitize_column_name(row_diag_adm['Empresa'])}_{str(row_diag_adm['Data']).replace(':','-').replace(' ','_')}.pdf",
+                                                   mime="application/pdf",
+                                                   key=f"dl_confirm_adm_diag_v19_{idx_diag_adm}_{time.time()}", 
+                                                   icon="📄")
                         else:
                             st.error("Erro ao gerar PDF para este diagnóstico.")
                     st.markdown('</div>', unsafe_allow_html=True)
@@ -1730,6 +1862,157 @@ if aba == "Administrador" and st.session_state.admin_logado:
         else:
             st.info("Nenhuma notificação encontrada para os filtros aplicados.")
 
+    elif menu_admin == "Gerenciar SAC":
+        st.markdown("#### Gerenciamento do SAC - Perguntas e Respostas")
+        df_sac_qa_admin = carregar_sac_perguntas_respostas().copy() # Use copy to modify
+        df_sac_uso_admin = carregar_sac_uso_feedback().copy()
+
+        sac_admin_tabs = st.tabs(["📝 Gerenciar Perguntas e Respostas SAC", "📊 Relatório de Uso e Feedback SAC"])
+
+        with sac_admin_tabs[0]:
+            st.subheader("Adicionar Nova Pergunta ao SAC")
+            with st.form("form_nova_pergunta_sac", clear_on_submit=True):
+                nova_pergunta_sac_txt = st.text_input("Texto da Pergunta SAC:", key="nova_p_sac_txt")
+                nova_resposta_sac_txt = st.text_area("Texto da Resposta SAC:", key="nova_r_sac_txt", height=150)
+                
+                cat_existentes_sac_admin = sorted(list(df_sac_qa_admin['Categoria_SAC'].astype(str).unique())) if not df_sac_qa_admin.empty else []
+                cat_options_sac_admin = ["Nova Categoria"] + cat_existentes_sac_admin
+                cat_selecionada_sac_admin = st.selectbox("Categoria da Pergunta SAC:", cat_options_sac_admin, key="cat_select_admin_new_sac")
+                nova_cat_sac_form_admin = st.text_input("Nome da Nova Categoria SAC:", key="nova_cat_input_admin_new_sac") if cat_selecionada_sac_admin == "Nova Categoria" else cat_selecionada_sac_admin
+
+                submitted_nova_sac_qa = st.form_submit_button("Adicionar ao SAC", icon="➕")
+                if submitted_nova_sac_qa:
+                    if nova_pergunta_sac_txt.strip() and nova_resposta_sac_txt.strip() and nova_cat_sac_form_admin.strip():
+                        nova_id_sac_p = str(uuid.uuid4())
+                        nova_entrada_sac = pd.DataFrame([{
+                            "ID_SAC_Pergunta": nova_id_sac_p,
+                            "Pergunta_SAC": nova_pergunta_sac_txt.strip(),
+                            "Resposta_SAC": nova_resposta_sac_txt.strip(),
+                            "Categoria_SAC": nova_cat_sac_form_admin.strip(),
+                            "DataCriacao": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        }])
+                        df_sac_qa_admin = pd.concat([df_sac_qa_admin, nova_entrada_sac], ignore_index=True)
+                        df_sac_qa_admin.to_csv(sac_perguntas_respostas_csv, index=False, encoding='utf-8')
+                        st.cache_data.clear() # Clear cache for carregar_sac_perguntas_respostas
+                        st.toast("Pergunta adicionada ao SAC!", icon="🎉")
+                        st.rerun()
+                    else:
+                        st.warning("Pergunta, Resposta e Categoria são obrigatórias.")
+            
+            st.divider()
+            st.subheader("Perguntas e Respostas Atuais do SAC")
+            if df_sac_qa_admin.empty:
+                st.info("Nenhuma pergunta cadastrada no SAC.")
+            else:
+                for i_sac, row_sac_item in df_sac_qa_admin.iterrows():
+                    st.markdown(f"""
+                    <div class="custom-card" style="margin-bottom: 10px; border-left-color: #10b981;">
+                        <small><i>ID: {row_sac_item['ID_SAC_Pergunta']} | Categoria: {row_sac_item['Categoria_SAC']} | Criado em: {row_sac_item.get('DataCriacao','N/A')}</i></small>
+                        <h5>P: {row_sac_item['Pergunta_SAC']}</h5>
+                        <p>R: {row_sac_item['Resposta_SAC'][:200] + ('...' if len(row_sac_item['Resposta_SAC']) > 200 else '')}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    with st.expander("✏️ Editar / 🗑️ Deletar esta Pergunta/Resposta SAC"):
+                        form_key_edit_sac = f"form_edit_sac_{row_sac_item['ID_SAC_Pergunta']}"
+                        with st.form(form_key_edit_sac):
+                            edited_p_sac = st.text_input("Editar Pergunta:", value=row_sac_item['Pergunta_SAC'], key=f"edit_p_{form_key_edit_sac}")
+                            edited_r_sac = st.text_area("Editar Resposta:", value=row_sac_item['Resposta_SAC'], height=100, key=f"edit_r_{form_key_edit_sac}")
+                            
+                            cat_edit_sac_opts = ["Manter Categoria Atual"] + sorted(list(df_sac_qa_admin['Categoria_SAC'].astype(str).unique())) + ["Nova Categoria (Editar Abaixo)"]
+                            sel_cat_edit_sac = st.selectbox("Nova Categoria (ou manter):", cat_edit_sac_opts, key=f"sel_cat_edit_{form_key_edit_sac}")
+                            
+                            input_new_cat_edit_sac = ""
+                            if sel_cat_edit_sac == "Nova Categoria (Editar Abaixo)":
+                                input_new_cat_edit_sac = st.text_input("Digite a Nova Categoria:", key=f"input_new_cat_edit_{form_key_edit_sac}")
+                            
+                            final_cat_edit_sac = row_sac_item['Categoria_SAC'] # Default to current
+                            if sel_cat_edit_sac == "Nova Categoria (Editar Abaixo)":
+                                if input_new_cat_edit_sac.strip(): final_cat_edit_sac = input_new_cat_edit_sac.strip()
+                            elif sel_cat_edit_sac != "Manter Categoria Atual":
+                                final_cat_edit_sac = sel_cat_edit_sac
+                            
+                            col_btn_sac1, col_btn_sac2 = st.columns(2)
+                            if col_btn_sac1.form_submit_button("Salvar Alterações SAC", icon="💾", use_container_width=True):
+                                df_sac_qa_admin.loc[i_sac, "Pergunta_SAC"] = edited_p_sac
+                                df_sac_qa_admin.loc[i_sac, "Resposta_SAC"] = edited_r_sac
+                                df_sac_qa_admin.loc[i_sac, "Categoria_SAC"] = final_cat_edit_sac
+                                df_sac_qa_admin.loc[i_sac, "DataCriacao"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S") # Update timestamp
+                                df_sac_qa_admin.to_csv(sac_perguntas_respostas_csv, index=False, encoding='utf-8')
+                                st.cache_data.clear()
+                                st.toast("Alterações salvas no SAC!", icon="✅")
+                                st.rerun()
+
+                            if col_btn_sac2.form_submit_button("Deletar do SAC", icon="🗑️", type="primary", use_container_width=True):
+                                df_sac_qa_admin = df_sac_qa_admin.drop(index=i_sac)
+                                df_sac_qa_admin.to_csv(sac_perguntas_respostas_csv, index=False, encoding='utf-8')
+                                # Optionally: delete related feedback from sac_uso_feedback_csv
+                                # df_sac_uso_admin = df_sac_uso_admin[df_sac_uso_admin["ID_SAC_Pergunta"] != row_sac_item['ID_SAC_Pergunta']]
+                                # df_sac_uso_admin.to_csv(sac_uso_feedback_csv, index=False, encoding='utf-8')
+                                st.cache_data.clear()
+                                st.toast("Pergunta/Resposta deletada do SAC!", icon="🗑️")
+                                st.rerun()
+                    st.markdown("<hr>", unsafe_allow_html=True)
+
+
+        with sac_admin_tabs[1]:
+            st.subheader("Relatório de Interações e Feedback do SAC")
+            if df_sac_uso_admin.empty:
+                st.info("Nenhum feedback ou uso registrado no SAC ainda.")
+            else:
+                # Merge with user data for client name
+                df_sac_uso_display = df_sac_uso_admin.copy()
+                if not df_usuarios_admin_geral.empty:
+                    df_sac_uso_display = pd.merge(df_sac_uso_display, df_usuarios_admin_geral[['CNPJ', 'Empresa']],
+                                                  left_on='CNPJ_Cliente', right_on='CNPJ', how='left')
+                    df_sac_uso_display.rename(columns={'Empresa': 'Empresa Cliente'}, inplace=True)
+                    df_sac_uso_display['Empresa Cliente'] = df_sac_uso_display['Empresa Cliente'].fillna("N/D (Usuário Desconhecido)")
+                    df_sac_uso_display.drop(columns=['CNPJ'], inplace=True, errors='ignore')
+                else:
+                    df_sac_uso_display['Empresa Cliente'] = "N/D (Dados de Usuários Não Carregados)"
+
+                # Merge with SAC Q&A for question text
+                if not df_sac_qa_admin.empty:
+                    df_sac_uso_display = pd.merge(df_sac_uso_display, df_sac_qa_admin[['ID_SAC_Pergunta', 'Pergunta_SAC', 'Categoria_SAC']],
+                                                  on='ID_SAC_Pergunta', how='left')
+                    df_sac_uso_display['Pergunta_SAC'] = df_sac_uso_display['Pergunta_SAC'].fillna("N/D (Pergunta SAC Excluída)")
+                    df_sac_uso_display['Categoria_SAC'] = df_sac_uso_display['Categoria_SAC'].fillna("N/D")
+
+                else:
+                    df_sac_uso_display['Pergunta_SAC'] = "N/D (Dados de Perguntas SAC Não Carregados)"
+                    df_sac_uso_display['Categoria_SAC'] = "N/D"
+                
+                # Filters
+                filt_col1, filt_col2, filt_col3 = st.columns(3)
+                clientes_sac_uso_list = ["Todos"] + sorted(df_sac_uso_display["Empresa Cliente"].astype(str).unique().tolist())
+                sel_cliente_sac_uso = filt_col1.selectbox("Filtrar por Cliente:", clientes_sac_uso_list, key="sac_uso_cliente_filt")
+
+                perguntas_sac_uso_list = ["Todas"] + sorted(df_sac_uso_display["Pergunta_SAC"].astype(str).unique().tolist())
+                sel_pergunta_sac_uso = filt_col2.selectbox("Filtrar por Pergunta SAC:", perguntas_sac_uso_list, key="sac_uso_pergunta_filt")
+
+                feedback_options_map = {"Todos": None, "Útil": True, "Não Útil": False, "Sem Feedback": pd.NA}
+                sel_feedback_sac_uso_display = filt_col3.selectbox("Filtrar por Feedback:", list(feedback_options_map.keys()), key="sac_uso_feedback_filt")
+                sel_feedback_sac_uso_actual = feedback_options_map[sel_feedback_sac_uso_display]
+
+
+                df_sac_uso_filtrado = df_sac_uso_display.copy()
+                if sel_cliente_sac_uso != "Todos":
+                    df_sac_uso_filtrado = df_sac_uso_filtrado[df_sac_uso_filtrado["Empresa Cliente"] == sel_cliente_sac_uso]
+                if sel_pergunta_sac_uso != "Todas":
+                    df_sac_uso_filtrado = df_sac_uso_filtrado[df_sac_uso_filtrado["Pergunta_SAC"] == sel_pergunta_sac_uso]
+                
+                if sel_feedback_sac_uso_actual is not None: # Check if not "Todos"
+                    if pd.isna(sel_feedback_sac_uso_actual): # For "Sem Feedback"
+                        df_sac_uso_filtrado = df_sac_uso_filtrado[df_sac_uso_filtrado["Feedback_Util"].isna()]
+                    else: # For "Útil" or "Não Útil"
+                        df_sac_uso_filtrado = df_sac_uso_filtrado[df_sac_uso_filtrado["Feedback_Util"] == sel_feedback_sac_uso_actual]
+
+
+                if df_sac_uso_filtrado.empty:
+                    st.info("Nenhum registro de uso do SAC para os filtros aplicados.")
+                else:
+                    cols_show_sac_uso = ['Timestamp', 'Empresa Cliente', 'CNPJ_Cliente', 'Categoria_SAC', 'Pergunta_SAC', 'Feedback_Util', 'ID_Uso_SAC']
+                    df_sac_uso_filtrado['Feedback_Util'] = df_sac_uso_filtrado['Feedback_Util'].map({True: '👍 Útil', False: '👎 Não Útil', pd.NA: '➖ Sem Feedback'}).fillna('➖ Sem Feedback')
+                    st.dataframe(df_sac_uso_filtrado[cols_show_sac_uso].sort_values(by="Timestamp", ascending=False), use_container_width=True)
 
     elif menu_admin == "Gerenciar Instruções":
         st.markdown("#### ✍️ Editar Texto das Instruções para Clientes")
@@ -1909,11 +2192,11 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 st.caption(f"Pergunta selecionada: {pergunta_selecionada_analise_admin}")
 
                 tipo_condicao_analise_display_admin = st.selectbox("Tipo de Condição para a Análise:",
-                                                               ["Faixa Numérica (p/ Pontuação 0-X)",
-                                                                "Valor Exato (p/ Escala)",
-                                                                "Faixa de Score (p/ Matriz GUT)",
-                                                                "Análise Padrão (default para a pergunta)"],
-                                                               key="tipo_cond_analise_v19_ga")
+                                                                   ["Faixa Numérica (p/ Pontuação 0-X)",
+                                                                    "Valor Exato (p/ Escala)",
+                                                                    "Faixa de Score (p/ Matriz GUT)",
+                                                                    "Análise Padrão (default para a pergunta)"],
+                                                                   key="tipo_cond_analise_v19_ga")
 
                 map_tipo_cond_to_csv_admin = {
                     "Faixa Numérica (p/ Pontuação 0-X)": "FaixaNumerica",
