@@ -827,4 +827,13 @@ def carregar_sac_uso_feedback():
     except (FileNotFoundError, pd.errors.EmptyDataError):
         return pd.DataFrame(columns=colunas_base_sac_uso_feedback)
 
-@
+@st.cache_data
+def carregar_pesquisa_satisfacao():
+    try:
+        df = pd.read_csv(pesquisa_satisfacao_csv, encoding='utf-8', dtype={'CNPJ_Cliente': str})
+        if 'Recomendaria' in df.columns:
+            df['Recomendaria'] = df['Recomendaria'].astype(str).str.lower().map({'true': True, 'false': False, 'nan': pd.NA, '': pd.NA}).astype('boolean')
+        else:
+            df['Recomendaria'] = pd.NA
+        return df
+    except (FileNotFoundError
