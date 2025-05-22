@@ -188,9 +188,9 @@ def create_radar_chart(data_dict, title="Radar Chart"):
     fig = px.line_polar(df_radar, r='r', theta='theta', line_close=True, template="seaborn")
     fig.update_traces(fill='toself', line=dict(color='#2563eb'))
     fig.update_layout(title={'text': title, 'x':0.5, 'xanchor': 'center'},
-                      polar=dict(radialaxis=dict(visible=True, range=[0, 5])),
-                      font=dict(family="Segoe UI, sans-serif"),
-                      margin=dict(l=50, r=50, t=70, b=50))
+                        polar=dict(radialaxis=dict(visible=True, range=[0, 5])),
+                        font=dict(family="Segoe UI, sans-serif"),
+                        margin=dict(l=50, r=50, t=70, b=50))
     return fig
 
 def create_gut_barchart(gut_data_list, title="Top Prioridades (GUT)"):
@@ -202,10 +202,10 @@ def create_gut_barchart(gut_data_list, title="Top Prioridades (GUT)"):
                  color="Score", color_continuous_scale=px.colors.sequential.Blues_r,
                  labels={'Tarefa':'Tarefa/Pergunta', 'Score':'Score GUT'})
     fig.update_layout(yaxis={'categoryorder':'total ascending'},
-                      xaxis_title="Score GUT", yaxis_title="",
-                      font=dict(family="Segoe UI, sans-serif"),
-                      height=400 + len(df_gut)*20,
-                      margin=dict(l=250, r=20, t=70, b=20))
+                        xaxis_title="Score GUT", yaxis_title="",
+                        font=dict(family="Segoe UI, sans-serif"),
+                        height=400 + len(df_gut)*20,
+                        margin=dict(l=250, r=20, t=70, b=20))
     return fig
 
 def create_diagnostics_timeline_chart(df_diagnostics, title="Diagnósticos Realizados ao Longo do Tempo"):
@@ -243,7 +243,7 @@ def create_avg_category_scores_chart(df_diagnostics, title="Média de Scores por
                  color='Média_Score', color_continuous_scale=px.colors.sequential.Blues_r,
                  labels={'Categoria':'Categoria', 'Média_Score':'Média do Score'})
     fig.update_layout(xaxis_tickangle=-45, font=dict(family="Segoe UI, sans-serif"),
-                      yaxis=dict(range=[0,5.5]))
+                        yaxis=dict(range=[0,5.5]))
     return fig
 
 def create_client_engagement_pie(df_usuarios, title="Engajamento de Clientes (Nº de Diagnósticos)"):
@@ -333,17 +333,17 @@ def inicializar_csv(filepath, columns, defaults=None):
             try:
                 df_init = pd.read_csv(filepath, encoding='utf-8', dtype={'CNPJ': str, 'CNPJ_Cliente': str} if filepath in [usuarios_csv, usuarios_bloqueados_csv, arquivo_csv, notificacoes_csv] else None)
             except ValueError as ve: # Attempt to handle older CSVs that might cause dtype issues
-                 st.warning(f"Problema ao ler {filepath} com dtypes específicos ({ve}), tentando leitura genérica.")
-                 df_init = pd.read_csv(filepath, encoding='utf-8') # Fallback to generic read
+                st.warning(f"Problema ao ler {filepath} com dtypes específicos ({ve}), tentando leitura genérica.")
+                df_init = pd.read_csv(filepath, encoding='utf-8') # Fallback to generic read
             except Exception as read_e: 
-                 st.warning(f"Problema ao ler {filepath}, tentando recriar com colunas esperadas: {read_e}")
-                 df_init = pd.DataFrame(columns=columns) 
-                 if defaults:
+                st.warning(f"Problema ao ler {filepath}, tentando recriar com colunas esperadas: {read_e}")
+                df_init = pd.DataFrame(columns=columns) 
+                if defaults:
                     for col, default_val in defaults.items():
                         if col in columns: df_init[col] = default_val
-                 df_init.to_csv(filepath, index=False, encoding='utf-8')
-                 # Re-read after potential recreation
-                 df_init = pd.read_csv(filepath, encoding='utf-8', dtype={'CNPJ': str, 'CNPJ_Cliente': str} if filepath in [usuarios_csv, usuarios_bloqueados_csv, arquivo_csv, notificacoes_csv] else None)
+                df_init.to_csv(filepath, index=False, encoding='utf-8')
+                # Re-read after potential recreation
+                df_init = pd.read_csv(filepath, encoding='utf-8', dtype={'CNPJ': str, 'CNPJ_Cliente': str} if filepath in [usuarios_csv, usuarios_bloqueados_csv, arquivo_csv, notificacoes_csv] else None)
 
 
             made_changes = False
@@ -658,7 +658,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         pode_fazer_novo = st.session_state.user.get("DiagnosticosDisponiveis", 0) > st.session_state.user.get("TotalDiagnosticosRealizados", 0)
         if not pode_fazer_novo and "Novo Diagnóstico" in menu_options_cli_map:
             if st.session_state.cliente_page == "Novo Diagnóstico":
-                 st.session_state.cliente_page = "Painel Principal"
+                st.session_state.cliente_page = "Painel Principal"
             del menu_options_cli_map["Novo Diagnóstico"]
 
     menu_options_cli_display = list(menu_options_cli_map.values())
@@ -739,7 +739,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
             else:
                 df_notificacoes_todas = pd.DataFrame(columns=colunas_base_notificacoes)
             if 'ID_Diagnostico_Relacionado' not in df_notificacoes_todas.columns: 
-                 df_notificacoes_todas['ID_Diagnostico_Relacionado'] = None
+                df_notificacoes_todas['ID_Diagnostico_Relacionado'] = None
 
 
             minhas_notificacoes = df_notificacoes_todas[
@@ -815,7 +815,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
             df_antigos = pd.read_csv(arquivo_csv, dtype={'CNPJ': str}, encoding='utf-8')
             df_cliente_diags_raw = df_antigos[df_antigos["CNPJ"] == st.session_state.cnpj]
             if 'Data' in df_cliente_diags_raw.columns:
-                 df_cliente_diags_raw['Data'] = df_cliente_diags_raw['Data'].astype(str)
+                df_cliente_diags_raw['Data'] = df_cliente_diags_raw['Data'].astype(str)
         except FileNotFoundError:
             st.error(f"Arquivo de diagnósticos '{arquivo_csv}' não encontrado.")
             df_cliente_diags_raw = pd.DataFrame()
@@ -1005,10 +1005,10 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                                     for card_k_item in gut_cards_sorted_kanban:
                                         if card_k_item["Prazo"] == prazo_k_col:
                                             st.markdown(f"""<div class="custom-card"><b>{card_k_item['Tarefa']}</b> (Score GUT: {card_k_item['Score']})<br><small><i>👤 {card_k_item['Responsável']}</i></small></div>""", unsafe_allow_html=True)
+                        else:
+                            st.info("Nenhuma ação prioritária (GUT > 0) identificada no último diagnóstico para o Kanban.")
                     else:
-                        st.info("Nenhuma ação prioritária (GUT > 0) identificada no último diagnóstico para o Kanban.")
-                else:
-                    st.info("Nenhum diagnóstico para gerar o Kanban.")
+                        st.info("Nenhum diagnóstico para gerar o Kanban.")
                 st.divider()
 
                 st.subheader("📈 Comparativo de Evolução das Médias")
@@ -1511,9 +1511,9 @@ if aba == "Administrador" and st.session_state.admin_logado:
             # Use 'Data_dt' for sorting if it exists and then drop it or use original 'Data' (string) for display
             df_display_admin = df_diagnosticos_filtrados_view_final_vg.copy()
             if 'Data_dt' in df_display_admin.columns:
-                 df_display_admin = df_display_admin.sort_values(by="Data_dt", ascending=False).reset_index(drop=True)
+                df_display_admin = df_display_admin.sort_values(by="Data_dt", ascending=False).reset_index(drop=True)
             else: # Fallback if Data_dt wasn't created (e.g. empty original df)
-                 df_display_admin = df_display_admin.sort_values(by="Data", ascending=False).reset_index(drop=True)
+                df_display_admin = df_display_admin.sort_values(by="Data", ascending=False).reset_index(drop=True)
 
 
             try:
@@ -1590,10 +1590,10 @@ if aba == "Administrador" and st.session_state.admin_logado:
                         if pdf_path_adm_d:
                             with open(pdf_path_adm_d, "rb") as f_adm_d:
                                 st.download_button("Download PDF Confirmado", f_adm_d,
-                                                   file_name=f"diag_{sanitize_column_name(row_diag_adm['Empresa'])}_{str(row_diag_adm['Data']).replace(':','-').replace(' ','_')}.pdf",
-                                                   mime="application/pdf",
-                                                   key=f"dl_confirm_adm_diag_v19_{idx_diag_adm}_{time.time()}", 
-                                                   icon="📄")
+                                                  file_name=f"diag_{sanitize_column_name(row_diag_adm['Empresa'])}_{str(row_diag_adm['Data']).replace(':','-').replace(' ','_')}.pdf",
+                                                  mime="application/pdf",
+                                                  key=f"dl_confirm_adm_diag_v19_{idx_diag_adm}_{time.time()}", 
+                                                  icon="📄")
                         else:
                             st.error("Erro ao gerar PDF para este diagnóstico.")
                     st.markdown('</div>', unsafe_allow_html=True)
@@ -1650,7 +1650,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         try:
             df_notificacoes_admin = pd.read_csv(notificacoes_csv, dtype={'CNPJ_Cliente': str, 'ID_Diagnostico_Relacionado': str})
             if 'Lida' in df_notificacoes_admin.columns:
-                 df_notificacoes_admin['Lida'] = df_notificacoes_admin['Lida'].astype(str).str.lower().map({'true': True, 'false': False, 'nan': False, '': False}).fillna(False)
+                df_notificacoes_admin['Lida'] = df_notificacoes_admin['Lida'].astype(str).str.lower().map({'true': True, 'false': False, 'nan': False, '': False}).fillna(False)
             else:
                 df_notificacoes_admin['Lida'] = False 
             if 'ID_Diagnostico_Relacionado' not in df_notificacoes_admin.columns:
@@ -1681,9 +1681,9 @@ if aba == "Administrador" and st.session_state.admin_logado:
         
         clientes_notif_list = ["Todos"]
         if "Empresa Cliente" in df_notificacoes_admin.columns:
-             clientes_notif_list.extend(sorted(df_notificacoes_admin["Empresa Cliente"].astype(str).unique().tolist()))
+            clientes_notif_list.extend(sorted(df_notificacoes_admin["Empresa Cliente"].astype(str).unique().tolist()))
         
-        sel_cliente_notif = st.sidebar.selectbox("Filtrar por Cliente:", clientes_not_list, key="admin_notif_cliente_filter")
+        sel_cliente_notif = st.sidebar.selectbox("Filtrar por Cliente:", clientes_notif_list, key="admin_notif_cliente_filter") # CORREÇÃO APLICADA AQUI
         sel_lida_notif = st.sidebar.selectbox("Filtrar por Status:", ["Todas", "Lidas", "Não Lidas"], key="admin_notif_lida_filter")
         
         dt_ini_notif = st.sidebar.date_input("Data Início Notificação:", None, key="admin_notif_dt_ini")
@@ -1711,7 +1711,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             try:
                 # Ensure Timestamp_dt column exists if not created by dt_ini_notif filter
                 if 'Timestamp_dt' not in df_notificacoes_filtradas_admin.columns:
-                     df_notificacoes_filtradas_admin['Timestamp_dt'] = pd.to_datetime(df_notificacoes_filtradas_admin['Timestamp'])
+                    df_notificacoes_filtradas_admin['Timestamp_dt'] = pd.to_datetime(df_notificacoes_filtradas_admin['Timestamp'])
                 df_notificacoes_filtradas_admin = df_notificacoes_filtradas_admin[df_notificacoes_filtradas_admin['Timestamp_dt'] < pd.to_datetime(dt_fim_notif) + pd.Timedelta(days=1)]
             except Exception as e_date_filter:
                 st.warning(f"Não foi possível aplicar filtro de data final: {e_date_filter}")
@@ -1909,11 +1909,11 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 st.caption(f"Pergunta selecionada: {pergunta_selecionada_analise_admin}")
 
                 tipo_condicao_analise_display_admin = st.selectbox("Tipo de Condição para a Análise:",
-                                                                   ["Faixa Numérica (p/ Pontuação 0-X)",
-                                                                    "Valor Exato (p/ Escala)",
-                                                                    "Faixa de Score (p/ Matriz GUT)",
-                                                                    "Análise Padrão (default para a pergunta)"],
-                                                                   key="tipo_cond_analise_v19_ga")
+                                                               ["Faixa Numérica (p/ Pontuação 0-X)",
+                                                                "Valor Exato (p/ Escala)",
+                                                                "Faixa de Score (p/ Matriz GUT)",
+                                                                "Análise Padrão (default para a pergunta)"],
+                                                               key="tipo_cond_analise_v19_ga")
 
                 map_tipo_cond_to_csv_admin = {
                     "Faixa Numérica (p/ Pontuação 0-X)": "FaixaNumerica",
@@ -2051,7 +2051,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                     else:
                         st.warning("Cliente selecionado não encontrado nos dados originais. Pode ter sido removido ou há uma inconsistência.")
             else:
-                 st.info("Nenhum cliente correspondente ao filtro para selecionar ações.")
+                st.info("Nenhum cliente correspondente ao filtro para selecionar ações.")
 
         else:
             st.info("Nenhum cliente cadastrado para gerenciar ou exibir com os filtros atuais.")
@@ -2083,7 +2083,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                             if col in df_usuarios_gc_para_salvar.columns:
                                 df_usuarios_gc_para_salvar[col] = pd.to_numeric(df_usuarios_gc_para_salvar[col], errors='coerce').fillna(0).astype(int)
                         if "JaVisualizouInstrucoes" in df_usuarios_gc_para_salvar.columns:
-                             df_usuarios_gc_para_salvar["JaVisualizouInstrucoes"] = df_usuarios_gc_para_salvar["JaVisualizouInstrucoes"].astype(str).str.lower().map({'true': True, 'false': False, 'nan':False, '':False}).fillna(False)
+                            df_usuarios_gc_para_salvar["JaVisualizouInstrucoes"] = df_usuarios_gc_para_salvar["JaVisualizouInstrucoes"].astype(str).str.lower().map({'true': True, 'false': False, 'nan':False, '':False}).fillna(False)
 
 
                         df_usuarios_gc_updated = pd.concat([df_usuarios_gc_para_salvar, nova_linha_cliente_form], ignore_index=True)
