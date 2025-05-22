@@ -1,2 +1,2 @@
-Usuario,Senha;Perm_VisaoGeralDiagnosticos;Perm_RelatorioEngajamento;Perm_GerenciarNotificacoes;Perm_GerenciarClientes;Perm_PersonalizarAparencia;Perm_GerenciarPerguntasDiagnostico;Perm_GerenciarAnalises;Perm_GerenciarFAQ;Perm_GerenciarPerguntasPesquisa;Perm_VerResultadosPesquisa;Perm_GerenciarInstrucoes;Perm_VerHistorico;Perm_GerenciarAdministradores
-admin,potencialize;;;;;;;;;;;;;
+Usuario,Senha
+admin,potencialize
