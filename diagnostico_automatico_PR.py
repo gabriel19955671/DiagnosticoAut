@@ -2601,4 +2601,4 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 current_instructions_text = f.read()
             instrucoes_loaded_source = instrucoes_custom_path
         elif os.path.exists(instrucoes_default_path): 
-            with open(instrucoes_defau )
+            with open(instrucoes_defau)
