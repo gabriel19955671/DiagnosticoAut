@@ -11,75 +11,55 @@ import plotly.express as px
 import uuid # Para IDs de análise, SAC e Pesquisa de Satisfação
 
 # !!! st.set_page_config() DEVE SER O PRIMEIRO COMANDO STREAMLIT !!!
-st.set_page_config(page_title="Portal de Diagnóstico", layout="wide", page_icon="📊")
-
-# --- Diretórios de Assets ---
-PORTAL_ASSETS_DIR = "portal_assets"
-LOGOS_DIR = "client_logos" # Já definido
-PORTAL_LOGO_FILENAME = "portal_logo.png"
-PORTAL_LOGO_PLACEHOLDER = "https://via.placeholder.com/200x80.png?text=Logo+do+Portal"
-
-# Criar diretórios se não existirem
-if not os.path.exists(PORTAL_ASSETS_DIR):
-    try: os.makedirs(PORTAL_ASSETS_DIR)
-    except OSError as e: st.error(f"Erro ao criar diretório '{PORTAL_ASSETS_DIR}': {e}")
-if not os.path.exists(LOGOS_DIR):
-    try: os.makedirs(LOGOS_DIR)
-    except OSError as e: st.error(f"Erro ao criar diretório '{LOGOS_DIR}': {e}")
-
+st.set_page_config(page_title="Portal de Diagnóstico", layout="wide", page_icon=" ")
 
 # --- CSS Melhorado ---
 st.markdown("""
 <style>
 body {
     font-family: 'Segoe UI', sans-serif;
-    background-color: #f0f2f5; /* Um fundo suave para a página toda */
 }
 .login-container {
     max-width: 450px;
-    margin: 60px auto 0 auto; /* Aumentar margem superior */
+    margin: 40px auto 0 auto;
     padding: 40px;
-    border-radius: 12px; /* Bordas mais arredondadas */
+    border-radius: 10px;
     background-color: #ffffff;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1); /* Sombra mais pronunciada */
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     font-family: 'Segoe UI', sans-serif;
 }
-.login-container img.portal-logo-login { /* Classe específica para logo no login */
+.login-container img.portal-logo { /* Estilo específico para o logo do portal no login */
+    max-height: 80px; /* Ajuste a altura máxima conforme necessário */
+    width: auto;   /* Mantém a proporção */
     display: block;
     margin-left: auto;
     margin-right: auto;
-    margin-bottom: 25px; /* Mais espaço abaixo da logo */
-    max-height: 80px; /* Limitar altura da logo */
-    width: auto; /* Manter proporção */
+    margin-bottom: 20px;
 }
 .login-container h2 {
     text-align: center;
     margin-bottom: 30px;
     font-weight: 600;
-    font-size: 28px; /* Tamanho de fonte maior */
-    color: #1e3a8a; /* Azul mais escuro e corporativo */
+    font-size: 26px;
+    color: #2563eb;
 }
 .stButton>button {
-    border-radius: 8px; /* Bordas mais arredondadas */
-    background-color: #2563eb; /* Azul primário */
+    border-radius: 6px;
+    background-color: #2563eb;
     color: white;
-    font-weight: 600; /* Fonte mais forte */
-    padding: 0.7rem 1.5rem; /* Mais padding */
-    margin-top: 0.8rem; /* Mais margem */
+    font-weight: 500;
+    padding: 0.6rem 1.3rem;
+    margin-top: 0.5rem;
     border: none;
-    transition: background-color 0.3s ease, transform 0.1s ease; /* Adicionar transição de transform */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease;
 }
 .stButton>button:hover {
-    background-color: #1d4ed8; /* Azul mais escuro no hover */
-    transform: translateY(-2px); /* Efeito de levantar no hover */
+    background-color: #1d4ed8;
 }
 .stButton>button:disabled {
-    background-color: #9ca3af; 
-    color: #e5e7eb;
-    cursor: not-allowed;
-    transform: none; /* Remover efeito de levantar para desabilitado */
-    box-shadow: none;
+    background-color: #9ca3af !important; 
+    color: #e5e7eb !important;
+    cursor: not-allowed !important;
 }
 .stButton>button.secondary {
     background-color: #e5e7eb;
@@ -89,54 +69,49 @@ body {
     background-color: #d1d5db;
 }
 .stButton>button.secondary:disabled {
-    background-color: #d1d5db;
-    color: #9ca3af;
+    background-color: #d1d5db !important;
+    color: #9ca3af !important;
 }
 .stDownloadButton>button {
-    background-color: #10b981; /* Verde para download */
+    background-color: #10b981;
     color: white;
     font-weight: 600;
-    border-radius: 8px;
+    border-radius: 6px;
     margin-top: 10px;
-    padding: 0.7rem 1.5rem;
+    padding: 0.6rem 1.3rem;
     border: none;
-    transition: background-color 0.3s ease, transform 0.1s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease;
 }
 .stDownloadButton>button:hover {
     background-color: #059669;
-    transform: translateY(-2px);
 }
-.stTextInput>div>input, .stTextArea>div>textarea, .stDateInput>div>input, .stSelectbox>div>div, .stNumberInput>div>input, .stFileUploader>div>button {
-    border-radius: 8px;
-    padding: 0.7rem; /* Mais padding interno */
+.stTextInput>div>input, .stTextArea>div>textarea, .stDateInput>div>input, .stSelectbox>div>div, .stNumberInput>div>input, .stFileUpload>div>button {
+    border-radius: 6px;
+    padding: 0.6rem;
     border: 1px solid #d1d5db;
     background-color: #f9fafb;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 .stTextInput>div>input:focus, .stTextArea>div>textarea:focus, .stDateInput>div>input:focus, .stSelectbox>div>div:focus-within, .stNumberInput>div>input:focus {
     border-color: #2563eb;
-    box-shadow: 0 0 0 0.15rem rgba(37, 99, 235, 0.25); /* Sombra de foco mais pronunciada */
+    box-shadow: 0 0 0 0.1rem rgba(37, 99, 235, 0.25);
 }
-.stTextInput>div>input:disabled, .stTextArea>div>textarea:disabled, .stDateInput>div>input:disabled, .stSelectbox>div>div[aria-disabled="true"], .stNumberInput>div>input:disabled, .stFileUploader>div>button:disabled {
-    background-color: #e5e7eb;
-    color: #9ca3af;
-    cursor: not-allowed;
-}
-.stFileUploader>div>button { /* Estilizar botão do file uploader */
-    background-color: #f0f0f0;
-    color: #333;
-    border: 1px dashed #ccc;
-}
-.stFileUploader>div>button:hover {
-    background-color: #e0e0e0;
-    border-color: #bbb;
+.stTextInput>div>input:disabled, 
+.stTextArea>div>textarea:disabled, 
+.stDateInput>div>input:disabled, 
+.stSelectbox>div>div[aria-disabled="true"], 
+.stNumberInput>div>input:disabled,
+.stFileUpload>div>button:disabled { /* Estilo para botão de upload desabilitado */
+    background-color: #e5e7eb !important;
+    color: #9ca3af !important;
+    cursor: not-allowed !important;
+    border-color: #d1d5db !important;
 }
 .stTabs [data-baseweb="tab"] {
     font-size: 16px;
     font-weight: 600;
     padding: 12px 22px;
-    border-radius: 8px 8px 0 0; /* Bordas mais arredondadas para abas */
+    border-radius: 6px 6px 0 0;
 }
 .stTabs [data-baseweb="tab"][aria-selected="true"] {
     background-color: #2563eb;
@@ -147,14 +122,14 @@ body {
     border-left: 5px solid #2563eb;
     padding: 20px;
     margin-bottom: 15px;
-    border-radius: 10px; /* Bordas mais arredondadas */
+    border-radius: 8px;
     background-color: #ffffff;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05); /* Sombra suave */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.07);
 }
 .custom-card h4 {
     margin-top: 0;
-    color: #1e3a8a; /* Azul mais escuro */
-    font-size: 1.2em; /* Fonte maior para títulos de card */
+    color: #2563eb;
+    font-size: 1.1em;
 }
 .feedback-saved {
     font-size: 0.85em;
@@ -166,60 +141,57 @@ body {
 .analise-pergunta-cliente {
     font-size: 0.9em;
     color: #333;
-    background-color: #eef2ff; /* Fundo suave para análise */
-    border-left: 3px solid #6366f1; /* Cor de destaque */
-    padding: 12px; /* Mais padding */
+    background-color: #eef2ff;
+    border-left: 3px solid #6366f1;
+    padding: 10px;
     margin-top: 8px;
     margin-bottom:12px;
-    border-radius: 6px;
+    border-radius: 4px;
 }
 [data-testid="stMetric"] {
     background-color: #ffffff;
-    border-radius: 10px;
-    padding: 20px; /* Mais padding para métricas */
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    border-radius: 8px;
+    padding: 15px 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.07);
     border: 1px solid #e0e0e0;
 }
 [data-testid="stMetricLabel"] {
     font-weight: 500;
     color: #4b5563;
-    font-size: 0.95em; /* Ajuste de tamanho */
 }
 [data-testid="stMetricValue"] {
-    font-size: 2em; /* Valor da métrica maior */
-    color: #1e3a8a; /* Azul mais escuro */
+    font-size: 1.8em;
 }
 [data-testid="stMetricDelta"] {
     font-size: 0.9em;
 }
 .stExpander {
     border: 1px solid #e0e0e0 !important;
-    border-radius: 10px !important; /* Bordas mais arredondadas */
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.07) !important;
     margin-bottom: 15px !important;
 }
 .stExpander header {
     font-weight: 600 !important;
-    border-radius: 10px 10px 0 0 !important;
-    padding: 12px 18px !important; /* Mais padding para header do expander */
-    background-color: #f9fafb; /* Fundo suave para header */
+    border-radius: 8px 8px 0 0 !important;
+    padding: 10px 15px !important;
 }
 .dashboard-item {
     background-color: #ffffff;
-    padding: 25px; /* Mais padding */
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.07);
     margin-bottom: 20px;
     border: 1px solid #e0e0e0;
     height: 100%;
 }
 .dashboard-item h5 {
     margin-top: 0;
-    margin-bottom: 18px; /* Mais espaço abaixo do título */
-    color: #1e3a8a; /* Azul mais escuro */
-    font-size: 1.2em;
+    margin-bottom: 15px;
+    color: #2563eb;
+    font-size: 1.1em;
     border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
+    padding-bottom: 8px;
 }
 .sac-feedback-button button {
     background-color: #f0f0f0;
@@ -238,31 +210,21 @@ body {
 }
 .survey-question-container {
     background-color: #f9fafb;
-    padding: 18px; /* Mais padding */
+    padding: 15px;
     border-radius: 8px;
-    margin-bottom: 18px; /* Mais margem */
+    margin-bottom: 15px;
     border: 1px solid #e5e7eb;
 }
-.survey-question-container label { /* Streamlit não permite estilizar label diretamente assim */
+.survey-question-container label {
     font-weight: 600;
     color: #374151;
     display: block;
     margin-bottom: 8px;
 }
-/* Estilo para o sidebar */
-[data-testid="stSidebar"] {
-    background-color: #f8f9fa; /* Cor de fundo suave para sidebar */
-    padding: 15px;
-}
-[data-testid="stSidebar"] .stImage img {
-    border-radius: 8px; /* Arredondar logos no sidebar */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
 </style>
 """, unsafe_allow_html=True)
 
-# --- Funções de Gráficos (sem alterações diretas, mas podem ser melhoradas visualmente no futuro) ---
-# ... (código das funções de gráfico existente) ...
+# --- Funções de Gráficos ---
 def create_radar_chart(data_dict, title="Radar Chart"):
     if not data_dict: return None
     categories = list(data_dict.keys())
@@ -406,6 +368,9 @@ sac_perguntas_respostas_csv = "sac_perguntas_respostas.csv"
 sac_uso_feedback_csv = "sac_uso_feedback.csv"
 satisfacao_perguntas_csv = "satisfacao_perguntas.csv" 
 satisfacao_respostas_csv = "satisfacao_respostas.csv" 
+LOGOS_DIR = "client_logos"
+PORTAL_ASSETS_DIR = "portal_assets" # Novo para logo do portal
+PORTAL_LOGO_FILENAME = "portal_logo.png" # Nome padrão do logo do portal
 
 # --- Inicialização do Session State ---
 default_session_state = {
@@ -415,7 +380,7 @@ default_session_state = {
     "respostas_atuais_diagnostico": {}, "id_formulario_atual": None,
     "pdf_gerado_path": None, "pdf_gerado_filename": None,
     "feedbacks_respostas": {}, "sac_feedback_registrado": {},
-    "force_sidebar_rerun_after_notif_read_v19": False, 
+    "force_sidebar_rerun_after_notif_read_v19": False, # Mantido v19 para compatibilidade se necessário
     "target_diag_data_for_expansion": None,
     "respostas_atuais_satisfacao": {}, 
     "pesquisa_satisfacao_enviada": False,
@@ -427,29 +392,35 @@ for key, value in default_session_state.items():
         st.session_state[key] = value
 
 # --- Funções Utilitárias (exceto gráficos) ---
-def sanitize_filename(name): # Mais robusto para nomes de arquivo
-    s = str(name).strip().replace(' ', '_')
-    s = re.sub(r'(?u)[^-\w.]', '', s)
-    return s if s else "arquivo_sem_nome"
-
+def sanitize_column_name(name):
+    s = str(name).strip().replace(' ', '_'); s = re.sub(r'(?u)[^-\w.]', '', s); return s
 def pdf_safe_text_output(text): return str(text).encode('latin-1', 'replace').decode('latin-1')
-
-def get_portal_logo_path():
-    return os.path.join(PORTAL_ASSETS_DIR, PORTAL_LOGO_FILENAME)
 
 def find_client_logo_path(cnpj_arg):
     if not cnpj_arg: return None
-    base = sanitize_filename(str(cnpj_arg)) # Usar sanitize_filename
-    for ext in ["png", "jpg", "jpeg"]:
+    base = str(cnpj_arg).replace('/', '').replace('.', '').replace('-', '')
+    for ext in ["png", "jpg", "jpeg"]: # Adicionar mais extensões se necessário
         path = os.path.join(LOGOS_DIR, f"{base}_logo.{ext}")
         if os.path.exists(path): return path
     return None
+
+def get_portal_logo_path():
+    path = os.path.join(PORTAL_ASSETS_DIR, PORTAL_LOGO_FILENAME)
+    if os.path.exists(path):
+        return path
+    return None # Ou um placeholder/default logo path
+
+# Criar diretórios se não existirem
+for dir_path in [LOGOS_DIR, PORTAL_ASSETS_DIR]:
+    if not os.path.exists(dir_path):
+        try: os.makedirs(dir_path)
+        except OSError as e: st.error(f"Erro ao criar diretório '{dir_path}': {e}")
 
 
 colunas_base_admin_credenciais = ["Usuario", "Senha", "Permissoes"] 
 colunas_base_diagnosticos = ["Data", "CNPJ", "Nome", "Email", "Empresa", "Média Geral", "GUT Média", "Observações", "Diagnóstico", "Análise do Cliente", "Comentarios_Admin"]
 colunas_base_usuarios = ["CNPJ", "Senha", "Empresa", "NomeContato", "Telefone",
-                         "JaVisualizouInstrucoes", "DiagnosticosDisponiveis", "TotalDiagnosticosRealizados", "LogoPath"] # Adicionado LogoPath
+                         "JaVisualizouInstrucoes", "DiagnosticosDisponiveis", "TotalDiagnosticosRealizados"]
 colunas_base_perguntas = ["Pergunta", "Categoria"]
 colunas_base_analises = ["ID_Analise", "TextoPerguntaOriginal", "TipoCondicao", "CondicaoValorMin", "CondicaoValorMax", "CondicaoValorExato", "TextoAnalise"]
 colunas_base_notificacoes = ["ID_Notificacao", "CNPJ_Cliente", "Timestamp", "Mensagem", "Lida", "ID_Diagnostico_Relacionado"] 
@@ -485,12 +456,6 @@ def inicializar_csv(filepath, columns, defaults=None):
                     df_init["Permissoes"] = "total" 
                     df_init.to_csv(filepath, index=False, encoding='utf-8')
                     df_init = pd.read_csv(filepath, encoding='utf-8') 
-                
-                if filepath == usuarios_csv and "LogoPath" not in df_init.columns: # Adicionar LogoPath se não existir
-                    df_init["LogoPath"] = None
-                    df_init.to_csv(filepath, index=False, encoding='utf-8')
-                    df_init = pd.read_csv(filepath, encoding='utf-8', dtype=dtype_spec)
-
 
             except ValueError as ve: 
                 st.warning(f"Problema ao ler {filepath} com dtypes específicos ({ve}), tentando leitura genérica.")
@@ -525,7 +490,7 @@ try:
     inicializar_csv(usuarios_bloqueados_csv, ["CNPJ"])
     inicializar_csv(admin_credenciais_csv, colunas_base_admin_credenciais, defaults={"Permissoes": "total"}) 
     inicializar_csv(usuarios_csv, colunas_base_usuarios,
-                    defaults={"JaVisualizouInstrucoes": "False", "DiagnosticosDisponiveis": 1, "TotalDiagnosticosRealizados": 0, "LogoPath": None})
+                    defaults={"JaVisualizouInstrucoes": "False", "DiagnosticosDisponiveis": 1, "TotalDiagnosticosRealizados": 0})
     inicializar_csv(perguntas_csv, colunas_base_perguntas, defaults={"Categoria": "Geral"})
     inicializar_csv(historico_csv, ["Data", "CNPJ", "Ação", "Descrição"])
     inicializar_csv(arquivo_csv, colunas_base_diagnosticos) 
@@ -641,228 +606,183 @@ def obter_analise_para_resposta(pergunta_texto, resposta_valor, df_analises):
             if is_min and is_max_ok: return analise_txt
     return default_analise
 
-# --- Classe PDF Personalizada ---
-class PDF(FPDF):
-    def __init__(self, portal_logo_path=None, client_logo_path=None, client_name=""):
-        super().__init__()
-        self.portal_logo_path = portal_logo_path
-        self.client_logo_path = client_logo_path
-        self.client_name = client_name
-        self.set_auto_page_break(auto=True, margin=15)
-        self.add_font('Arial', '', 'arial.ttf', uni=True) # Adicionar fonte Arial padrão
-        self.add_font('Arial', 'B', 'arial_bold.ttf', uni=True)
-        self.add_font('Arial', 'I', 'arial_italic.ttf', uni=True)
-        self.add_font('Arial', 'BI', 'arial_bold_italic.ttf', uni=True)
-
-
-    def header(self):
-        # Logo do Portal (se existir)
-        if self.portal_logo_path and os.path.exists(self.portal_logo_path):
-            try:
-                self.image(self.portal_logo_path, x=10, y=8, h=15)
-            except Exception as e:
-                print(f"Erro ao adicionar logo do portal ao PDF: {e}")
-        
-        # Logo do Cliente (se existir)
-        if self.client_logo_path and os.path.exists(self.client_logo_path):
-            try:
-                self.image(self.client_logo_path, x=self.w - 10 - 30, y=8, h=15) # Alinhar à direita
-            except Exception as e:
-                print(f"Erro ao adicionar logo do cliente ao PDF: {e}")
-
-        self.set_font('Arial', 'B', 18)
-        self.set_text_color(30, 58, 138) # Azul escuro corporativo
-        title_w = self.get_string_width("Relatório de Diagnóstico") + 6
-        self.set_x((self.w - title_w) / 2) # Centralizar título
-        self.cell(title_w, 10, "Relatório de Diagnóstico", 0, 0, 'C')
-        self.ln(10) # Espaço após título principal
-        
-        if self.client_name:
-            self.set_font('Arial', 'I', 12)
-            self.set_text_color(75, 85, 99) # Cinza para subtítulo
-            client_title_w = self.get_string_width(self.client_name) + 6
-            self.set_x((self.w - client_title_w) / 2)
-            self.cell(client_title_w, 10, pdf_safe_text_output(self.client_name), 0, 1, 'C')
-        
-        self.ln(10) # Espaço maior após o cabeçalho
-        # Linha horizontal abaixo do cabeçalho
-        self.set_line_width(0.3)
-        self.set_draw_color(200, 200, 200) # Cinza claro para linha
-        self.line(10, self.get_y(), self.w - 10, self.get_y())
-        self.ln(5)
-
-
-    def footer(self):
-        self.set_y(-15)
-        self.set_font('Arial', 'I', 8)
-        self.set_text_color(128)
-        self.cell(0, 10, f'Página {self.page_no()}', 0, 0, 'C')
-        # Adicionar data de geração no rodapé
-        self.set_x(10)
-        self.cell(0,10, f"Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}", 0,0, 'L')
-
-
-    def section_title(self, title):
-        self.set_font('Arial', 'B', 14)
-        self.set_fill_color(230, 230, 250) # Lavanda suave para fundo do título da seção
-        self.set_text_color(30, 58, 138) # Azul escuro
-        self.cell(0, 10, pdf_safe_text_output(f" {title} "), 0, 1, 'L', fill=True) # Adicionar espaço antes do título
-        self.ln(5)
-
-    def chapter_body(self, text_content):
-        self.set_font('Arial', '', 10)
-        self.set_text_color(50, 50, 50) # Cinza escuro para corpo do texto
-        self.multi_cell(0, 7, pdf_safe_text_output(text_content))
-        self.ln()
-
-    def key_value_pair(self, key, value, indent=False):
-        self.set_font('Arial', 'B', 10)
-        self.set_text_color(55, 65, 81) # Cinza mais escuro para chaves
-        key_text = f"   {key}: " if indent else f"{key}: "
-        self.cell(self.get_string_width(key_text) + 2, 7, pdf_safe_text_output(key_text))
-        self.set_font('Arial', '', 10)
-        self.set_text_color(50, 50, 50)
-        self.multi_cell(0, 7, pdf_safe_text_output(str(value))) # Multi_cell para valor, caso seja longo
-        self.ln(1) # Pequeno espaço após par chave-valor
-
 def gerar_pdf_diagnostico_completo(diag_data, user_data, perguntas_df, respostas_coletadas, medias_cat, analises_df):
     try:
         with st.spinner("Gerando PDF do diagnóstico... Aguarde."):
-            portal_logo_p = get_portal_logo_path()
-            client_logo_p = find_client_logo_path(user_data.get("CNPJ"))
-            
-            pdf = PDF(portal_logo_path=portal_logo_p, client_logo_path=client_logo_p, client_name=user_data.get("Empresa", "N/D"))
-            pdf.alias_nb_pages()
+            pdf = FPDF()
+            pdf.set_auto_page_break(auto=True, margin=15)
             pdf.add_page()
+            
+            # Portal Logo (Header)
+            portal_logo_path = get_portal_logo_path()
+            if portal_logo_path:
+                try:
+                    pdf.image(portal_logo_path, x=170, y=8, h=15) # Posição no canto superior direito
+                except Exception as e_pl:
+                    print(f"Erro ao adicionar logo do portal ao PDF: {e_pl}")
 
-            # Informações Gerais
-            pdf.section_title("Informações Gerais do Diagnóstico")
-            pdf.key_value_pair("Data da Realização", diag_data.get('Data','N/D'))
-            pdf.key_value_pair("Empresa", user_data.get("Empresa", "N/D"))
-            pdf.key_value_pair("CNPJ", user_data.get("CNPJ", "N/D"))
-            if user_data.get("NomeContato"): pdf.key_value_pair("Contato Principal", user_data.get("NomeContato"))
-            if user_data.get("Telefone"): pdf.key_value_pair("Telefone", user_data.get("Telefone"))
+            # Client Logo
+            empresa_nome = user_data.get("Empresa", "N/D")
+            cnpj_pdf = user_data.get("CNPJ", "N/D")
+            client_logo_path_pdf = find_client_logo_path(cnpj_pdf)
+            initial_y_after_portal_logo = pdf.get_y()
+
+            if client_logo_path_pdf:
+                try:
+                    pdf.image(client_logo_path_pdf, x=10, y=initial_y_after_portal_logo, h=20) # Logo do cliente à esquerda
+                    pdf.set_y(initial_y_after_portal_logo + 20 + 5) # Ajusta Y após logo do cliente
+                except Exception as e_cl:
+                    print(f"Erro ao adicionar logo do cliente ao PDF: {e_cl}")
+                    pdf.set_y(initial_y_after_portal_logo) # Garante que Y está definido
+            else:
+                 pdf.set_y(initial_y_after_portal_logo)
+
+
+            pdf.set_font("Arial", 'B', 18)
+            pdf.cell(0, 10, pdf_safe_text_output(f"Diagnóstico Empresarial"), 0, 1, 'C')
+            pdf.set_font("Arial", 'B', 14)
+            pdf.cell(0, 10, pdf_safe_text_output(empresa_nome), 0, 1, 'C')
             pdf.ln(5)
 
-            # Resumo dos Scores
-            pdf.section_title("Resumo dos Indicadores Chave")
-            pdf.key_value_pair("Média Geral do Diagnóstico", f"{pd.to_numeric(diag_data.get('Média Geral'), errors='coerce'):.2f}" if pd.notna(diag_data.get('Média Geral')) else "N/A")
-            pdf.key_value_pair("Score Médio da Matriz GUT", f"{pd.to_numeric(diag_data.get('GUT Média'), errors='coerce'):.2f}" if pd.notna(diag_data.get('GUT Média')) else "N/A")
-            pdf.ln(2)
+            pdf.set_font("Arial", size=10)
+            pdf.multi_cell(0, 7, pdf_safe_text_output(f"Data: {diag_data.get('Data','N/D')} | CNPJ: {cnpj_pdf}"))
+            if user_data.get("NomeContato"): pdf.multi_cell(0, 7, pdf_safe_text_output(f"Contato: {user_data.get('NomeContato')}"))
+            if user_data.get("Telefone"): pdf.multi_cell(0, 7, pdf_safe_text_output(f"Telefone: {user_data.get('Telefone')}"))
+            pdf.ln(3)
+            
+            # Summary Box
+            pdf.set_fill_color(230, 230, 230) # Light grey
+            pdf.set_font("Arial", 'B', 11)
+            pdf.cell(0, 8, "Resumo dos Indicadores Chave", 1, 1, 'C', fill=True)
+            pdf.set_font("Arial", size=10)
+            pdf.cell(95, 8, pdf_safe_text_output(f"Média Geral do Diagnóstico: {diag_data.get('Média Geral','N/A')}"), 1, 0, 'L')
+            pdf.cell(95, 8, pdf_safe_text_output(f"Score GUT Médio: {diag_data.get('GUT Média','N/A')}"), 1, 1, 'L')
+            pdf.ln(5)
+
             if medias_cat:
-                pdf.set_font("Arial", 'B', 10); pdf.multi_cell(0, 7, pdf_safe_text_output("Médias por Categoria:")); pdf.set_font("Arial", size=10)
-                for cat, media_val in medias_cat.items():
-                     pdf.key_value_pair(f"  - {cat}", f"{media_val:.2f}", indent=True)
+                pdf.set_font("Arial", 'B', 11); pdf.multi_cell(0, 7, pdf_safe_text_output("Médias por Categoria:"))
+                pdf.set_font("Arial", size=10)
+                # Criar tabela para médias por categoria
+                pdf.set_fill_color(240, 240, 240)
+                col_width_cat = pdf.w / 2.2 # Ajustar largura
+                line_height_cat = pdf.font_size * 1.5
+                
+                first_col = True
+                for cat, media in medias_cat.items():
+                    if first_col:
+                        pdf.cell(col_width_cat, line_height_cat, pdf_safe_text_output(f"{cat}: {media:.2f}"), border=1, ln=0, fill=True)
+                        first_col = False
+                    else:
+                        pdf.cell(col_width_cat, line_height_cat, pdf_safe_text_output(f"{cat}: {media:.2f}"), border=1, ln=1, fill=True)
+                        first_col = True
+                if not first_col: # Se o número de categorias for ímpar, fechar a linha
+                    pdf.ln(line_height_cat)
                 pdf.ln(5)
 
-            # Observações e Análises do Cliente e Consultor
-            for titulo_pdf, campo_dados in [("Diagnóstico e Insights (Cliente)", "Diagnóstico"), 
-                                     ("Análise Adicional (Cliente)", "Análise do Cliente"), 
-                                     ("Comentários do Consultor", "Comentarios_Admin")]:
-                valor_obs = diag_data.get(campo_dados, "")
-                if valor_obs and not pd.isna(valor_obs) and str(valor_obs).strip():
-                    pdf.section_title(titulo_pdf)
-                    pdf.chapter_body(str(valor_obs))
+
+            for titulo, campo in [("Resumo do Diagnóstico (Cliente):", "Diagnóstico"), 
+                                  ("Análise Adicional (Cliente):", "Análise do Cliente"), 
+                                  ("Comentários do Consultor:", "Comentarios_Admin")]:
+                valor = diag_data.get(campo, "")
+                if valor and not pd.isna(valor) and str(valor).strip():
+                    pdf.set_font("Arial", 'B', 12); pdf.multi_cell(0, 7, pdf_safe_text_output(titulo), ln=1)
+                    pdf.set_font("Arial", size=10); 
+                    pdf.set_draw_color(200,200,200) # Cor da borda da caixa de texto
+                    pdf.multi_cell(0, 7, pdf_safe_text_output(str(valor)), border=1, ln=1, align='J') # Justificado
+                    pdf.set_draw_color(0,0,0) # Resetar cor da borda
+                    pdf.ln(3)
+
+            pdf.add_page() # Nova página para detalhes
+            pdf.set_font("Arial", 'B', 14); pdf.cell(0, 10, pdf_safe_text_output("Respostas Detalhadas e Análises"), 0, 1, 'C'); pdf.ln(5)
             
-            # Respostas Detalhadas
-            pdf.add_page()
-            pdf.section_title("Respostas Detalhadas e Análises por Pergunta")
             categorias = perguntas_df["Categoria"].unique() if not perguntas_df.empty and "Categoria" in perguntas_df.columns else []
-            
-            for categoria_pdf in categorias:
+            for categoria in categorias:
                 pdf.set_font("Arial", 'B', 11); 
-                pdf.set_fill_color(240, 240, 240) # Fundo levemente diferente para título de categoria
-                pdf.cell(0, 8, pdf_safe_text_output(f" Categoria: {categoria_pdf} "), 0, 1, 'L', fill=True)
-                pdf.ln(3)
-                
-                perg_cat_pdf = perguntas_df[perguntas_df["Categoria"] == categoria_pdf]
-                for _, p_row_pdf in perg_cat_pdf.iterrows():
-                    p_texto_pdf = p_row_pdf["Pergunta"]
-                    resp_pdf = respostas_coletadas.get(p_texto_pdf, diag_data.get(p_texto_pdf, "N/R"))
+                pdf.set_fill_color(220, 220, 255) # Azul claro para cabeçalho de categoria
+                pdf.cell(0, 8, pdf_safe_text_output(f"Categoria: {categoria}"), 0, 1, 'L', fill=True)
+                pdf.set_font("Arial", size=9)
+                pdf.ln(2)
+                perg_cat = perguntas_df[perguntas_df["Categoria"] == categoria]
+                for _, p_row in perg_cat.iterrows():
+                    p_texto = p_row["Pergunta"]
+                    resp = respostas_coletadas.get(p_texto, diag_data.get(p_texto, "N/R"))
+                    analise_texto = None
                     
-                    pdf.set_font("Arial", 'B', 9); 
-                    pdf.set_text_color(60,60,60)
-                    pdf.multi_cell(0, 6, pdf_safe_text_output(f"  • {p_texto_pdf.split('[')[0].strip()}:")) # Usar bullet point
-
-                    pdf.set_font("Arial", '', 9); 
-                    pdf.set_text_color(80,80,80)
-                    pdf.set_fill_color(248,249,250) # Fundo muito claro para a resposta
+                    pdf.set_font("Arial", 'B', 9)
+                    pdf.multi_cell(0, 6, pdf_safe_text_output(f"  • {p_texto.split('[')[0].strip()}:"))
+                    pdf.set_font("Arial", '', 9)
                     
-                    resp_display_pdf = str(resp_pdf)
-                    analise_texto_pdf = None
-
-                    if "[Matriz GUT]" in p_texto_pdf:
-                        g,u,t,score_gut_pdf=0,0,0,0
-                        if isinstance(resp_pdf, dict): g,u,t=int(resp_pdf.get("G",0)),int(resp_pdf.get("U",0)),int(resp_pdf.get("T",0))
-                        elif isinstance(resp_pdf, str):
-                            try: data_gut_pdf=json.loads(resp_pdf.replace("'",'"'));g,u,t=int(data_gut_pdf.get("G",0)),int(data_gut_pdf.get("U",0)),int(data_gut_pdf.get("T",0))
+                    if "[Matriz GUT]" in p_texto:
+                        g,u,t,score=0,0,0,0
+                        if isinstance(resp, dict): g,u,t=int(resp.get("G",0)),int(resp.get("U",0)),int(resp.get("T",0))
+                        elif isinstance(resp, str):
+                            try: data_gut=json.loads(resp.replace("'",'"'));g,u,t=int(data_gut.get("G",0)),int(data_gut.get("U",0)),int(data_gut.get("T",0))
                             except: pass
-                        score_gut_pdf = g*u*t
-                        resp_display_pdf = f"G={g}, U={u}, T={t} (Score Total: {score_gut_pdf})"
-                        analise_texto_pdf = obter_analise_para_resposta(p_texto_pdf, score_gut_pdf, analises_df)
+                        score = g*u*t
+                        pdf.multi_cell(0,6,pdf_safe_text_output(f"    Resposta: G={g}, U={u}, T={t} (Score: {score})"), ln=1)
+                        analise_texto = obter_analise_para_resposta(p_texto, score, analises_df)
                     else:
-                        analise_texto_pdf = obter_analise_para_resposta(p_texto_pdf, resp_pdf, analises_df)
+                        pdf.multi_cell(0, 6, pdf_safe_text_output(f"    Resposta: {resp}"), ln=1)
+                        analise_texto = obter_analise_para_resposta(p_texto, resp, analises_df)
                     
-                    pdf.multi_cell(0, 6, pdf_safe_text_output(f"    Resposta: {resp_display_pdf}"),0, 'L', fill=True)
-                    
-                    if analise_texto_pdf:
-                        pdf.set_font("Arial", 'I', 8.5); pdf.set_text_color(100,100,100)
-                        pdf.set_fill_color(252,252,252) # Fundo ainda mais claro para análise
-                        pdf.multi_cell(0, 5, pdf_safe_text_output(f"      Análise Consultor: {analise_texto_pdf}"),0, 'L', fill=True)
-                    pdf.ln(3) # Espaço entre perguntas
-                pdf.ln(5) # Espaço entre categorias
+                    if analise_texto:
+                        pdf.set_font("Arial", 'I', 8); pdf.set_text_color(70,70,70) # Cinza mais escuro
+                        pdf.set_fill_color(245, 245, 245) # Fundo leve para análise
+                        pdf.multi_cell(0, 5, pdf_safe_text_output(f"    Análise Consultor: {analise_texto}"), border=0, ln=1, fill=True, align='J')
+                        pdf.set_text_color(0,0,0); pdf.set_font("Arial", size=9)
+                    pdf.ln(2) # Espaço entre perguntas
+                pdf.ln(4) # Espaço entre categorias
 
-            # Plano de Ação GUT
-            pdf.add_page()
-            pdf.section_title("Plano de Ação Sugerido (Matriz GUT)")
-            gut_cards_pdf = []
-            if not perguntas_df.empty:
-                for _, p_row_pdf_gut in perguntas_df.iterrows():
-                    p_texto_pdf_gut = p_row_pdf_gut["Pergunta"]
-                    if "[Matriz GUT]" in p_texto_pdf_gut:
-                        resp_gut = respostas_coletadas.get(p_texto_pdf_gut, diag_data.get(p_texto_pdf_gut))
-                        g_pdf,u_pdf,t_pdf,score_pdf=0,0,0,0
-                        if isinstance(resp_gut, dict): g_pdf,u_pdf,t_pdf=int(resp_gut.get("G",0)),int(resp_gut.get("U",0)),int(resp_gut.get("T",0))
-                        elif isinstance(resp_gut, str):
-                            try:data_gut_val_pdf=json.loads(resp_gut.replace("'",'"'));g_pdf,u_pdf,t_pdf=int(data_gut_val_pdf.get("G",0)),int(data_gut_val_pdf.get("U",0)),int(data_gut_val_pdf.get("T",0))
-                            except: pass
-                        score_pdf = g_pdf*u_pdf*t_pdf
-                        prazo_pdf = "N/A"
-                        if score_pdf >= 75: prazo_pdf = "Curto Prazo (até 15 dias)"
-                        elif score_pdf >= 40: prazo_pdf = "Médio Prazo (até 30 dias)"
-                        elif score_pdf >= 20: prazo_pdf = "Longo Prazo (até 45 dias)"
-                        elif score_pdf > 0: prazo_pdf = "Considerar (até 60 dias)"
-                        else: continue
-                        if prazo_pdf != "N/A": gut_cards_pdf.append({"Tarefa": p_texto_pdf_gut.replace(" [Matriz GUT]", ""),"Prazo": prazo_pdf, "Score": score_pdf, "G":g_pdf, "U":u_pdf, "T":t_pdf})
+            pdf.add_page(); pdf.set_font("Arial", 'B', 14)
+            pdf.cell(0, 10, pdf_safe_text_output("Plano de Ação Sugerido (Matriz GUT)"), 0, 1, 'C'); pdf.ln(5); 
             
-            if gut_cards_pdf:
-                sorted_cards_pdf = sorted(gut_cards_pdf, key=lambda x: x["Score"], reverse=True)
-                # Cabeçalho da tabela
-                pdf.set_font('Arial', 'B', 10)
-                pdf.set_fill_color(220, 220, 220) # Cinza claro para cabeçalho da tabela
-                pdf.cell(90, 8, 'Tarefa Prioritária', 1, 0, 'C', True)
-                pdf.cell(25, 8, 'G', 1, 0, 'C', True)
-                pdf.cell(25, 8, 'U', 1, 0, 'C', True)
-                pdf.cell(25, 8, 'T', 1, 0, 'C', True)
-                pdf.cell(25, 8, 'Score', 1, 1, 'C', True)
-                
-                pdf.set_font('Arial', '', 9)
-                for card_pdf in sorted_cards_pdf:
-                    pdf.set_fill_color(255,255,255) # Branco para linhas
-                    # Lidar com quebra de linha na tarefa
-                    x_before = pdf.get_x()
-                    y_before = pdf.get_y()
-                    pdf.multi_cell(90, 7, pdf_safe_text_output(card_pdf['Tarefa']), 1, 'L', True)
-                    y_after_multi = pdf.get_y()
-                    h_multi = y_after_multi - y_before
-                    
-                    pdf.set_xy(x_before + 90, y_before) # Voltar para a mesma linha, após a multi_cell
-                    pdf.cell(25, h_multi, str(card_pdf['G']), 1, 0, 'C', True)
-                    pdf.cell(25, h_multi, str(card_pdf['U']), 1, 0, 'C', True)
-                    pdf.cell(25, h_multi, str(card_pdf['T']), 1, 0, 'C', True)
-                    pdf.cell(25, h_multi, str(card_pdf['Score']), 1, 1, 'C', True)
+            gut_cards = []
+            if not perguntas_df.empty:
+                for _, p_row in perguntas_df.iterrows():
+                    p_texto = p_row["Pergunta"]
+                    if "[Matriz GUT]" in p_texto:
+                        resp = respostas_coletadas.get(p_texto, diag_data.get(p_texto))
+                        g,u,t,score=0,0,0,0
+                        if isinstance(resp, dict): g,u,t=int(resp.get("G",0)),int(resp.get("U",0)),int(resp.get("T",0))
+                        elif isinstance(resp, str):
+                            try:data_gut=json.loads(resp.replace("'",'"'));g,u,t=int(data_gut.get("G",0)),int(data_gut.get("U",0)),int(data_gut.get("T",0))
+                            except: pass
+                        score = g*u*t
+                        prazo = "N/A"
+                        if score >= 75: prazo = "15 dias"
+                        elif score >= 40: prazo = "30 dias"
+                        elif score >= 20: prazo = "45 dias"
+                        elif score > 0: prazo = "60 dias"
+                        else: continue
+                        if prazo != "N/A": gut_cards.append({"Tarefa": p_texto.replace(" [Matriz GUT]", ""),"Prazo": prazo, "Score": score})
+            
+            if gut_cards:
+                sorted_cards = sorted(gut_cards, key=lambda x: x["Score"], reverse=True) # Ordenar por Score descendente
+                pdf.set_font("Arial", 'B', 10)
+                pdf.cell(60, 7, "Prazo Sugerido", 1, 0, 'C')
+                pdf.cell(100, 7, "Tarefa Prioritária", 1, 0, 'C')
+                pdf.cell(30, 7, "Score GUT", 1, 1, 'C')
+                pdf.set_font("Arial", size=9)
+                for card in sorted_cards:
+                    pdf.cell(60, 6, pdf_safe_text_output(card['Prazo']), 1, 0)
+                    pdf.multi_cell(100, 6, pdf_safe_text_output(card['Tarefa']), 1, 'L', ln=3 if pdf.get_string_width(card['Tarefa']) > 90 else 0) # Multi_cell para tarefas longas
+                    if pdf.get_string_width(card['Tarefa']) <= 90: # Se não quebrou linha, precisa de ln=1 no próximo cell
+                         pdf.cell(30, 6, str(card['Score']), 1, 1, 'C')
+                    else: # Se quebrou, o cursor já está na próxima linha
+                         current_x_after_multicell = pdf.get_x()
+                         pdf.set_xy(current_x_after_multicell + 100, pdf.get_y() - 6) # Ajustar X para alinhar
+                         pdf.cell(30, 6, str(card['Score']), 1, 1, 'C')
+
+
             else: 
-                pdf.chapter_body("Nenhuma ação prioritária (GUT > 0) identificada com base nas respostas fornecidas.")
+                pdf.set_font("Arial", size=10)
+                pdf.multi_cell(0,6, pdf_safe_text_output("Nenhuma ação prioritária (GUT > 0) identificada."))
+            
+            # Footer
+            pdf.set_y(-15)
+            pdf.set_font('Arial', 'I', 8)
+            pdf.cell(0, 10, f'Página {pdf.page_no()}', 0, 0, 'C')
+
 
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
                 pdf_path = tmpfile.name; pdf.output(pdf_path)
@@ -872,21 +792,20 @@ def gerar_pdf_diagnostico_completo(diag_data, user_data, perguntas_df, respostas
 # --- Lógica de Login e Navegação Principal ---
 if st.session_state.get("trigger_rerun_global"): st.session_state.trigger_rerun_global = False; st.rerun()
 
-# Exibir logo do portal na página de login
-portal_logo_path_login = get_portal_logo_path()
-if not os.path.exists(portal_logo_path_login):
-    portal_logo_path_login = PORTAL_LOGO_PLACEHOLDER # Fallback se não existir
-
 if not st.session_state.admin_logado and not st.session_state.cliente_logado:
     aba = st.radio("Você é:", ["Administrador", "Cliente"], horizontal=True, key="tipo_usuario_radio_v21")
 elif st.session_state.admin_logado: aba = "Administrador"
 else: aba = "Cliente"
 
+# Exibir logo do portal na tela de login
+portal_logo_login_path = get_portal_logo_path()
+
 if aba == "Administrador" and not st.session_state.admin_logado:
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
-    st.image(portal_logo_path_login, width=200, use_column_width='auto', output_format='PNG', 
-             caption="" if portal_logo_path_login == PORTAL_LOGO_PLACEHOLDER else "Logo do Portal", 
-             channels="RGB" if portal_logo_path_login != PORTAL_LOGO_PLACEHOLDER else "RGBA")
+    if portal_logo_login_path:
+        st.image(portal_logo_login_path, use_column_width='auto', output_format='PNG', width=200)
+    else: # Fallback se não houver logo
+        st.image("https://via.placeholder.com/200x80.png?text=Logo+do+Portal", width=200)
     st.markdown('<h2 class="login-title">Login Administrador</h2>', unsafe_allow_html=True)
     with st.form("form_admin_login_v21"):
         u = st.text_input("Usuário", key="admin_u_v21"); p = st.text_input("Senha", type="password", key="admin_p_v21")
@@ -917,9 +836,10 @@ if aba == "Administrador" and not st.session_state.admin_logado:
 
 if aba == "Cliente" and not st.session_state.cliente_logado:
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
-    st.image(portal_logo_path_login, width=200, use_column_width='auto', output_format='PNG', 
-             caption="" if portal_logo_path_login == PORTAL_LOGO_PLACEHOLDER else "Logo do Portal", 
-             channels="RGB" if portal_logo_path_login != PORTAL_LOGO_PLACEHOLDER else "RGBA")
+    if portal_logo_login_path:
+        st.image(portal_logo_login_path, use_column_width='auto', output_format='PNG', width=200)
+    else: # Fallback
+        st.image("https://via.placeholder.com/200x80.png?text=Logo+do+Portal", width=200) 
     st.markdown('<h2 class="login-title">Login Cliente</h2>', unsafe_allow_html=True)
     with st.form("form_cliente_login_v21"):
         c = st.text_input("CNPJ", key="cli_c_v21", value=st.session_state.get("last_cnpj_input",""))
@@ -978,22 +898,11 @@ if aba == "Cliente" and st.session_state.cliente_logado:
     if not st.session_state.user.get("JaVisualizouInstrucoes", False):
         st.session_state.cliente_page = "Instruções"
 
-    # Mostrar logo do portal no topo do sidebar do cliente
-    portal_logo_sidebar_cli = get_portal_logo_path()
-    if os.path.exists(portal_logo_sidebar_cli):
-        st.sidebar.image(portal_logo_sidebar_cli, use_column_width='auto')
-    else:
-        st.sidebar.markdown(f"### {st.session_state.user.get('Empresa', 'Cliente')}")
-
-
-    # st.sidebar.markdown(f"### Bem-vindo(a), {st.session_state.user.get('Empresa', 'Cliente')}!") # Movido para baixo da logo
+    st.sidebar.markdown(f"### Bem-vindo(a), {st.session_state.user.get('Empresa', 'Cliente')}!")
     with st.sidebar.expander("👤 Meu Perfil", expanded=True):
-        client_logo_display_path = st.session_state.user.get("LogoPath") # Usar o caminho do CSV
-        if client_logo_display_path and os.path.exists(client_logo_display_path): 
-            st.image(client_logo_display_path, width=100)
-        elif find_client_logo_path(st.session_state.cnpj): # Fallback para função antiga se LogoPath não estiver no CSV ou inválido
-             st.image(find_client_logo_path(st.session_state.cnpj), width=100)
-
+        logo_cliente_path = find_client_logo_path(st.session_state.cnpj)
+        if logo_cliente_path: 
+            st.image(logo_cliente_path, width=100, caption=st.session_state.user.get('Empresa', ''))
         st.write(f"**Empresa:** {st.session_state.user.get('Empresa', 'N/D')}")
         st.write(f"**CNPJ:** {st.session_state.cnpj}")
         st.write(f"**Contato:** {st.session_state.user.get('NomeContato', 'N/D')}")
@@ -1096,7 +1005,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
             with open(instrucoes_custom_path, "r", encoding="utf-8") as f:
                 instrucoes_content_md = f.read()
         elif os.path.exists(instrucoes_default_path):
-            with open(instrucoes_default_path, "r", encoding="utf-8") as f:
+            with open(instrucoes_default_path, "r", encoding="utf-8") as f: 
                 instrucoes_content_md = f.read()
             st.caption("Exibindo instruções padrão. O administrador pode personalizar este texto.")
         else:
@@ -1533,7 +1442,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                             if pdf_path_antigo:
                                 with open(pdf_path_antigo, "rb") as f_antigo:
                                     st.download_button("Clique para Baixar", f_antigo,
-                                                        file_name=f"diag_{sanitize_filename(row_diag_data['Empresa'])}_{str(row_diag_data['Data']).replace(':','-').replace(' ','_')}.pdf", # Usar sanitize_filename
+                                                        file_name=f"diag_{sanitize_column_name(row_diag_data['Empresa'])}_{str(row_diag_data['Data']).replace(':','-').replace(' ','_')}.pdf",
                                                         mime="application/pdf",
                                                         key=f"dl_confirm_antigo_v21_{idx_row_diag}_{time.time()}",
                                                         icon="📄")
@@ -1830,7 +1739,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                     st.session_state.diagnostico_enviado_sucesso = True
                     if pdf_path_gerado_n:
                         st.session_state.pdf_gerado_path = pdf_path_gerado_n
-                        st.session_state.pdf_gerado_filename = f"diagnostico_{sanitize_filename(emp_nome_n)}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf" # Usar sanitize_filename
+                        st.session_state.pdf_gerado_filename = f"diagnostico_{sanitize_column_name(emp_nome_n)}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
 
                     st.session_state.respostas_atuais_diagnostico = {}
                     st.session_state.progresso_diagnostico_percentual = 0
@@ -1842,14 +1751,13 @@ if aba == "Cliente" and st.session_state.cliente_logado:
 
 # --- ÁREA DO ADMINISTRADOR LOGADO ---
 if aba == "Administrador" and st.session_state.admin_logado:
-    portal_logo_sidebar_adm = get_portal_logo_path()
-    if os.path.exists(portal_logo_sidebar_adm):
-        st.sidebar.image(portal_logo_sidebar_adm, use_column_width='auto')
+    portal_logo_admin_path = get_portal_logo_path()
+    if portal_logo_admin_path:
+        st.sidebar.image(portal_logo_admin_path, use_column_width='auto')
     else:
-        st.sidebar.markdown(f"### Painel Admin")
+        st.sidebar.image("https://via.placeholder.com/200x80.png?text=Logo+Admin", use_container_width=True) 
 
-
-    st.sidebar.success(f"🟢 Admin: {st.session_state.get('admin_username', '')} ({st.session_state.get('admin_permissions', 'N/D')})")
+    st.sidebar.success(f"🟢 Admin Logado: {st.session_state.get('admin_username', '')} ({st.session_state.get('admin_permissions', 'N/D')})")
 
 
     if st.sidebar.button("Sair do Painel Admin", icon="🚪", key="logout_admin_v21", use_container_width=True):
@@ -1868,7 +1776,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         "Gerenciar Análises de Perguntas": "💡",
         "Gerenciar Pesquisa de Satisfação": "🧐", 
         "Gerenciar SAC": "📞",
-        "Configurações do Portal": "⚙️", # Renomeado e movido
+        "Configurações do Portal": "⚙️", # Renomeado de "Gerenciar Instruções"
         "Histórico de Usuários": "📜", 
         "Gerenciar Administradores": "👮"
     }
@@ -1924,11 +1832,1105 @@ if aba == "Administrador" and st.session_state.admin_logado:
         
         if "JaVisualizouInstrucoes" not in df_usuarios_admin_temp_load.columns: df_usuarios_admin_temp_load["JaVisualizouInstrucoes"] = "False"
         df_usuarios_admin_temp_load["JaVisualizouInstrucoes"] = df_usuarios_admin_temp_load["JaVisualizouInstrucoes"].astype(str).str.lower().map({'true': True, 'false': False, 'nan':False, '':False}).fillna(False)
-        if "LogoPath" not in df_usuarios_admin_temp_load.columns: df_usuarios_admin_temp_load["LogoPath"] = None # Garantir coluna
         
         df_usuarios_admin_geral = df_usuarios_admin_temp_load
     except FileNotFoundError:
         if menu_admin in ["Visão Geral e Diagnósticos", "Histórico de Usuários", "Gerenciar Clientes", "Gerenciar Notificações", "Relatório de Engajamento", "Gerenciar SAC", "Gerenciar Pesquisa de Satisfação"]:
             st.sidebar.error(f"Arquivo '{usuarios_csv}' não encontrado. Funcionalidades limitadas.")
     except Exception as e_load_users_adm_global:
-        if menu_admin in ["Visão Geral e Diagnósticos", "Histórico de Usuários", "Gerenciar Cliente
+        if menu_admin in ["Visão Geral e Diagnósticos", "Histórico de Usuários", "Gerenciar Clientes", "Gerenciar Notificações", "Relatório de Engajamento", "Gerenciar SAC", "Gerenciar Pesquisa de Satisfação"]:
+            st.sidebar.error(f"Erro ao carregar usuários para admin: {e_load_users_adm_global}")
+
+
+    if menu_admin == "Visão Geral e Diagnósticos":
+        diagnosticos_df_admin_orig_view = pd.DataFrame()
+        admin_data_carregada_view_sucesso = False
+
+        if not os.path.exists(arquivo_csv):
+            st.error(f"ATENÇÃO: O arquivo de diagnósticos '{arquivo_csv}' não foi encontrado.")
+        elif os.path.getsize(arquivo_csv) == 0:
+            st.warning(f"O arquivo de diagnósticos '{arquivo_csv}' está completamente vazio.")
+        else:
+            try:
+                diagnosticos_df_admin_orig_view = pd.read_csv(arquivo_csv, encoding='utf-8', dtype={'CNPJ': str})
+                if 'Data' in diagnosticos_df_admin_orig_view.columns:
+                    diagnosticos_df_admin_orig_view['Data_dt'] = pd.to_datetime(diagnosticos_df_admin_orig_view['Data'], errors='coerce') 
+                    diagnosticos_df_admin_orig_view['Data'] = diagnosticos_df_admin_orig_view['Data'].astype(str) 
+                if not diagnosticos_df_admin_orig_view.empty:
+                    admin_data_carregada_view_sucesso = True
+                else: st.info("Arquivo de diagnósticos lido, mas sem dados.")
+            except pd.errors.EmptyDataError: st.warning(f"Arquivo '{arquivo_csv}' parece vazio ou só com cabeçalhos.")
+            except Exception as e: st.error(f"ERRO AO CARREGAR DIAGNÓSTICOS: {e}"); st.exception(e)
+
+        st.markdown("#### KPIs Gerais do Sistema")
+        kpi_cols_v21 = st.columns(3) 
+        total_clientes_cadastrados_vg = len(df_usuarios_admin_geral) if not df_usuarios_admin_geral.empty else 0
+        kpi_cols_v21[0].metric("👥 Clientes Cadastrados", total_clientes_cadastrados_vg)
+
+        if admin_data_carregada_view_sucesso:
+            total_diagnosticos_sistema_vg = len(diagnosticos_df_admin_orig_view)
+            kpi_cols_v21[1].metric("📋 Diagnósticos Realizados", total_diagnosticos_sistema_vg)
+            avg_geral_sistema = pd.to_numeric(diagnosticos_df_admin_orig_view.get("Média Geral"), errors='coerce').mean()
+            kpi_cols_v21[2].metric("📈 Média Geral (Sistema)", f"{avg_geral_sistema:.2f}" if pd.notna(avg_geral_sistema) else "N/A")
+        else:
+            kpi_cols_v21[1].metric("📋 Diagnósticos Realizados", 0)
+            kpi_cols_v21[2].metric("📈 Média Geral (Sistema)", "N/A")
+        st.divider()
+
+        st.markdown("#### Análises Gráficas do Sistema")
+        dash_cols1_v21 = st.columns(2) 
+        with dash_cols1_v21[0]:
+            st.markdown('<div class="dashboard-item">', unsafe_allow_html=True)
+            st.markdown("##### Diagnósticos ao Longo do Tempo")
+            if admin_data_carregada_view_sucesso and 'Data_dt' in diagnosticos_df_admin_orig_view.columns:
+                df_for_timeline_chart = diagnosticos_df_admin_orig_view[['Data_dt']].rename(columns={'Data_dt': 'Data'})
+                fig_timeline = create_diagnostics_timeline_chart(df_for_timeline_chart)
+                if fig_timeline: st.plotly_chart(fig_timeline, use_container_width=True)
+                else: st.caption("Não há dados suficientes para o gráfico de linha do tempo.")
+            else: st.caption("Dados de diagnóstico não carregados ou coluna 'Data' não pode ser convertida para datetime.")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        with dash_cols1_v21[1]:
+            st.markdown('<div class="dashboard-item">', unsafe_allow_html=True)
+            st.markdown("##### Engajamento de Clientes (Nº de Diagnósticos)")
+            if not df_usuarios_admin_geral.empty:
+                fig_engagement = create_client_engagement_pie(df_usuarios_admin_geral)
+                if fig_engagement: st.plotly_chart(fig_engagement, use_container_width=True)
+                else: st.caption("Não há dados suficientes para o gráfico de engajamento.")
+            else: st.caption("Dados de usuários não carregados.")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown('<div class="dashboard-item">', unsafe_allow_html=True)
+        st.markdown("##### Média de Scores por Categoria (Global)")
+        if admin_data_carregada_view_sucesso:
+            fig_avg_cat = create_avg_category_scores_chart(diagnosticos_df_admin_orig_view)
+            if fig_avg_cat: st.plotly_chart(fig_avg_cat, use_container_width=True)
+            else: st.caption("Não há dados de categorias para exibir.")
+        else: st.caption("Dados de diagnóstico não carregados.")
+        st.markdown('</div>', unsafe_allow_html=True)
+        st.divider()
+
+        st.markdown("#### Filtros para Análise Detalhada de Diagnósticos")
+        filter_cols_v21 = st.columns(3) 
+
+        empresas_lista_admin_filtro_vg = []
+        if not df_usuarios_admin_geral.empty and "Empresa" in df_usuarios_admin_geral.columns:
+            empresas_lista_admin_filtro_vg = sorted(df_usuarios_admin_geral["Empresa"].astype(str).unique().tolist())
+        options_empresa_filtro = ["Todos os Clientes"] + empresas_lista_admin_filtro_vg
+        
+        KEY_WIDGET_EMPRESA_FILTRO_GV = "admin_filtro_emp_gv_v21_widget_sel" 
+        KEY_DT_INI_FILTRO_VALUE_GV = "admin_dt_ini_gv_v21_value_sel" 
+        KEY_DT_FIM_FILTRO_VALUE_GV = "admin_dt_fim_gv_v21_value_sel" 
+
+        if KEY_WIDGET_EMPRESA_FILTRO_GV not in st.session_state or \
+           st.session_state[KEY_WIDGET_EMPRESA_FILTRO_GV] not in options_empresa_filtro:
+            st.session_state[KEY_WIDGET_EMPRESA_FILTRO_GV] = options_empresa_filtro[0] if options_empresa_filtro else None
+
+        emp_sel_admin_vg = filter_cols_v21[0].selectbox(
+            "Filtrar por Empresa:",
+            options=options_empresa_filtro,
+            key=KEY_WIDGET_EMPRESA_FILTRO_GV
+        )
+        
+        with filter_cols_v21[1]:
+            dt_ini_admin_vg = st.date_input("Data Início:",
+                                            value=st.session_state.get(KEY_DT_INI_FILTRO_VALUE_GV, None), 
+                                            key=KEY_DT_INI_FILTRO_VALUE_GV)
+        with filter_cols_v21[2]:
+            dt_fim_admin_vg = st.date_input("Data Fim:",
+                                            value=st.session_state.get(KEY_DT_FIM_FILTRO_VALUE_GV, None), 
+                                            key=KEY_DT_FIM_FILTRO_VALUE_GV)
+        st.divider()
+
+        df_diagnosticos_contexto_filtro_vg = diagnosticos_df_admin_orig_view.copy() if admin_data_carregada_view_sucesso else pd.DataFrame(columns=colunas_base_diagnosticos + ['Data_dt'])
+        df_usuarios_contexto_filtro_vg = df_usuarios_admin_geral.copy()
+
+        if emp_sel_admin_vg != "Todos os Clientes":
+            df_diagnosticos_contexto_filtro_vg = df_diagnosticos_contexto_filtro_vg[df_diagnosticos_contexto_filtro_vg["Empresa"] == emp_sel_admin_vg]
+            df_usuarios_contexto_filtro_vg = df_usuarios_contexto_filtro_vg[df_usuarios_contexto_filtro_vg["Empresa"] == emp_sel_admin_vg]
+
+        df_diagnosticos_filtrados_view_final_vg = df_diagnosticos_contexto_filtro_vg.copy()
+        if dt_ini_admin_vg and 'Data_dt' in df_diagnosticos_filtrados_view_final_vg.columns: 
+            df_diagnosticos_filtrados_view_final_vg = df_diagnosticos_filtrados_view_final_vg[
+                df_diagnosticos_filtrados_view_final_vg['Data_dt'] >= pd.to_datetime(dt_ini_admin_vg)
+            ]
+        if dt_fim_admin_vg and 'Data_dt' in df_diagnosticos_filtrados_view_final_vg.columns:
+            df_diagnosticos_filtrados_view_final_vg = df_diagnosticos_filtrados_view_final_vg[
+                df_diagnosticos_filtrados_view_final_vg['Data_dt'] < pd.to_datetime(dt_fim_admin_vg) + pd.Timedelta(days=1)
+            ]
+
+
+        st.markdown(f"#### Análise para: **{emp_sel_admin_vg}** (Período de Diagnósticos: {dt_ini_admin_vg or 'Início'} a {dt_fim_admin_vg or 'Fim'})")
+
+        kpi_cols_filt_v21 = st.columns(3) 
+        cnpjs_usuarios_contexto_final_vg = set(df_usuarios_contexto_filtro_vg['CNPJ'].unique()) if not df_usuarios_contexto_filtro_vg.empty else set()
+        cnpjs_com_diagnostico_contexto_final_vg = set(df_diagnosticos_filtrados_view_final_vg['CNPJ'].unique()) if not df_diagnosticos_filtrados_view_final_vg.empty else set()
+
+        clientes_sem_diagnostico_final_vg = len(cnpjs_usuarios_contexto_final_vg - cnpjs_com_diagnostico_contexto_final_vg)
+        clientes_com_pelo_menos_um_diag_final_vg = len(cnpjs_com_diagnostico_contexto_final_vg)
+
+        clientes_com_mais_de_um_diag_final_vg = 0
+        if not df_diagnosticos_filtrados_view_final_vg.empty:
+            contagem_diag_por_cliente_final_vg = df_diagnosticos_filtrados_view_final_vg.groupby('CNPJ').size()
+            clientes_com_mais_de_um_diag_final_vg = len(contagem_diag_por_cliente_final_vg[contagem_diag_por_cliente_final_vg > 1])
+
+        kpi_cols_filt_v21[0].metric("Clientes SEM Diag. (Filtro)", clientes_sem_diagnostico_final_vg)
+        kpi_cols_filt_v21[1].metric("Clientes COM Diag. (Filtro)", clientes_com_pelo_menos_um_diag_final_vg)
+        kpi_cols_filt_v21[2].metric("Clientes COM +1 Diag. (Filtro)", clientes_com_mais_de_um_diag_final_vg)
+        st.divider()
+
+        if not admin_data_carregada_view_sucesso and os.path.exists(arquivo_csv) and os.path.getsize(arquivo_csv) > 0 :
+            st.warning("Não foi possível processar os dados de diagnósticos para os indicadores filtrados.")
+        elif df_diagnosticos_filtrados_view_final_vg.empty and admin_data_carregada_view_sucesso:
+            st.info(f"Nenhum diagnóstico encontrado para os filtros aplicados.")
+        elif not df_diagnosticos_filtrados_view_final_vg.empty:
+            st.markdown(f"##### Indicadores da Seleção Filtrada de Diagnósticos")
+            kpi_cols_sel_filt_v21 = st.columns(3) 
+            kpi_cols_sel_filt_v21[0].metric("📦 Diagnósticos na Seleção", len(df_diagnosticos_filtrados_view_final_vg))
+            media_geral_filtrada_adm_vg = pd.to_numeric(df_diagnosticos_filtrados_view_final_vg.get("Média Geral"), errors='coerce').mean()
+            kpi_cols_sel_filt_v21[1].metric("📈 Média Geral da Seleção", f"{media_geral_filtrada_adm_vg:.2f}" if pd.notna(media_geral_filtrada_adm_vg) else "N/A")
+            gut_media_filtrada_adm_vg = pd.to_numeric(df_diagnosticos_filtrados_view_final_vg.get("GUT Média"), errors='coerce').mean()
+            kpi_cols_sel_filt_v21[2].metric("🔥 GUT Média da Seleção", f"{gut_media_filtrada_adm_vg:.2f}" if pd.notna(gut_media_filtrada_adm_vg) else "N/A")
+            st.divider()
+
+            st.markdown(f"##### Diagnósticos Detalhados (Seleção Filtrada)")
+            df_display_admin = df_diagnosticos_filtrados_view_final_vg.copy()
+            if 'Data_dt' in df_display_admin.columns:
+                df_display_admin = df_display_admin.sort_values(by="Data_dt", ascending=False).reset_index(drop=True)
+            else: 
+                df_display_admin = df_display_admin.sort_values(by="Data", ascending=False).reset_index(drop=True)
+
+
+            try:
+                perguntas_df_admin_view = pd.read_csv(perguntas_csv, encoding='utf-8')
+                if "Categoria" not in perguntas_df_admin_view.columns: perguntas_df_admin_view["Categoria"] = "Geral"
+            except FileNotFoundError: perguntas_df_admin_view = pd.DataFrame()
+            analises_df_admin_view = carregar_analises_perguntas()
+
+            for idx_diag_adm, row_diag_adm in df_display_admin.iterrows():
+                diag_data_str = str(row_diag_adm['Data']) 
+                with st.expander(f"🔎 {diag_data_str} - {row_diag_adm['Empresa']} (CNPJ: {row_diag_adm['CNPJ']})"):
+                    st.markdown('<div class="custom-card" style="padding-top:10px; padding-bottom:10px;">', unsafe_allow_html=True)
+
+                    m1, m2 = st.columns(2)
+                    m1.metric("Média Geral", f"{pd.to_numeric(row_diag_adm.get('Média Geral'), errors='coerce'):.2f}" if pd.notna(row_diag_adm.get('Média Geral')) else "N/A")
+                    m2.metric("GUT Média", f"{pd.to_numeric(row_diag_adm.get('GUT Média'), errors='coerce'):.2f}" if pd.notna(row_diag_adm.get('GUT Média')) else "N/A")
+
+                    st.write(f"**Resumo (Cliente):** {row_diag_adm.get('Diagnóstico', 'N/P')}")
+                    st.write(f"**Análise (Cliente):** {row_diag_adm.get('Análise do Cliente', 'N/P')}")
+
+                    com_admin_atual = row_diag_adm.get("Comentarios_Admin", "")
+                    com_admin_input = st.text_area("Comentários do Consultor (visível para o cliente):",
+                                                    value=com_admin_atual,
+                                                    key=f"com_admin_input_v21_{idx_diag_adm}_{row_diag_adm['CNPJ']}_{diag_data_str.replace(' ','_')}",
+                                                    disabled=not is_admin_total()) 
+                    if st.button("Salvar Comentário do Consultor", icon="💬", 
+                                 key=f"save_com_admin_v21_{idx_diag_adm}_{row_diag_adm['CNPJ']}_{diag_data_str.replace(' ','_')}",
+                                 disabled=not is_admin_total()): 
+                        if is_admin_total():
+                            if com_admin_input != com_admin_atual:
+                                df_all_diags_update = pd.read_csv(arquivo_csv, encoding='utf-8', dtype={'CNPJ':str})
+                                df_all_diags_update['Data'] = df_all_diags_update['Data'].astype(str)
+                                
+                                match_indices = df_all_diags_update[
+                                    (df_all_diags_update["CNPJ"] == row_diag_adm["CNPJ"]) &
+                                    (df_all_diags_update["Data"] == diag_data_str) 
+                                ].index
+                                
+                                if not match_indices.empty:
+                                    original_index_to_update = match_indices[0]
+                                    df_all_diags_update.loc[original_index_to_update, "Comentarios_Admin"] = com_admin_input
+                                    df_all_diags_update.to_csv(arquivo_csv, index=False, encoding='utf-8')
+                                    
+                                    try:
+                                        df_notificacoes = pd.read_csv(notificacoes_csv, dtype={'CNPJ_Cliente': str, 'ID_Diagnostico_Relacionado': str})
+                                        if 'Lida' not in df_notificacoes.columns: df_notificacoes['Lida'] = False
+                                        if 'ID_Diagnostico_Relacionado' not in df_notificacoes.columns: df_notificacoes['ID_Diagnostico_Relacionado'] = None
+                                    except (FileNotFoundError, pd.errors.EmptyDataError):
+                                        df_notificacoes = pd.DataFrame(columns=colunas_base_notificacoes)
+
+                                    nova_notificacao = pd.DataFrame([{
+                                        "ID_Notificacao": str(uuid.uuid4()),
+                                        "CNPJ_Cliente": row_diag_adm["CNPJ"],
+                                        "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                        "Mensagem": f"O consultor adicionou um novo comentário ao seu diagnóstico de {diag_data_str}.",
+                                        "Lida": False,
+                                        "ID_Diagnostico_Relacionado": diag_data_str 
+                                    }])
+                                    df_notificacoes = pd.concat([df_notificacoes, nova_notificacao], ignore_index=True)
+                                    df_notificacoes.to_csv(notificacoes_csv, index=False, encoding='utf-8')
+                                    st.toast("Comentário salvo e cliente notificado!", icon="🔔")
+                                    df_display_admin.loc[df_display_admin.index == idx_diag_adm, "Comentarios_Admin"] = com_admin_input
+                                    st.rerun()
+                                else:
+                                    st.error("Erro ao encontrar diagnóstico original para salvar comentário. Verifique a consistência dos dados.")
+                            else:
+                                st.info("Nenhuma alteração no comentário.")
+
+                    if st.button("Baixar PDF Detalhado", icon="📄", key=f"dl_pdf_adm_diag_v21_{idx_diag_adm}_{row_diag_adm['CNPJ']}_{diag_data_str.replace(' ','_')}"): 
+                        user_data_pdf_adm = {}
+                        if not df_usuarios_admin_geral.empty:
+                            match_user = df_usuarios_admin_geral[df_usuarios_admin_geral['CNPJ'] == row_diag_adm['CNPJ']]
+                            if not match_user.empty:
+                                user_data_pdf_adm = match_user.iloc[0].to_dict()
+
+                        medias_cat_pdf_adm = {k.replace("Media_Cat_","").replace("_"," "):v for k,v in row_diag_adm.items() if "Media_Cat_" in k and pd.notna(v)}
+                        pdf_path_adm_d = gerar_pdf_diagnostico_completo(row_diag_adm.to_dict(), user_data_pdf_adm, perguntas_df_admin_view, row_diag_adm.to_dict(), medias_cat_pdf_adm, analises_df_admin_view)
+                        if pdf_path_adm_d:
+                            with open(pdf_path_adm_d, "rb") as f_adm_d:
+                                st.download_button("Download PDF Confirmado", f_adm_d,
+                                                    file_name=f"diag_{sanitize_column_name(row_diag_adm['Empresa'])}_{str(row_diag_adm['Data']).replace(':','-').replace(' ','_')}.pdf",
+                                                    mime="application/pdf",
+                                                    key=f"dl_confirm_adm_diag_v21_{idx_diag_adm}_{time.time()}", 
+                                                    icon="📄")
+                        else:
+                            st.error("Erro ao gerar PDF para este diagnóstico.")
+                    st.markdown('</div>', unsafe_allow_html=True)
+
+        elif not admin_data_carregada_view_sucesso:
+            st.warning("Dados de diagnósticos não puderam ser carregados. Funcionalidades limitadas.")
+    
+    elif menu_admin == "Relatório de Engajamento":
+        st.markdown("#### Métricas de Engajamento dos Clientes")
+
+        if df_usuarios_admin_geral.empty:
+            st.info("Nenhum cliente cadastrado para gerar o relatório.")
+        else:
+            total_usuarios = len(df_usuarios_admin_geral)
+
+            nao_visualizaram_instrucoes_df = df_usuarios_admin_geral[df_usuarios_admin_geral["JaVisualizouInstrucoes"] == False]
+            visualizaram_instrucoes_df = df_usuarios_admin_geral[df_usuarios_admin_geral["JaVisualizouInstrucoes"] == True]
+            
+            visualizaram_sem_diag_df = visualizaram_instrucoes_df[visualizaram_instrucoes_df["TotalDiagnosticosRealizados"] == 0]
+            visualizaram_com_diag_df = visualizaram_instrucoes_df[visualizaram_instrucoes_df["TotalDiagnosticosRealizados"] > 0]
+
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Total de Clientes Cadastrados", total_usuarios)
+            c2.metric("Não Aceitaram Instruções", len(nao_visualizaram_instrucoes_df))
+            c3.metric("Aceitaram Instruções, SEM Diagnóstico", len(visualizaram_sem_diag_df))
+            c4.metric("Aceitaram Instruções e COM Diagnóstico(s)", len(visualizaram_com_diag_df))
+            
+            st.divider()
+            
+            with st.expander("Detalhes: Clientes que NÃO Visualizaram/Aceitaram Instruções"):
+                if not nao_visualizaram_instrucoes_df.empty:
+                    st.dataframe(nao_visualizaram_instrucoes_df[["Empresa", "CNPJ", "NomeContato"]], use_container_width=True)
+                else:
+                    st.info("Todos os clientes visualizaram as instruções ou não há clientes nesta categoria.")
+
+            with st.expander("Detalhes: Clientes que Aceitaram Instruções, mas NÃO Fizeram Diagnóstico"):
+                if not visualizaram_sem_diag_df.empty:
+                    st.dataframe(visualizaram_sem_diag_df[["Empresa", "CNPJ", "NomeContato", "DiagnosticosDisponiveis"]], use_container_width=True)
+                else:
+                    st.info("Todos os clientes que visualizaram as instruções fizeram ao menos um diagnóstico ou não há clientes nesta categoria.")
+
+            with st.expander("Detalhes: Clientes que Aceitaram Instruções e FIZERAM Diagnóstico(s)"):
+                if not visualizaram_com_diag_df.empty:
+                    st.dataframe(visualizaram_com_diag_df[["Empresa", "CNPJ", "NomeContato", "TotalDiagnosticosRealizados", "DiagnosticosDisponiveis"]], use_container_width=True)
+                else:
+                    st.info("Nenhum cliente visualizou as instruções e completou um diagnóstico ainda.")
+
+    elif menu_admin == "Gerenciar Notificações":
+        st.markdown("#### Lista de Todas as Notificações do Sistema")
+        try:
+            df_notificacoes_admin = pd.read_csv(notificacoes_csv, dtype={'CNPJ_Cliente': str, 'ID_Diagnostico_Relacionado': str})
+            if 'Lida' in df_notificacoes_admin.columns:
+                df_notificacoes_admin['Lida'] = df_notificacoes_admin['Lida'].astype(str).str.lower().map({'true': True, 'false': False, 'nan': False, '': False}).fillna(False)
+            else:
+                df_notificacoes_admin['Lida'] = False 
+            if 'ID_Diagnostico_Relacionado' not in df_notificacoes_admin.columns:
+                df_notificacoes_admin['ID_Diagnostico_Relacionado'] = None
+
+
+            if not df_usuarios_admin_geral.empty:
+                df_notificacoes_admin = pd.merge(df_notificacoes_admin, df_usuarios_admin_geral[['CNPJ', 'Empresa']], 
+                                                left_on='CNPJ_Cliente', right_on='CNPJ', how='left')
+                df_notificacoes_admin.drop(columns=['CNPJ'], inplace=True, errors='ignore') 
+                df_notificacoes_admin.rename(columns={'Empresa': 'Empresa Cliente'}, inplace=True)
+                df_notificacoes_admin['Empresa Cliente'] = df_notificacoes_admin['Empresa Cliente'].fillna("N/D (Usuário não encontrado)")
+
+            else:
+                df_notificacoes_admin['Empresa Cliente'] = "N/D (Dados de usuários não carregados)"
+
+
+        except (FileNotFoundError, pd.errors.EmptyDataError):
+            st.info("Nenhuma notificação encontrada.")
+            df_notificacoes_admin = pd.DataFrame(columns=colunas_base_notificacoes + ['Empresa Cliente'])
+        except Exception as e_notif_admin:
+            st.error(f"Erro ao carregar notificações para admin: {e_notif_admin}")
+            df_notificacoes_admin = pd.DataFrame(columns=colunas_base_notificacoes + ['Empresa Cliente'])
+
+        st.sidebar.markdown("---") 
+        st.sidebar.subheader("Filtros de Notificações")
+        
+        clientes_notif_list = ["Todos"]
+        if "Empresa Cliente" in df_notificacoes_admin.columns:
+            clientes_notif_list.extend(sorted(df_notificacoes_admin["Empresa Cliente"].astype(str).unique().tolist()))
+        
+        sel_cliente_notif = st.sidebar.selectbox("Filtrar por Cliente:", clientes_notif_list, key="admin_notif_cliente_filter_v21") 
+        sel_lida_notif = st.sidebar.selectbox("Filtrar por Status:", ["Todas", "Lidas", "Não Lidas"], key="admin_notif_lida_filter_v21")
+        
+        dt_ini_notif = st.sidebar.date_input("Data Início Notificação:", None, key="admin_notif_dt_ini_v21")
+        dt_fim_notif = st.sidebar.date_input("Data Fim Notificação:", None, key="admin_notif_dt_fim_v21")
+
+        df_notificacoes_filtradas_admin = df_notificacoes_admin.copy()
+
+        if sel_cliente_notif != "Todos" and "Empresa Cliente" in df_notificacoes_filtradas_admin.columns:
+            df_notificacoes_filtradas_admin = df_notificacoes_filtradas_admin[df_notificacoes_filtradas_admin["Empresa Cliente"] == sel_cliente_notif]
+        
+        if sel_lida_notif == "Lidas" and "Lida" in df_notificacoes_filtradas_admin.columns:
+            df_notificacoes_filtradas_admin = df_notificacoes_filtradas_admin[df_notificacoes_filtradas_admin["Lida"] == True]
+        elif sel_lida_notif == "Não Lidas" and "Lida" in df_notificacoes_filtradas_admin.columns:
+            df_notificacoes_filtradas_admin = df_notificacoes_filtradas_admin[df_notificacoes_filtradas_admin["Lida"] == False]
+
+        if dt_ini_notif and 'Timestamp' in df_notificacoes_filtradas_admin.columns:
+            try:
+                df_notificacoes_filtradas_admin['Timestamp_dt'] = pd.to_datetime(df_notificacoes_filtradas_admin['Timestamp'])
+                df_notificacoes_filtradas_admin = df_notificacoes_filtradas_admin[df_notificacoes_filtradas_admin['Timestamp_dt'] >= pd.to_datetime(dt_ini_notif)]
+            except Exception as e_date_filter:
+                st.warning(f"Não foi possível aplicar filtro de data inicial: {e_date_filter}")
+
+        
+        if dt_fim_notif and 'Timestamp' in df_notificacoes_filtradas_admin.columns:
+            try:
+                if 'Timestamp_dt' not in df_notificacoes_filtradas_admin.columns:
+                    df_notificacoes_filtradas_admin['Timestamp_dt'] = pd.to_datetime(df_notificacoes_filtradas_admin['Timestamp'])
+                df_notificacoes_filtradas_admin = df_notificacoes_filtradas_admin[df_notificacoes_filtradas_admin['Timestamp_dt'] < pd.to_datetime(dt_fim_notif) + pd.Timedelta(days=1)]
+            except Exception as e_date_filter:
+                st.warning(f"Não foi possível aplicar filtro de data final: {e_date_filter}")
+
+        if 'Timestamp_dt' in df_notificacoes_filtradas_admin.columns:
+            df_notificacoes_filtradas_admin = df_notificacoes_filtradas_admin.drop(columns=['Timestamp_dt'])
+
+
+        if not df_notificacoes_filtradas_admin.empty:
+            cols_to_show = ["Timestamp", "Empresa Cliente", "CNPJ_Cliente", "Mensagem", "Lida", "ID_Diagnostico_Relacionado", "ID_Notificacao"]
+            final_cols_to_show = [col for col in cols_to_show if col in df_notificacoes_filtradas_admin.columns]
+            
+            st.dataframe(df_notificacoes_filtradas_admin[final_cols_to_show].sort_values(by="Timestamp", ascending=False), use_container_width=True)
+        else:
+            st.info("Nenhuma notificação encontrada para os filtros aplicados.")
+
+    elif menu_admin == "Gerenciar Pesquisa de Satisfação": 
+        st.markdown("#### Gerenciamento da Pesquisa de Satisfação")
+        df_satisfacao_perguntas_admin = carregar_satisfacao_perguntas().copy()
+        df_satisfacao_respostas_admin = carregar_satisfacao_respostas().copy()
+
+        admin_satisfacao_tabs = st.tabs(["📝 Gerenciar Perguntas da Pesquisa", "📊 Resultados da Pesquisa"])
+
+        with admin_satisfacao_tabs[0]: 
+            st.subheader("Adicionar Nova Pergunta de Satisfação")
+            with st.form("form_nova_pergunta_satisfacao_v21", clear_on_submit=True):
+                nova_pergunta_sat_texto = st.text_input("Texto da Pergunta:", key="nova_p_sat_texto_v21", disabled=not is_admin_total())
+                
+                tipos_pergunta_sat_opts = {
+                    "Pontuação (0-5)": "Pontuacao_0_5",
+                    "Pontuação (0-10)": "Pontuacao_0_10",
+                    "Texto Aberto": "Texto_Aberto",
+                    "Escolha Única (Likert, etc.)": "Escolha_Unica"
+                }
+                tipo_pergunta_sat_display = st.selectbox("Tipo da Pergunta:", list(tipos_pergunta_sat_opts.keys()), key="nova_p_sat_tipo_v21", disabled=not is_admin_total())
+                tipo_pergunta_sat_valor = tipos_pergunta_sat_opts[tipo_pergunta_sat_display]
+
+                opcoes_pergunta_sat_str = ""
+                if tipo_pergunta_sat_valor == "Escolha_Unica":
+                    opcoes_pergunta_sat_str = st.text_input("Opções (separadas por vírgula, ex: Ruim,Regular,Bom):", key="nova_p_sat_opcoes_v21", disabled=not is_admin_total())
+                
+                ordem_pergunta_sat = st.number_input("Ordem de Exibição:", min_value=0, step=1, value=len(df_satisfacao_perguntas_admin), key="nova_p_sat_ordem_v21", disabled=not is_admin_total())
+                ativa_pergunta_sat = st.checkbox("Pergunta Ativa?", value=True, key="nova_p_sat_ativa_v21", disabled=not is_admin_total())
+
+                submitted_nova_sat_p = st.form_submit_button("Adicionar Pergunta de Satisfação", icon="➕", disabled=not is_admin_total())
+                if submitted_nova_sat_p and is_admin_total():
+                    if nova_pergunta_sat_texto.strip():
+                        opcoes_json_sat = None
+                        if tipo_pergunta_sat_valor == "Escolha_Unica" and opcoes_pergunta_sat_str.strip():
+                            opcoes_list = [opt.strip() for opt in opcoes_pergunta_sat_str.split(',')]
+                            if opcoes_list:
+                                opcoes_json_sat = json.dumps(opcoes_list)
+                            else:
+                                st.warning("Para 'Escolha Única', as opções são obrigatórias.")
+                                st.stop()
+                        elif tipo_pergunta_sat_valor == "Escolha_Unica" and not opcoes_pergunta_sat_str.strip():
+                             st.warning("Para 'Escolha Única', as opções são obrigatórias.")
+                             st.stop()
+
+
+                        nova_id_sat_p = str(uuid.uuid4())
+                        nova_entrada_sat_p = pd.DataFrame([{
+                            "ID_Pergunta_Satisfacao": nova_id_sat_p,
+                            "Texto_Pergunta": nova_pergunta_sat_texto.strip(),
+                            "Tipo_Pergunta": tipo_pergunta_sat_valor,
+                            "Opcoes_Pergunta": opcoes_json_sat,
+                            "Ordem": int(ordem_pergunta_sat),
+                            "Ativa": bool(ativa_pergunta_sat)
+                        }])
+                        df_satisfacao_perguntas_admin = pd.concat([df_satisfacao_perguntas_admin, nova_entrada_sat_p], ignore_index=True)
+                        df_satisfacao_perguntas_admin.to_csv(satisfacao_perguntas_csv, index=False, encoding='utf-8')
+                        st.cache_data.clear() 
+                        st.toast("Pergunta de satisfação adicionada!", icon="🎉")
+                        st.rerun()
+                    else:
+                        st.warning("O texto da pergunta é obrigatório.")
+            
+            st.divider()
+            st.subheader("Perguntas de Satisfação Cadastradas")
+            if df_satisfacao_perguntas_admin.empty:
+                st.info("Nenhuma pergunta de satisfação cadastrada.")
+            else:
+                for i_sat_p, row_sat_p_item in df_satisfacao_perguntas_admin.sort_values(by="Ordem").iterrows():
+                    st.markdown(f"""
+                    <div class="custom-card" style="margin-bottom: 10px; border-left-color: {'#10b981' if row_sat_p_item['Ativa'] else '#f59e0b'};">
+                        <small><i>ID: {row_sat_p_item['ID_Pergunta_Satisfacao']} | Ordem: {row_sat_p_item['Ordem']} | Ativa: {'Sim' if row_sat_p_item['Ativa'] else 'Não'}</i></small>
+                        <h5>{row_sat_p_item['Texto_Pergunta']} (Tipo: {row_sat_p_item['Tipo_Pergunta']})</h5>
+                        {f"<p>Opções: {row_sat_p_item['Opcoes_Pergunta']}</p>" if pd.notna(row_sat_p_item['Opcoes_Pergunta']) else ""}
+                    </div>
+                    """, unsafe_allow_html=True)
+                    with st.expander("✏️ Editar / 🗑️ Deletar esta Pergunta de Satisfação"):
+                        form_key_edit_sat_p = f"form_edit_sat_p_v21_{row_sat_p_item['ID_Pergunta_Satisfacao']}"
+                        with st.form(form_key_edit_sat_p):
+                            edited_texto_sat_p = st.text_input("Editar Texto:", value=row_sat_p_item['Texto_Pergunta'], key=f"edit_texto_{form_key_edit_sat_p}", disabled=not is_admin_total())
+                            
+                            current_type_val_edit = row_sat_p_item['Tipo_Pergunta']
+                            current_type_display_edit = next((k for k, v in tipos_pergunta_sat_opts.items() if v == current_type_val_edit), list(tipos_pergunta_sat_opts.keys())[0])
+                            
+                            edited_tipo_display_sat_p = st.selectbox("Editar Tipo:", list(tipos_pergunta_sat_opts.keys()), 
+                                                                     index=list(tipos_pergunta_sat_opts.keys()).index(current_type_display_edit), 
+                                                                     key=f"edit_tipo_{form_key_edit_sat_p}", disabled=not is_admin_total())
+                            edited_tipo_valor_sat_p = tipos_pergunta_sat_opts[edited_tipo_display_sat_p]
+
+                            edited_opcoes_str_sat_p = row_sat_p_item.get('Opcoes_Pergunta', "")
+                            if pd.notna(edited_opcoes_str_sat_p) and isinstance(edited_opcoes_str_sat_p, str):
+                                try:
+                                    edited_opcoes_list = json.loads(edited_opcoes_str_sat_p)
+                                    edited_opcoes_str_sat_p = ",".join(edited_opcoes_list)
+                                except: 
+                                    edited_opcoes_str_sat_p = "" if not isinstance(edited_opcoes_str_sat_p, str) else edited_opcoes_str_sat_p
+
+
+                            if edited_tipo_valor_sat_p == "Escolha_Unica":
+                                edited_opcoes_str_sat_p = st.text_input("Editar Opções (separadas por vírgula):", value=edited_opcoes_str_sat_p, key=f"edit_opcoes_{form_key_edit_sat_p}", disabled=not is_admin_total())
+                            
+                            edited_ordem_sat_p = st.number_input("Editar Ordem:", value=int(row_sat_p_item['Ordem']), min_value=0, step=1, key=f"edit_ordem_{form_key_edit_sat_p}", disabled=not is_admin_total())
+                            edited_ativa_sat_p = st.checkbox("Ativa?", value=bool(row_sat_p_item['Ativa']), key=f"edit_ativa_{form_key_edit_sat_p}", disabled=not is_admin_total())
+
+                            col_btn_sat_p1, col_btn_sat_p2 = st.columns(2)
+                            if col_btn_sat_p1.form_submit_button("Salvar Alterações", icon="💾", use_container_width=True, disabled=not is_admin_total()):
+                                if is_admin_total():
+                                    df_satisfacao_perguntas_admin.loc[i_sat_p, "Texto_Pergunta"] = edited_texto_sat_p
+                                    df_satisfacao_perguntas_admin.loc[i_sat_p, "Tipo_Pergunta"] = edited_tipo_valor_sat_p
+                                    if edited_tipo_valor_sat_p == "Escolha_Unica" and edited_opcoes_str_sat_p.strip():
+                                        df_satisfacao_perguntas_admin.loc[i_sat_p, "Opcoes_Pergunta"] = json.dumps([opt.strip() for opt in edited_opcoes_str_sat_p.split(',')])
+                                    elif edited_tipo_valor_sat_p != "Escolha_Unica":
+                                         df_satisfacao_perguntas_admin.loc[i_sat_p, "Opcoes_Pergunta"] = None 
+                                    elif edited_tipo_valor_sat_p == "Escolha_Unica" and not edited_opcoes_str_sat_p.strip():
+                                        st.warning("Opções são obrigatórias para tipo 'Escolha Única'. Não foram salvas.")
+
+
+                                    df_satisfacao_perguntas_admin.loc[i_sat_p, "Ordem"] = int(edited_ordem_sat_p)
+                                    df_satisfacao_perguntas_admin.loc[i_sat_p, "Ativa"] = bool(edited_ativa_sat_p)
+                                    df_satisfacao_perguntas_admin.to_csv(satisfacao_perguntas_csv, index=False, encoding='utf-8')
+                                    st.cache_data.clear()
+                                    st.toast("Alterações na pergunta de satisfação salvas!", icon="✅")
+                                    st.rerun()
+
+                            if col_btn_sat_p2.form_submit_button("Deletar Pergunta", icon="🗑️", type="primary", use_container_width=True, disabled=not is_admin_total()):
+                                if is_admin_total():
+                                    df_satisfacao_perguntas_admin = df_satisfacao_perguntas_admin.drop(index=i_sat_p)
+                                    df_satisfacao_perguntas_admin.to_csv(satisfacao_perguntas_csv, index=False, encoding='utf-8')
+                                    st.cache_data.clear()
+                                    st.toast("Pergunta de satisfação deletada!", icon="🗑️")
+                                    st.rerun()
+                    st.markdown("<hr style='margin-top: 5px; margin-bottom: 15px;'>", unsafe_allow_html=True)
+
+
+        with admin_satisfacao_tabs[1]: 
+            st.subheader("Resultados da Pesquisa de Satisfação")
+            if df_satisfacao_respostas_admin.empty:
+                st.info("Nenhuma resposta de satisfação registrada ainda.")
+            else:
+                df_respostas_display = df_satisfacao_respostas_admin.copy()
+                if not df_usuarios_admin_geral.empty:
+                    df_respostas_display = pd.merge(df_respostas_display, df_usuarios_admin_geral[['CNPJ', 'Empresa']], 
+                                                    left_on='CNPJ_Cliente', right_on='CNPJ', how='left')
+                    df_respostas_display.rename(columns={'Empresa': 'Empresa_Cliente_Nome'}, inplace=True)
+                    df_respostas_display['Empresa_Cliente_Nome'] = df_respostas_display['Empresa_Cliente_Nome'].fillna("N/D")
+                    df_respostas_display.drop(columns=['CNPJ'], inplace=True, errors='ignore')
+                else:
+                    df_respostas_display['Empresa_Cliente_Nome'] = "N/D"
+
+                if not df_satisfacao_perguntas_admin.empty:
+                    df_respostas_display = pd.merge(df_respostas_display, df_satisfacao_perguntas_admin[['ID_Pergunta_Satisfacao', 'Texto_Pergunta', 'Tipo_Pergunta']],
+                                                    on='ID_Pergunta_Satisfacao', how='left')
+                    df_respostas_display['Texto_Pergunta'] = df_respostas_display['Texto_Pergunta'].fillna("Pergunta Excluída/Desconhecida")
+                    df_respostas_display['Tipo_Pergunta'] = df_respostas_display['Tipo_Pergunta'].fillna("N/D")
+                else:
+                    df_respostas_display['Texto_Pergunta'] = "N/D"
+                    df_respostas_display['Tipo_Pergunta'] = "N/D"
+
+
+                st.markdown("##### Filtros de Resultados")
+                col_f1, col_f2, col_f3 = st.columns(3)
+                
+                perguntas_filtro_opts = ["Todas"] + sorted(df_respostas_display['Texto_Pergunta'].unique().tolist())
+                pergunta_sel_filtro = col_f1.selectbox("Filtrar por Pergunta:", perguntas_filtro_opts, key="filtro_sat_pergunta_v21")
+                
+                clientes_filtro_opts = ["Todos"] + sorted(df_respostas_display['Empresa_Cliente_Nome'].unique().tolist())
+                cliente_sel_filtro = col_f2.selectbox("Filtrar por Cliente:", clientes_filtro_opts, key="filtro_sat_cliente_v21")
+
+                dt_ini_sat_resp = col_f3.date_input("Data Início Resposta:", None, key="filtro_sat_dt_ini_v21")
+                dt_fim_sat_resp = col_f3.date_input("Data Fim Resposta:", None, key="filtro_sat_dt_fim_v21")
+
+                df_respostas_filtrado = df_respostas_display.copy()
+                if pergunta_sel_filtro != "Todas":
+                    df_respostas_filtrado = df_respostas_filtrado[df_respostas_filtrado['Texto_Pergunta'] == pergunta_sel_filtro]
+                if cliente_sel_filtro != "Todos":
+                    df_respostas_filtrado = df_respostas_filtrado[df_respostas_filtrado['Empresa_Cliente_Nome'] == cliente_sel_filtro]
+                if dt_ini_sat_resp:
+                    df_respostas_filtrado = df_respostas_filtrado[df_respostas_filtrado['Timestamp_Resposta'] >= pd.to_datetime(dt_ini_sat_resp)]
+                if dt_fim_sat_resp:
+                    df_respostas_filtrado = df_respostas_filtrado[df_respostas_filtrado['Timestamp_Resposta'] < pd.to_datetime(dt_fim_sat_resp) + pd.Timedelta(days=1)]
+
+                if df_respostas_filtrado.empty:
+                    st.info("Nenhuma resposta encontrada para os filtros aplicados.")
+                else:
+                    st.markdown("##### Visualização dos Resultados Filtrados")
+                    
+                    if pergunta_sel_filtro != "Todas" and not df_respostas_filtrado.empty:
+                        tipo_pergunta_selecionada = df_respostas_filtrado['Tipo_Pergunta'].iloc[0]
+                        if tipo_pergunta_selecionada in ["Pontuacao_0_5", "Pontuacao_0_10"]:
+                            avg_score = df_respostas_filtrado['Resposta_Numerica'].mean()
+                            st.metric(f"Média de Score para '{pergunta_sel_filtro}'", f"{avg_score:.2f}" if pd.notna(avg_score) else "N/A")
+                            fig_score_dist = create_satisfaction_score_distribution_chart(df_respostas_filtrado, pergunta_sel_filtro)
+                            if fig_score_dist: st.plotly_chart(fig_score_dist, use_container_width=True)
+                        elif tipo_pergunta_selecionada == "Escolha_Unica":
+                            fig_choice_dist = create_satisfaction_choice_distribution_chart(df_respostas_filtrado, pergunta_sel_filtro)
+                            if fig_choice_dist: st.plotly_chart(fig_choice_dist, use_container_width=True)
+                        elif tipo_pergunta_selecionada == "Texto_Aberto":
+                            st.markdown(f"**Respostas de Texto para '{pergunta_sel_filtro}':**")
+                            for resp_texto in df_respostas_filtrado['Resposta_Texto'].dropna():
+                                st.markdown(f"- {resp_texto}")
+                    
+                    st.markdown("##### Todas as Respostas Filtradas (Tabela)")
+                    cols_view_respostas = ['Timestamp_Resposta', 'Empresa_Cliente_Nome', 'CNPJ_Cliente', 'Texto_Pergunta', 
+                                           'Resposta_Texto', 'Resposta_Numerica', 'Resposta_Opcao_Selecionada']
+                    st.dataframe(df_respostas_filtrado[cols_view_respostas].sort_values(by="Timestamp_Resposta", ascending=False), use_container_width=True)
+
+
+    elif menu_admin == "Gerenciar Perguntas (Diagnóstico)": 
+        tabs_perg_admin = st.tabs(["📋 Perguntas Atuais", "➕ Adicionar Nova Pergunta"])
+        try:
+            perguntas_df_admin_gp = pd.read_csv(perguntas_csv, encoding='utf-8')
+            if "Categoria" not in perguntas_df_admin_gp.columns: perguntas_df_admin_gp["Categoria"] = "Geral"
+        except (FileNotFoundError, pd.errors.EmptyDataError):
+            perguntas_df_admin_gp = pd.DataFrame(columns=colunas_base_perguntas)
+
+        with tabs_perg_admin[0]:
+            if perguntas_df_admin_gp.empty: st.info("Nenhuma pergunta cadastrada.")
+            else:
+                for i_p_admin, row_p_admin in perguntas_df_admin_gp.iterrows():
+                    with st.container():
+                        st.markdown(f"""
+                        <div class="custom-card" style="margin-bottom: 15px;">
+                            <p style="font-size: 0.8em; color: #6b7280; margin-bottom: 5px;">ID: {i_p_admin} | Categoria: <b>{row_p_admin.get("Categoria", "Geral")}</b></p>
+                            <p style="font-weight: 500;">{row_p_admin["Pergunta"]}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                        with st.expander("✏️ Editar Pergunta"):
+                            cols_edit_perg = st.columns([3, 2])
+                            novo_p_text_admin = cols_edit_perg[0].text_area("Texto da Pergunta:", value=str(row_p_admin["Pergunta"]), key=f"edit_p_txt_v21_gp_{i_p_admin}", height=100, disabled=not is_admin_total())
+                            nova_cat_text_admin = cols_edit_perg[1].text_input("Categoria:", value=str(row_p_admin.get("Categoria", "Geral")), key=f"edit_p_cat_v21_gp_{i_p_admin}", disabled=not is_admin_total())
+
+                            col_btn1, col_btn2 = st.columns([0.15, 0.85])
+                            if col_btn1.button("Salvar", key=f"salvar_p_adm_v21_gp_{i_p_admin}", help="Salvar Alterações", icon="💾", disabled=not is_admin_total()):
+                                if is_admin_total():
+                                    perguntas_df_admin_gp.loc[i_p_admin, "Pergunta"] = novo_p_text_admin
+                                    perguntas_df_admin_gp.loc[i_p_admin, "Categoria"] = nova_cat_text_admin
+                                    perguntas_df_admin_gp.to_csv(perguntas_csv, index=False, encoding='utf-8')
+                                    st.toast(f"Pergunta {i_p_admin} atualizada.", icon="✅"); st.rerun()
+
+                            if col_btn2.button("Deletar", type="primary", key=f"deletar_p_adm_v21_gp_{i_p_admin}", help="Deletar Pergunta", icon="🗑️", disabled=not is_admin_total()):
+                                if is_admin_total():
+                                    perguntas_df_admin_gp = perguntas_df_admin_gp.drop(i_p_admin).reset_index(drop=True)
+                                    perguntas_df_admin_gp.to_csv(perguntas_csv, index=False, encoding='utf-8')
+                                    st.toast(f"Pergunta {i_p_admin} removida.", icon="🗑️"); st.rerun()
+                    st.divider()
+        with tabs_perg_admin[1]:
+            with st.form("form_nova_pergunta_admin_v21_gp"):
+                st.subheader("➕ Adicionar Nova Pergunta (Diagnóstico)")
+                nova_p_form_txt_admin = st.text_input("Texto da Pergunta", key="nova_p_input_admin_txt_v21_gp", disabled=not is_admin_total())
+                cat_existentes_gp = sorted(list(perguntas_df_admin_gp['Categoria'].astype(str).unique())) if not perguntas_df_admin_gp.empty else []
+                cat_options_gp = ["Nova Categoria"] + cat_existentes_gp
+                cat_selecionada_gp = st.selectbox("Categoria:", cat_options_gp, key="cat_select_admin_new_q_v21_gp", disabled=not is_admin_total())
+                nova_cat_form_admin_gp = st.text_input("Nome da Nova Categoria:", key="nova_cat_input_admin_new_q_v21_gp", disabled=not is_admin_total()) if cat_selecionada_gp == "Nova Categoria" else cat_selecionada_gp
+
+                tipo_p_form_admin = st.selectbox("Tipo de Pergunta (será adicionado ao final do texto da pergunta):",
+                                                ["Pontuação (0-10)", "Pontuação (0-5)", "Texto Aberto", "Escala (Muito Baixo, Baixo, Médio, Alto, Muito Alto)", "[Matriz GUT]"],
+                                                key="tipo_p_select_admin_new_q_v21_gp", disabled=not is_admin_total())
+                add_p_btn_admin = st.form_submit_button("Adicionar Pergunta", icon="➕", use_container_width=True, disabled=not is_admin_total())
+                if add_p_btn_admin and is_admin_total():
+                    if nova_p_form_txt_admin.strip() and nova_cat_form_admin_gp.strip():
+                        p_completa_add_admin = f"{nova_p_form_txt_admin.strip()} [{tipo_p_form_admin.replace('[','').replace(']','')}]"
+                        nova_entrada_p_add_admin = pd.DataFrame([[p_completa_add_admin, nova_cat_form_admin_gp.strip()]], columns=["Pergunta", "Categoria"])
+                        perguntas_df_admin_gp = pd.concat([perguntas_df_admin_gp, nova_entrada_p_add_admin], ignore_index=True)
+                        perguntas_df_admin_gp.to_csv(perguntas_csv, index=False, encoding='utf-8')
+                        st.toast(f"Pergunta adicionada!", icon="🎉"); st.rerun()
+                    else: st.warning("Texto da pergunta e categoria são obrigatórios.")
+
+
+    elif menu_admin == "Gerenciar Análises de Perguntas":
+        df_analises_existentes_admin = carregar_analises_perguntas()
+        try: df_perguntas_formulario_admin = pd.read_csv(perguntas_csv, encoding='utf-8')
+        except: df_perguntas_formulario_admin = pd.DataFrame(columns=colunas_base_perguntas)
+
+        st.markdown("#### Adicionar Nova Análise")
+        if df_perguntas_formulario_admin.empty:
+            st.warning("Nenhuma pergunta cadastrada no formulário. Adicione perguntas primeiro em 'Gerenciar Perguntas (Diagnóstico)'.")
+        else:
+            lista_perguntas_txt_admin = [""] + df_perguntas_formulario_admin["Pergunta"].unique().tolist()
+            pergunta_selecionada_analise_admin = st.selectbox("Selecione a Pergunta para adicionar análise:", lista_perguntas_txt_admin, key="sel_perg_analise_v21_ga", disabled=not is_admin_total())
+
+            if pergunta_selecionada_analise_admin:
+                st.caption(f"Pergunta selecionada: {pergunta_selecionada_analise_admin}")
+
+                tipo_condicao_analise_display_admin = st.selectbox("Tipo de Condição para a Análise:",
+                                                                ["Faixa Numérica (p/ Pontuação 0-X)",
+                                                                "Valor Exato (p/ Escala)",
+                                                                "Faixa de Score (p/ Matriz GUT)",
+                                                                "Análise Padrão (default para a pergunta)"],
+                                                                key="tipo_cond_analise_v21_ga", disabled=not is_admin_total())
+
+                map_tipo_cond_to_csv_admin = {
+                    "Faixa Numérica (p/ Pontuação 0-X)": "FaixaNumerica",
+                    "Valor Exato (p/ Escala)": "ValorExatoEscala",
+                    "Faixa de Score (p/ Matriz GUT)": "ScoreGUT",
+                    "Análise Padrão (default para a pergunta)": "Default"
+                }
+                tipo_condicao_csv_val_admin = map_tipo_cond_to_csv_admin[tipo_condicao_analise_display_admin]
+
+                cond_val_min_ui_admin, cond_val_max_ui_admin, cond_val_exato_ui_admin = None, None, None
+                if tipo_condicao_csv_val_admin == "FaixaNumerica":
+                    cols_faixa_ui_admin = st.columns(2)
+                    cond_val_min_ui_admin = cols_faixa_ui_admin[0].number_input("Valor Mínimo da Faixa", step=1.0, format="%.2f", key="cond_min_analise_v21_ga", disabled=not is_admin_total())
+                    cond_val_max_ui_admin = cols_faixa_ui_admin[1].number_input("Valor Máximo da Faixa", step=1.0, format="%.2f", key="cond_max_analise_v21_ga", disabled=not is_admin_total())
+                elif tipo_condicao_csv_val_admin == "ValorExatoEscala":
+                    cond_val_exato_ui_admin = st.text_input("Valor Exato da Escala (ex: Baixo, Médio, Alto)", key="cond_exato_analise_v21_ga", disabled=not is_admin_total())
+                elif tipo_condicao_csv_val_admin == "ScoreGUT":
+                    cols_faixa_gut_ui_admin = st.columns(2)
+                    cond_val_min_ui_admin = cols_faixa_gut_ui_admin[0].number_input("Score GUT Mínimo", step=1, key="cond_min_gut_analise_v21_ga", disabled=not is_admin_total())
+                    cond_val_max_ui_admin = cols_faixa_gut_ui_admin[1].number_input("Score GUT Máximo (opcional, deixe 0 ou vazio se for 'acima de Mínimo')", value=0.0, step=1.0, format="%.0f", key="cond_max_gut_analise_v21_ga", disabled=not is_admin_total())
+
+                texto_analise_nova_ui_admin = st.text_area("Texto da Análise:", height=150, key="txt_analise_nova_v21_ga", disabled=not is_admin_total())
+
+                if st.button("Salvar Nova Análise", key="salvar_analise_pergunta_v21_ga", icon="💾", use_container_width=True, disabled=not is_admin_total()):
+                    if is_admin_total():
+                        if texto_analise_nova_ui_admin.strip():
+                            nova_id_analise_admin = str(uuid.uuid4())
+                            nova_entrada_analise_admin = {
+                                "ID_Analise": nova_id_analise_admin,
+                                "TextoPerguntaOriginal": pergunta_selecionada_analise_admin,
+                                "TipoCondicao": tipo_condicao_csv_val_admin,
+                                "CondicaoValorMin": cond_val_min_ui_admin if cond_val_min_ui_admin is not None else pd.NA,
+                                "CondicaoValorMax": cond_val_max_ui_admin if cond_val_max_ui_admin is not None and cond_val_max_ui_admin !=0 else pd.NA,
+                                "CondicaoValorExato": cond_val_exato_ui_admin if cond_val_exato_ui_admin else pd.NA,
+                                "TextoAnalise": texto_analise_nova_ui_admin
+                            }
+                            df_analises_existentes_admin = pd.concat([df_analises_existentes_admin, pd.DataFrame([nova_entrada_analise_admin])], ignore_index=True)
+                            df_analises_existentes_admin.to_csv(analises_perguntas_csv, index=False, encoding='utf-8')
+                            st.cache_data.clear() 
+                            st.toast("Nova análise salva!", icon="🎉"); st.rerun()
+                        else: st.error("O texto da análise não pode estar vazio.")
+
+        st.markdown("---"); st.subheader("📜 Análises Cadastradas")
+        if df_analises_existentes_admin.empty: st.info("Nenhuma análise cadastrada.")
+        else:
+            df_display_analises = df_analises_existentes_admin.copy()
+            for col_num_format in ['CondicaoValorMin', 'CondicaoValorMax']:
+                if col_num_format in df_display_analises.columns:
+                    df_display_analises[col_num_format] = pd.to_numeric(df_display_analises[col_num_format], errors='coerce').fillna("") 
+            st.dataframe(df_display_analises, use_container_width=True)
+
+            analise_del_id_admin = st.selectbox("Deletar Análise por ID:", [""] + df_analises_existentes_admin["ID_Analise"].astype(str).tolist(), key="del_analise_id_v21_ga", disabled=not is_admin_total())
+            if st.button("Deletar Análise Selecionada", key="btn_del_analise_v21_ga", icon="🗑️", type="primary", disabled=not is_admin_total()):
+                if is_admin_total():
+                    if analise_del_id_admin:
+                        df_analises_existentes_admin = df_analises_existentes_admin[df_analises_existentes_admin["ID_Analise"] != analise_del_id_admin]
+                        df_analises_existentes_admin.to_csv(analises_perguntas_csv, index=False, encoding='utf-8')
+                        st.cache_data.clear() 
+                        st.toast("Análise deletada.", icon="🗑️"); st.rerun()
+                    else:
+                        st.warning("Selecione uma análise para deletar.")
+    
+    elif menu_admin == "Gerenciar SAC":
+        st.markdown("#### Gerenciamento do SAC - Perguntas e Respostas")
+        df_sac_qa_admin = carregar_sac_perguntas_respostas().copy() 
+        df_sac_uso_admin = carregar_sac_uso_feedback().copy()
+
+        sac_admin_tabs = st.tabs(["📝 Gerenciar Perguntas e Respostas SAC", "📊 Relatório de Uso e Feedback SAC"])
+
+        with sac_admin_tabs[0]:
+            st.subheader("Adicionar Nova Pergunta ao SAC")
+            with st.form("form_nova_pergunta_sac_v21", clear_on_submit=True): 
+                nova_pergunta_sac_txt = st.text_input("Texto da Pergunta SAC:", key="nova_p_sac_txt_v21", disabled=not is_admin_total())
+                nova_resposta_sac_txt = st.text_area("Texto da Resposta SAC:", key="nova_r_sac_txt_v21", height=150, disabled=not is_admin_total())
+                
+                cat_existentes_sac_admin = sorted(list(df_sac_qa_admin['Categoria_SAC'].astype(str).unique())) if not df_sac_qa_admin.empty else []
+                cat_options_sac_admin = ["Nova Categoria"] + cat_existentes_sac_admin
+                cat_selecionada_sac_admin = st.selectbox("Categoria da Pergunta SAC:", cat_options_sac_admin, key="cat_select_admin_new_sac_v21", disabled=not is_admin_total())
+                nova_cat_sac_form_admin = st.text_input("Nome da Nova Categoria SAC:", key="nova_cat_input_admin_new_sac_v21", disabled=not is_admin_total()) if cat_selecionada_sac_admin == "Nova Categoria" else cat_selecionada_sac_admin
+
+                submitted_nova_sac_qa = st.form_submit_button("Adicionar ao SAC", icon="➕", disabled=not is_admin_total())
+                if submitted_nova_sac_qa and is_admin_total():
+                    if nova_pergunta_sac_txt.strip() and nova_resposta_sac_txt.strip() and nova_cat_sac_form_admin.strip():
+                        nova_id_sac_p = str(uuid.uuid4())
+                        nova_entrada_sac = pd.DataFrame([{
+                            "ID_SAC_Pergunta": nova_id_sac_p,
+                            "Pergunta_SAC": nova_pergunta_sac_txt.strip(),
+                            "Resposta_SAC": nova_resposta_sac_txt.strip(),
+                            "Categoria_SAC": nova_cat_sac_form_admin.strip(),
+                            "DataCriacao": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        }])
+                        df_sac_qa_admin = pd.concat([df_sac_qa_admin, nova_entrada_sac], ignore_index=True)
+                        df_sac_qa_admin.to_csv(sac_perguntas_respostas_csv, index=False, encoding='utf-8')
+                        st.cache_data.clear() 
+                        st.toast("Pergunta adicionada ao SAC!", icon="🎉")
+                        st.rerun()
+                    else:
+                        st.warning("Pergunta, Resposta e Categoria são obrigatórias.")
+            
+            st.divider()
+            st.subheader("Perguntas e Respostas Atuais do SAC")
+            if df_sac_qa_admin.empty:
+                st.info("Nenhuma pergunta cadastrada no SAC.")
+            else:
+                for i_sac, row_sac_item in df_sac_qa_admin.iterrows():
+                    st.markdown(f"""
+                    <div class="custom-card" style="margin-bottom: 10px; border-left-color: #10b981;">
+                        <small><i>ID: {row_sac_item['ID_SAC_Pergunta']} | Categoria: {row_sac_item['Categoria_SAC']} | Criado em: {row_sac_item.get('DataCriacao','N/A')}</i></small>
+                        <h5>P: {row_sac_item['Pergunta_SAC']}</h5>
+                        <p>R: {row_sac_item['Resposta_SAC'][:200] + ('...' if len(row_sac_item['Resposta_SAC']) > 200 else '')}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    with st.expander("✏️ Editar / 🗑️ Deletar esta Pergunta/Resposta SAC"):
+                        form_key_edit_sac = f"form_edit_sac_v21_{row_sac_item['ID_SAC_Pergunta']}" 
+                        with st.form(form_key_edit_sac):
+                            edited_p_sac = st.text_input("Editar Pergunta:", value=row_sac_item['Pergunta_SAC'], key=f"edit_p_{form_key_edit_sac}", disabled=not is_admin_total())
+                            edited_r_sac = st.text_area("Editar Resposta:", value=row_sac_item['Resposta_SAC'], height=100, key=f"edit_r_{form_key_edit_sac}", disabled=not is_admin_total())
+                            
+                            cat_edit_sac_opts = ["Manter Categoria Atual"] + sorted(list(df_sac_qa_admin['Categoria_SAC'].astype(str).unique())) + ["Nova Categoria (Editar Abaixo)"]
+                            sel_cat_edit_sac = st.selectbox("Nova Categoria (ou manter):", cat_edit_sac_opts, key=f"sel_cat_edit_{form_key_edit_sac}", disabled=not is_admin_total())
+                            
+                            input_new_cat_edit_sac = ""
+                            if sel_cat_edit_sac == "Nova Categoria (Editar Abaixo)":
+                                input_new_cat_edit_sac = st.text_input("Digite a Nova Categoria:", key=f"input_new_cat_edit_{form_key_edit_sac}", disabled=not is_admin_total())
+                            
+                            final_cat_edit_sac = row_sac_item['Categoria_SAC'] 
+                            if sel_cat_edit_sac == "Nova Categoria (Editar Abaixo)":
+                                if input_new_cat_edit_sac.strip(): final_cat_edit_sac = input_new_cat_edit_sac.strip()
+                            elif sel_cat_edit_sac != "Manter Categoria Atual":
+                                final_cat_edit_sac = sel_cat_edit_sac
+                            
+                            col_btn_sac1, col_btn_sac2 = st.columns(2)
+                            if col_btn_sac1.form_submit_button("Salvar Alterações SAC", icon="💾", use_container_width=True, disabled=not is_admin_total()):
+                                if is_admin_total():
+                                    df_sac_qa_admin.loc[i_sac, "Pergunta_SAC"] = edited_p_sac
+                                    df_sac_qa_admin.loc[i_sac, "Resposta_SAC"] = edited_r_sac
+                                    df_sac_qa_admin.loc[i_sac, "Categoria_SAC"] = final_cat_edit_sac
+                                    df_sac_qa_admin.loc[i_sac, "DataCriacao"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S") 
+                                    df_sac_qa_admin.to_csv(sac_perguntas_respostas_csv, index=False, encoding='utf-8')
+                                    st.cache_data.clear()
+                                    st.toast("Alterações salvas no SAC!", icon="✅")
+                                    st.rerun()
+
+                            if col_btn_sac2.form_submit_button("Deletar do SAC", icon="🗑️", type="primary", use_container_width=True, disabled=not is_admin_total()):
+                                if is_admin_total():
+                                    df_sac_qa_admin = df_sac_qa_admin.drop(index=i_sac)
+                                    df_sac_qa_admin.to_csv(sac_perguntas_respostas_csv, index=False, encoding='utf-8')
+                                    st.cache_data.clear()
+                                    st.toast("Pergunta/Resposta deletada do SAC!", icon="🗑️")
+                                    st.rerun()
+                    st.markdown("<hr>", unsafe_allow_html=True)
+
+
+        with sac_admin_tabs[1]:
+            st.subheader("Relatório de Interações e Feedback do SAC")
+            if df_sac_uso_admin.empty:
+                st.info("Nenhum feedback ou uso registrado no SAC ainda.")
+            else:
+                df_sac_uso_display = df_sac_uso_admin.copy()
+                if not df_usuarios_admin_geral.empty:
+                    df_sac_uso_display = pd.merge(df_sac_uso_display, df_usuarios_admin_geral[['CNPJ', 'Empresa']],
+                                                left_on='CNPJ_Cliente', right_on='CNPJ', how='left')
+                    df_sac_uso_display.rename(columns={'Empresa': 'Empresa Cliente'}, inplace=True)
+                    df_sac_uso_display['Empresa Cliente'] = df_sac_uso_display['Empresa Cliente'].fillna("N/D (Usuário Desconhecido)")
+                    df_sac_uso_display.drop(columns=['CNPJ'], inplace=True, errors='ignore')
+                else:
+                    df_sac_uso_display['Empresa Cliente'] = "N/D (Dados de Usuários Não Carregados)"
+
+                if not df_sac_qa_admin.empty:
+                    df_sac_uso_display = pd.merge(df_sac_uso_display, df_sac_qa_admin[['ID_SAC_Pergunta', 'Pergunta_SAC', 'Categoria_SAC']],
+                                                on='ID_SAC_Pergunta', how='left')
+                    df_sac_uso_display['Pergunta_SAC'] = df_sac_uso_display['Pergunta_SAC'].fillna("N/D (Pergunta SAC Excluída)")
+                    df_sac_uso_display['Categoria_SAC'] = df_sac_uso_display['Categoria_SAC'].fillna("N/D")
+
+                else:
+                    df_sac_uso_display['Pergunta_SAC'] = "N/D (Dados de Perguntas SAC Não Carregados)"
+                    df_sac_uso_display['Categoria_SAC'] = "N/D"
+                
+                filt_col1, filt_col2, filt_col3 = st.columns(3)
+                clientes_sac_uso_list = ["Todos"] + sorted(df_sac_uso_display["Empresa Cliente"].astype(str).unique().tolist())
+                sel_cliente_sac_uso = filt_col1.selectbox("Filtrar por Cliente:", clientes_sac_uso_list, key="sac_uso_cliente_filt_v21") 
+
+                perguntas_sac_uso_list = ["Todas"] + sorted(df_sac_uso_display["Pergunta_SAC"].astype(str).unique().tolist())
+                sel_pergunta_sac_uso = filt_col2.selectbox("Filtrar por Pergunta SAC:", perguntas_sac_uso_list, key="sac_uso_pergunta_filt_v21") 
+
+                feedback_options_map = {"Todos": None, "Útil": True, "Não Útil": False, "Sem Feedback": pd.NA}
+                sel_feedback_sac_uso_display = filt_col3.selectbox("Filtrar por Feedback:", list(feedback_options_map.keys()), key="sac_uso_feedback_filt_v21") 
+                sel_feedback_sac_uso_actual = feedback_options_map[sel_feedback_sac_uso_display]
+
+
+                df_sac_uso_filtrado = df_sac_uso_display.copy()
+                if sel_cliente_sac_uso != "Todos":
+                    df_sac_uso_filtrado = df_sac_uso_filtrado[df_sac_uso_filtrado["Empresa Cliente"] == sel_cliente_sac_uso]
+                if sel_pergunta_sac_uso != "Todas":
+                    df_sac_uso_filtrado = df_sac_uso_filtrado[df_sac_uso_filtrado["Pergunta_SAC"] == sel_pergunta_sac_uso]
+                
+                if sel_feedback_sac_uso_actual is not None: 
+                    if pd.isna(sel_feedback_sac_uso_actual): 
+                        df_sac_uso_filtrado = df_sac_uso_filtrado[df_sac_uso_filtrado["Feedback_Util"].isna()]
+                    else: 
+                        df_sac_uso_filtrado = df_sac_uso_filtrado[df_sac_uso_filtrado["Feedback_Util"] == sel_feedback_sac_uso_actual]
+
+
+                if df_sac_uso_filtrado.empty:
+                    st.info("Nenhum registro de uso do SAC para os filtros aplicados.")
+                else:
+                    cols_show_sac_uso = ['Timestamp', 'Empresa Cliente', 'CNPJ_Cliente', 'Categoria_SAC', 'Pergunta_SAC', 'Feedback_Util', 'ID_Uso_SAC']
+                    df_sac_uso_filtrado['Feedback_Util'] = df_sac_uso_filtrado['Feedback_Util'].map({True: '👍 Útil', False: '👎 Não Útil', pd.NA: '➖ Sem Feedback'}).fillna('➖ Sem Feedback')
+                    st.dataframe(df_sac_uso_filtrado[cols_show_sac_uso].sort_values(by="Timestamp", ascending=False), use_container_width=True)
+
+    elif menu_admin == "Configurações do Portal": # Renomeado
+        st.markdown("#### ⚙️ Configurações Gerais do Portal")
+        
+        st.subheader("🖼️ Logo do Portal")
+        if not is_admin_total():
+            st.warning("Apenas administradores com permissão 'total' podem alterar o logo do portal.")
+        
+        current_portal_logo = get_portal_logo_path()
+        if current_portal_logo:
+            st.image(current_portal_logo, caption="Logo Atual do Portal", width=200)
+            if st.button("Remover Logo do Portal", key="remove_portal_logo_v21", disabled=not is_admin_total()):
+                if is_admin_total():
+                    try:
+                        os.remove(current_portal_logo)
+                        st.toast("Logo do portal removida!", icon="🗑️")
+                        st.rerun()
+                    except Exception as e_rem_logo:
+                        st.error(f"Erro ao remover logo: {e_rem_logo}")
+        else:
+            st.info("Nenhuma logo do portal configurada.")
+
+        uploaded_portal_logo = st.file_uploader("Carregar Nova Logo para o Portal (PNG recomendado, máx 2MB):", type=["png", "jpg", "jpeg"], key="upload_portal_logo_v21", disabled=not is_admin_total())
+        if uploaded_portal_logo is not None and is_admin_total():
+            try:
+                # Salvar com nome fixo, substituindo se existir
+                save_path = os.path.join(PORTAL_ASSETS_DIR, PORTAL_LOGO_FILENAME)
+                with open(save_path, "wb") as f:
+                    f.write(uploaded_portal_logo.getbuffer())
+                st.toast("Nova logo do portal salva com sucesso!", icon="🖼️")
+                st.rerun()
+            except Exception as e_save_logo:
+                st.error(f"Erro ao salvar nova logo: {e_save_logo}")
+        
+        st.divider()
+        st.subheader("✍️ Editar Texto das Instruções para Clientes")
+        
+        current_instructions_text = ""
+        instrucoes_loaded_source = None 
+
+        if os.path.exists(instrucoes_custom_path):
+            with open(instrucoes_custom_path, "r", encoding="utf-8") as f:
+                current_instructions_text = f.read()
+            instrucoes_loaded_source = instrucoes_custom_path
+        elif os.path.exists(instrucoes_default_path): 
+            with open(instrucoes_default_path, "r", encoding="utf-8") as f: 
+                current_instructions_text = f.read()
+            instrucoes_loaded_source = instrucoes_default_path
+            try:
+                with open(instrucoes_custom_path, "w", encoding="utf-8") as f_custom:
+                    f_custom.write(current_instructions_text)
+                st.info(f"Instruções carregadas de '{instrucoes_default_path}' e salvas como ponto de partida em '{instrucoes_custom_path}'.")
+            except Exception as e_write_custom:
+                st.warning(f"Instruções carregadas de '{instrucoes_default_path}', mas não foi possível criar '{instrucoes_custom_path}': {e_write_custom}")
+        else: 
+            st.warning(
+                f"Nenhum arquivo de instruções ('{instrucoes_custom_path}' ou '{instrucoes_default_path}') encontrado. "
+                f"Um texto base foi carregado. Edite e salve abaixo para criar '{instrucoes_custom_path}'."
+            )
+            current_instructions_text = (
+                "# Bem-vindo ao Portal de Diagnóstico!\n\n"
+                "Estas são as instruções padrão. Edite este texto conforme necessário.\n\n"
+                "## Como usar o portal:\n"
+                "1.  **Navegue pelo menu:** Utilize o menu lateral para acessar as diferentes seções.\n"
+                "2.  **Novo Diagnóstico:** Se disponível, preencha o formulário para gerar um novo diagnóstico.\n"
+                "3.  **Painel Principal:** Visualize seus diagnósticos anteriores, acompanhe sua evolução e o plano de ação.\n"
+                "4.  **Notificações:** Verifique se há novas mensagens ou atualizações do consultor.\n\n"
+                "Em caso de dúvidas, contate o administrador.\n\n"
+                "*Este texto pode ser editado e salvo pelo administrador.*"
+            )
+            instrucoes_loaded_source = "in-script default"
+            
+        edited_text = st.text_area(
+            "Edite o texto abaixo (suporta Markdown). Após salvar, este texto será usado como as instruções para os clientes:",
+            value=current_instructions_text,
+            height=600,
+            key="instrucoes_editor_v21", 
+            disabled=not is_admin_total()
+        )
+
+        if st.button("Salvar Instruções", key="save_instrucoes_v21", icon="💾", use_container_width=True, disabled=not is_admin_total()): 
+            if is_admin_total():
+                try:
+                    with open(instrucoes_custom_path, "w", encoding="utf-8") as f:
+                        f.write(edited_text)
+                    st.toast("Instruções salvas com sucesso!", icon="🎉")
+                    st.rerun() 
+                except Exception as e_save_instr:
+                    st.error(f"Erro ao salvar as instruções: {e_save_instr}")
+                
+    elif menu_admin == "Histórico de Usuários":
+        try:
+            df_historico_completo_hu = pd.read_csv(historico_csv, encoding='utf-8', dtype={'CNPJ': str})
+            df_usuarios_para_filtro_hu = pd.read_csv(usuarios_csv, encoding='utf-8', usecols=['CNPJ', 'Empresa', 'NomeContato'], dtype={'CNPJ': str})
+        except FileNotFoundError:
+            st.error("Arquivo de histórico ou usuários não encontrado.")
+            df_historico_completo_hu = pd.DataFrame(columns=["Data", "CNPJ", "Ação", "Descrição"]) 
+            df_usuarios_para_filtro_hu = pd.DataFrame(columns=['CNPJ', 'Empresa', 'NomeContato'])
+        except Exception as e_hu:
+            st.error(f"Erro ao carregar dados para o histórico: {e_hu}")
+            df_historico_completo_hu = pd.DataFrame(columns=["Data", "CNPJ", "Ação", "Descrição"])
+            df_usuarios_para_filtro_hu = pd.DataFrame(columns=['CNPJ', 'Empresa', 'NomeContato'])
+
+        st.markdown("#### Filtros do Histórico")
+        col_hu_f1, col_hu_f2 = st.columns(2)
+        empresas_hist_list_hu = ["Todas"]
+        if not df_usuarios_para_filtro_hu.empty and 'Empresa' in df_usuarios_para_filtro_hu.columns:
+            empresas_hist_list_hu.extend(sorted(df_usuarios_para_filtro_hu['Empresa'].astype(str).unique().tolist()))
+        
+        emp_sel_hu = col_hu_f1.selectbox("Filtrar por Empresa:", empresas_hist_list_hu, key="hist_emp_sel_v21") 
+        termo_busca_hu = col_hu_f2.text_input("Buscar por Nome do Contato, CNPJ, Ação ou Descrição:", key="hist_termo_busca_v21") 
+
+        df_historico_filtrado_view_hu = df_historico_completo_hu.copy()
+
+        if emp_sel_hu != "Todas" and not df_usuarios_para_filtro_hu.empty:
+            cnpjs_da_empresa_hu = df_usuarios_para_filtro_hu[df_usuarios_para_filtro_hu['Empresa'] == emp_sel_hu]['CNPJ'].tolist()
+            df_historico_filtrado_view_hu = df_historico_filtrado_view_hu[df_historico_filtrado_view_hu['CNPJ'].isin(cnpjs_da_empresa_hu)]
+        
+        if termo_busca_hu.strip():
+            busca_lower_hu = termo_busca_hu.strip().lower()
+            cnpjs_match_nome_hu = []
+            if not df_usuarios_para_filtro_hu.empty and 'NomeContato' in df_usuarios_para_filtro_hu.columns:
+                cnpjs_match_nome_hu = df_usuarios_para_filtro_hu[
+                    df_usuarios_para_filtro_hu['NomeContato'].astype(str).str.lower().str.contains(busca_lower_hu, na=False)
+                ]['CNPJ'].tolist()
+            
+            df_historico_filtrado_view_hu = df_historico_filtrado_view_hu[
+                df_historico_filtrado_view_hu['CNPJ'].isin(cnpjs_match_nome_hu) | 
+                df_historico_filtrado_view_hu['CNPJ'].astype(str).str.lower().str.contains(busca_lower_hu) |
+                df_historico_filtrado_view_hu['Ação'].astype(str).str.lower().str.contains(busca_lower_hu, na=False) |
+                df_historico_filtrado_view_hu['Descrição'].astype(str).str.lower().str.contains(busca_lower_hu, na=False)
+            ]
+
+        st.markdown("#### Registros do Histórico")
+        if not df_historico_filtrado_view_hu.empty:
+            st.dataframe(df_historico_filtrado_view_hu.sort_values(by="Data", ascending=False), use_container_width=True)
+        else:
+            st.info("Nenhum registro de histórico encontrado para os filtros aplicados.")
+
+    elif menu_admin == "Gerenciar Clientes":
+        df_usuarios_gc = df_usuarios_admin_geral.copy()
+
+        st.sidebar.markdown("---") 
+        st.sidebar.subheader("Filtros para Gerenciar Clientes")
+        filter_instrucoes_status_gc = st.sidebar.selectbox(
+            "Status das Instruções:",
+            ["Todos", "Visualizaram Instruções", "Não Visualizaram Instruções"],
+            key="admin_gc_filter_instrucoes_status_v21" 
+        )
+
+        df_display_clientes_gc = df_usuarios_gc.copy()
+        if filter_instrucoes_status_gc == "Visualizaram Instruções":
+            df_display_clientes_gc = df_display_clientes_gc[df_display_clientes_gc["JaVisualizouInstrucoes"] == True]
+        elif filter_instrucoes_status_gc == "Não Visualizaram Instruções":
+            df_display_clientes_gc = df_display_clientes_gc[df_display_clientes_gc["JaVisualizouInstrucoes"] == False]
+
+
+        st.markdown("#### Lista de Clientes Cadastrados")
+        if not df_display_clientes_gc.empty:
+            cols_display_gc = ["CNPJ", "Empresa", "NomeContato", "Telefone", "DiagnosticosDisponiveis", "TotalDiagnosticosRealizados", "JaVisualizouInstrucoes"]
+            cols_to_show_gc = [col for col in cols_display_gc if col in df_display_clientes_gc.columns]
+            st.dataframe(df_display_clientes_gc[cols_to_show_gc], use_container_width=True)
+
+            st.markdown("#### Ações de Cliente (selecionado da lista filtrada acima)")
+            
+            if not df_display_clientes_gc.empty:
+                clientes_lista_gc_ops = df_display_clientes_gc.apply(lambda row: f"{row['Empresa']} ({row['CNPJ']})", axis=1).tolist()
+                cliente_selecionado_str_gc = st.selectbox("Selecione o cliente para gerenciar:", [""] + clientes_lista_gc_ops, key="sel_cliente_gc_v21_filtered") 
+
+                if cliente_selecionado_str_gc:
+                    cnpj_selecionado_gc_val = cliente_selecionado_str_gc.split('(')[-1].replace(')','').strip()
+                    cliente_data_gc_val_row = df_usuarios_gc[df_usuarios_gc["CNPJ"] == cnpj_selecionado_gc_val]
+                    if not cliente_data_gc_val_row.empty:
+                        cliente_data_gc_val = cliente_data_gc_val_row.iloc[0]
+
+                        st.markdown(f"""
+                        <div class="custom-card">
+                            <h4>{cliente_data_gc_val['Empresa']}</h4>
+                            <p><strong>CNPJ:</strong> {cliente_data_gc_val['CNPJ']}</p>
+                            <p><strong>Diagnósticos Contratados (Slots):</strong> {cliente_data_gc_val['DiagnosticosDisponiveis']}</p>
+                            <p><strong>Diagnósticos Já Realizados:</strong> {cliente_data_gc_val['TotalDiagnosticosRealizados']}</p>
+                            <p><strong>Instruções Visualizadas:</strong> {'Sim' if cliente_data_gc_val['JaVisualizouInstrucoes'] else 'Não'}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Upload de logo do cliente
+                        st.markdown("##### Logo do Cliente")
+                        client_logo_current_path = find_client_logo_path(cnpj_selecionado_gc_val)
+                        if client_logo_current_path:
+                            st.image(client_logo_current_path, width=150, caption="Logo Atual do Cliente")
+                            if st.button("Remover Logo do Cliente", key=f"remove_client_logo_{cnpj_selecionado_gc_val}", disabled=not is_admin_total()):
+                                if is_admin_total():
+                                    try:
+                                        os.remove(client_logo_current_path)
+                                        st.toast("Logo do cliente removida!", icon="🗑️")
+                                        st.rerun()
+                                    except Exception as e_rem_cl_logo:
+                                        st.error(f"Erro ao remover logo do cliente: {e_rem_cl_logo}")
+                        
+                        uploaded_client_logo = st.file_uploader("Carregar Nova Logo para este Cliente (PNG, JPG):", type=["png", "jpg", "jpeg"], key=f"upload_client_logo_{cnpj_selecionado_gc_val}", disabled=not is_admin_total())
+                        if uploaded_client_logo is not None and is_admin_total():
+                            try:
+                                # Limpar logos antigas com mesmo CNPJ base mas extensão diferente
+                                base_name = str(cnpj_selecionado_gc_val).replace('/', '').replace('.', '').replace('-', '')
+                                for ext_old in ["png", "jpg", "jpeg"]:
+                                    old_path = os.path.join(LOGOS_DIR, f"{base_name}_logo.{ext_old}")
+                                    if os.path.exists(old_path):
+                                        os.remove(old_path)
+
+                                file_extension = os.path.splitext(uploaded_client_logo.name)[1].lower()
+                                client_logo_filename = f"{base_name}_logo{file_extension}"
+                                client_logo_save_path = os.path.join(LOGOS_DIR, client_logo_filename)
+                                with open(client_logo_save_path, "wb") as f:
+                                    f.write(uploaded_client_logo.getbuffer())
+                                st.toast("Nova logo do cliente salva!", icon="🖼️")
+                                st.rerun()
+                            except Exception as e_save_cl_logo:
+                                st.error(f"Erro ao salvar logo do cliente: {e_save_cl_logo}")
+                        st.divider()
+
+
+                        action_cols = st.columns(2)
+                        with action_cols[0]:
+                            if st.button(f"Conceder +1 Diagnóstico", key=f"conceder_diag_gc_v21_{cnpj_selecionado_gc_val}", icon="➕", use_container_width=True, disabled=not is_admin_total()): 
+                                if is_admin_total():
+                                    novos_ 
