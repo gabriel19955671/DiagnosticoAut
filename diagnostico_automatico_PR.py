@@ -30,7 +30,7 @@ body {
 }
 .login-container img.portal-logo { /* Estilo específico para o logo do portal no login */
     max-height: 80px; /* Ajuste a altura máxima conforme necessário */
-    width: auto;   /* Mantém a proporção */
+    width: auto;    /* Mantém a proporção */
     display: block;
     margin-left: auto;
     margin-right: auto;
@@ -57,7 +57,7 @@ body {
     background-color: #1d4ed8;
 }
 .stButton>button:disabled {
-    background-color: #9ca3af !important; 
+    background-color: #9ca3af !important;  
     color: #e5e7eb !important;
     cursor: not-allowed !important;
 }
@@ -249,8 +249,8 @@ def create_gut_barchart(gut_data_list, title="Top Prioridades (GUT)"):
     df_gut = df_gut.sort_values(by="Score", ascending=False).head(10)
     if df_gut.empty: return None
     fig = px.bar(df_gut, x="Score", y="Tarefa", title=title, orientation='h',
-                 color="Score", color_continuous_scale=px.colors.sequential.Blues_r,
-                 labels={'Tarefa':'Tarefa/Pergunta', 'Score':'Score GUT'})
+                  color="Score", color_continuous_scale=px.colors.sequential.Blues_r,
+                  labels={'Tarefa':'Tarefa/Pergunta', 'Score':'Score GUT'})
     fig.update_layout(yaxis={'categoryorder':'total ascending'},
                       xaxis_title="Score GUT", yaxis_title="",
                       font=dict(family="Segoe UI, sans-serif"),
@@ -290,8 +290,8 @@ def create_avg_category_scores_chart(df_diagnostics, title="Média de Scores por
     avg_scores = avg_scores.sort_values(by="Média_Score", ascending=False)
 
     fig = px.bar(avg_scores, x='Categoria', y='Média_Score', title=title,
-                 color='Média_Score', color_continuous_scale=px.colors.sequential.Blues_r,
-                 labels={'Categoria':'Categoria', 'Média_Score':'Média do Score'})
+                  color='Média_Score', color_continuous_scale=px.colors.sequential.Blues_r,
+                  labels={'Categoria':'Categoria', 'Média_Score':'Média do Score'})
     fig.update_layout(xaxis_tickangle=-45, font=dict(family="Segoe UI, sans-serif"),
                       yaxis=dict(range=[0,5.5]))
     return fig
@@ -314,7 +314,7 @@ def create_client_engagement_pie(df_usuarios, title="Engajamento de Clientes (N�
     if engagement_counts.empty: return None
 
     fig = px.pie(engagement_counts, values='Numero_Clientes', names='Categoria_Engajamento', title=title,
-                 color_discrete_sequence=px.colors.sequential.Blues_r)
+                  color_discrete_sequence=px.colors.sequential.Blues_r)
     fig.update_traces(textposition='inside', textinfo='percent+label', insidetextorientation='radial')
     fig.update_layout(font=dict(family="Segoe UI, sans-serif"), legend_title_text='Nível de Engajamento')
     return fig
@@ -331,9 +331,9 @@ def create_satisfaction_score_distribution_chart(df_respostas, pergunta_texto, t
     score_counts.columns = ['Score', 'Contagem']
     
     fig = px.bar(score_counts, x='Score', y='Contagem', 
-                 title=f"{title_prefix}: {pergunta_texto}",
-                 labels={'Score': 'Score de Satisfação', 'Contagem': 'Número de Respostas'},
-                 color='Contagem', color_continuous_scale=px.colors.sequential.Blues)
+                  title=f"{title_prefix}: {pergunta_texto}",
+                  labels={'Score': 'Score de Satisfação', 'Contagem': 'Número de Respostas'},
+                  color='Contagem', color_continuous_scale=px.colors.sequential.Blues)
     fig.update_layout(font=dict(family="Segoe UI, sans-serif"))
     return fig
 
@@ -346,8 +346,8 @@ def create_satisfaction_choice_distribution_chart(df_respostas, pergunta_texto, 
     choice_counts.columns = ['Opção', 'Contagem']
     
     fig = px.pie(choice_counts, values='Contagem', names='Opção', 
-                 title=f"{title_prefix}: {pergunta_texto}",
-                 color_discrete_sequence=px.colors.sequential.Blues_r)
+                  title=f"{title_prefix}: {pergunta_texto}",
+                  color_discrete_sequence=px.colors.sequential.Blues_r)
     fig.update_traces(textposition='inside', textinfo='percent+label')
     fig.update_layout(font=dict(family="Segoe UI, sans-serif"))
     return fig
@@ -361,13 +361,13 @@ usuarios_bloqueados_csv = "usuarios_bloqueados.csv"
 perguntas_csv = "perguntas_formulario.csv"
 historico_csv = "historico_clientes.csv"
 analises_perguntas_csv = "analises_perguntas.csv"
-notificacoes_csv = "notificacoes.csv" 
-instrucoes_custom_path = "instrucoes_portal.md" 
+notificacoes_csv = "notificacoes.csv"  
+instrucoes_custom_path = "instrucoes_portal.md"  
 instrucoes_default_path = "instrucoes_portal_default.md"
 sac_perguntas_respostas_csv = "sac_perguntas_respostas.csv"
 sac_uso_feedback_csv = "sac_uso_feedback.csv"
-satisfacao_perguntas_csv = "satisfacao_perguntas.csv" 
-satisfacao_respostas_csv = "satisfacao_respostas.csv" 
+satisfacao_perguntas_csv = "satisfacao_perguntas.csv"  
+satisfacao_respostas_csv = "satisfacao_respostas.csv"  
 LOGOS_DIR = "client_logos"
 PORTAL_ASSETS_DIR = "portal_assets" # Novo para logo do portal
 PORTAL_LOGO_FILENAME = "portal_logo.png" # Nome padrão do logo do portal
@@ -382,10 +382,10 @@ default_session_state = {
     "feedbacks_respostas": {}, "sac_feedback_registrado": {},
     "force_sidebar_rerun_after_notif_read_v19": False, # Mantido v19 para compatibilidade se necessário
     "target_diag_data_for_expansion": None,
-    "respostas_atuais_satisfacao": {}, 
+    "respostas_atuais_satisfacao": {},  
     "pesquisa_satisfacao_enviada": False,
-    "admin_username": None, 
-    "admin_permissions": "visualizacao" 
+    "admin_username": None,  
+    "admin_permissions": "visualizacao"  
 }
 for key, value in default_session_state.items():
     if key not in st.session_state:
@@ -417,19 +417,19 @@ for dir_path in [LOGOS_DIR, PORTAL_ASSETS_DIR]:
         except OSError as e: st.error(f"Erro ao criar diretório '{dir_path}': {e}")
 
 
-colunas_base_admin_credenciais = ["Usuario", "Senha", "Permissoes"] 
+colunas_base_admin_credenciais = ["Usuario", "Senha", "Permissoes"]  
 colunas_base_diagnosticos = ["Data", "CNPJ", "Nome", "Email", "Empresa", "Média Geral", "GUT Média", "Observações", "Diagnóstico", "Análise do Cliente", "Comentarios_Admin"]
 colunas_base_usuarios = ["CNPJ", "Senha", "Empresa", "NomeContato", "Telefone",
-                         "JaVisualizouInstrucoes", "DiagnosticosDisponiveis", "TotalDiagnosticosRealizados"]
+                          "JaVisualizouInstrucoes", "DiagnosticosDisponiveis", "TotalDiagnosticosRealizados"]
 colunas_base_perguntas = ["Pergunta", "Categoria"]
 colunas_base_analises = ["ID_Analise", "TextoPerguntaOriginal", "TipoCondicao", "CondicaoValorMin", "CondicaoValorMax", "CondicaoValorExato", "TextoAnalise"]
-colunas_base_notificacoes = ["ID_Notificacao", "CNPJ_Cliente", "Timestamp", "Mensagem", "Lida", "ID_Diagnostico_Relacionado"] 
+colunas_base_notificacoes = ["ID_Notificacao", "CNPJ_Cliente", "Timestamp", "Mensagem", "Lida", "ID_Diagnostico_Relacionado"]  
 colunas_base_sac_perguntas = ["ID_SAC_Pergunta", "Pergunta_SAC", "Resposta_SAC", "Categoria_SAC", "DataCriacao"]
 colunas_base_sac_uso_feedback = ["ID_Uso_SAC", "Timestamp", "CNPJ_Cliente", "ID_SAC_Pergunta", "Feedback_Util"]
 colunas_base_satisfacao_perguntas = ["ID_Pergunta_Satisfacao", "Texto_Pergunta", "Tipo_Pergunta", "Opcoes_Pergunta", "Ordem", "Ativa"]
-colunas_base_satisfacao_respostas = ["ID_Resposta_Satisfacao", "ID_Pergunta_Satisfacao", "CNPJ_Cliente", 
-                                     "ID_Diagnostico_Relacionado", "Timestamp_Resposta", 
-                                     "Resposta_Texto", "Resposta_Numerica", "Resposta_Opcao_Selecionada"]
+colunas_base_satisfacao_respostas = ["ID_Resposta_Satisfacao", "ID_Pergunta_Satisfacao", "CNPJ_Cliente",  
+                                      "ID_Diagnostico_Relacionado", "Timestamp_Resposta",  
+                                      "Resposta_Texto", "Resposta_Numerica", "Resposta_Opcao_Selecionada"]
 
 def is_admin_total():
     return st.session_state.get("admin_permissions") == "total"
@@ -447,22 +447,22 @@ def inicializar_csv(filepath, columns, defaults=None):
                 dtype_spec = None
                 if filepath in [usuarios_csv, usuarios_bloqueados_csv, arquivo_csv, notificacoes_csv, sac_uso_feedback_csv, satisfacao_respostas_csv]:
                     dtype_spec = {'CNPJ': str, 'CNPJ_Cliente': str, 'ID_Diagnostico_Relacionado': str}
-                    temp_df_check_cols = pd.read_csv(filepath, encoding='utf-8', nrows=0) 
+                    temp_df_check_cols = pd.read_csv(filepath, encoding='utf-8', nrows=0)  
                     dtype_spec = {k: v for k, v in dtype_spec.items() if k in temp_df_check_cols.columns}
                 
                 df_init = pd.read_csv(filepath, encoding='utf-8', dtype=dtype_spec)
 
                 if filepath == admin_credenciais_csv and "Permissoes" not in df_init.columns:
-                    df_init["Permissoes"] = "total" 
+                    df_init["Permissoes"] = "total"  
                     df_init.to_csv(filepath, index=False, encoding='utf-8')
-                    df_init = pd.read_csv(filepath, encoding='utf-8') 
+                    df_init = pd.read_csv(filepath, encoding='utf-8')  
 
-            except ValueError as ve: 
+            except ValueError as ve:  
                 st.warning(f"Problema ao ler {filepath} com dtypes específicos ({ve}), tentando leitura genérica.")
-                df_init = pd.read_csv(filepath, encoding='utf-8') 
-            except Exception as read_e: 
+                df_init = pd.read_csv(filepath, encoding='utf-8')  
+            except Exception as read_e:  
                 st.warning(f"Problema ao ler {filepath}, tentando recriar com colunas esperadas: {read_e}")
-                df_init = pd.DataFrame(columns=columns) 
+                df_init = pd.DataFrame(columns=columns)  
                 if defaults:
                     for col, default_val in defaults.items():
                         if col in columns: df_init[col] = default_val
@@ -474,7 +474,7 @@ def inicializar_csv(filepath, columns, defaults=None):
             for col_idx, col_name in enumerate(columns):
                 if col_name not in df_init.columns:
                     default_val = defaults.get(col_name, pd.NA) if defaults else pd.NA
-                    df_init.insert(loc=min(col_idx, len(df_init.columns)), column=col_name, value=default_val) 
+                    df_init.insert(loc=min(col_idx, len(df_init.columns)), column=col_name, value=default_val)  
                     made_changes = True
             if made_changes:
                 df_init.to_csv(filepath, index=False, encoding='utf-8')
@@ -488,20 +488,20 @@ def inicializar_csv(filepath, columns, defaults=None):
 
 try:
     inicializar_csv(usuarios_bloqueados_csv, ["CNPJ"])
-    inicializar_csv(admin_credenciais_csv, colunas_base_admin_credenciais, defaults={"Permissoes": "total"}) 
+    inicializar_csv(admin_credenciais_csv, colunas_base_admin_credenciais, defaults={"Permissoes": "total"})  
     inicializar_csv(usuarios_csv, colunas_base_usuarios,
-                    defaults={"JaVisualizouInstrucoes": "False", "DiagnosticosDisponiveis": 1, "TotalDiagnosticosRealizados": 0})
+                     defaults={"JaVisualizouInstrucoes": "False", "DiagnosticosDisponiveis": 1, "TotalDiagnosticosRealizados": 0})
     inicializar_csv(perguntas_csv, colunas_base_perguntas, defaults={"Categoria": "Geral"})
     inicializar_csv(historico_csv, ["Data", "CNPJ", "Ação", "Descrição"])
-    inicializar_csv(arquivo_csv, colunas_base_diagnosticos) 
+    inicializar_csv(arquivo_csv, colunas_base_diagnosticos)  
     inicializar_csv(analises_perguntas_csv, colunas_base_analises)
-    inicializar_csv(notificacoes_csv, colunas_base_notificacoes, defaults={"Lida": False, "ID_Diagnostico_Relacionado": None}) 
+    inicializar_csv(notificacoes_csv, colunas_base_notificacoes, defaults={"Lida": False, "ID_Diagnostico_Relacionado": None})  
     inicializar_csv(sac_perguntas_respostas_csv, colunas_base_sac_perguntas, defaults={"Categoria_SAC": "Geral", "DataCriacao": datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
     inicializar_csv(sac_uso_feedback_csv, colunas_base_sac_uso_feedback, defaults={"Feedback_Util": None})
-    inicializar_csv(satisfacao_perguntas_csv, colunas_base_satisfacao_perguntas, 
-                    defaults={"Tipo_Pergunta": "Texto_Aberto", "Opcoes_Pergunta": None, "Ordem": 0, "Ativa": True})
+    inicializar_csv(satisfacao_perguntas_csv, colunas_base_satisfacao_perguntas,  
+                     defaults={"Tipo_Pergunta": "Texto_Aberto", "Opcoes_Pergunta": None, "Ordem": 0, "Ativa": True})
     inicializar_csv(satisfacao_respostas_csv, colunas_base_satisfacao_respostas,
-                    defaults={"ID_Diagnostico_Relacionado": None, "Resposta_Texto": None, "Resposta_Numerica": None, "Resposta_Opcao_Selecionada": None})
+                     defaults={"ID_Diagnostico_Relacionado": None, "Resposta_Texto": None, "Resposta_Numerica": None, "Resposta_Opcao_Selecionada": None})
 
 except Exception as e_init:
     st.error(f"Falha na inicialização de arquivos CSV: {e_init}")
@@ -552,7 +552,7 @@ def carregar_sac_uso_feedback():
     try:
         df = pd.read_csv(sac_uso_feedback_csv, encoding='utf-8', dtype={'CNPJ_Cliente': str})
         if 'Feedback_Util' in df.columns:
-                df['Feedback_Util'] = df['Feedback_Util'].astype(str).str.lower().map({'true': True, 'false': False, 'nan': pd.NA, '': pd.NA}).astype('boolean') 
+            df['Feedback_Util'] = df['Feedback_Util'].astype(str).str.lower().map({'true': True, 'false': False, 'nan': pd.NA, '': pd.NA}).astype('boolean')  
         else:
             df['Feedback_Util'] = pd.NA
         return df
@@ -574,11 +574,11 @@ def carregar_satisfacao_perguntas():
 @st.cache_data
 def carregar_satisfacao_respostas():
     try:
-        df = pd.read_csv(satisfacao_respostas_csv, encoding='utf-8', 
+        df = pd.read_csv(satisfacao_respostas_csv, encoding='utf-8',  
                          dtype={'CNPJ_Cliente': str, 'ID_Diagnostico_Relacionado': str})
         if 'Timestamp_Resposta' in df.columns:
             df['Timestamp_Resposta'] = pd.to_datetime(df['Timestamp_Resposta'], errors='coerce')
-        for col_num in ['Resposta_Numerica']: 
+        for col_num in ['Resposta_Numerica']:  
             if col_num in df.columns:
                 df[col_num] = pd.to_numeric(df[col_num], errors='coerce')
         return df
@@ -602,7 +602,7 @@ def obter_analise_para_resposta(pergunta_texto, resposta_valor, df_analises):
         elif tipo_cond == 'ScoreGUT':
             min_s=pd.to_numeric(row_analise['CondicaoValorMin'],errors='coerce');max_s=pd.to_numeric(row_analise['CondicaoValorMax'],errors='coerce');resp_s_gut=pd.to_numeric(resposta_valor,errors='coerce')
             is_min = pd.notna(resp_s_gut) and pd.notna(min_s) and resp_s_gut >= min_s
-            is_max_ok = pd.isna(max_s) or (pd.notna(resp_s_gut) and resp_s_gut <= max_s) 
+            is_max_ok = pd.isna(max_s) or (pd.notna(resp_s_gut) and resp_s_gut <= max_s)  
             if is_min and is_max_ok: return analise_txt
     return default_analise
 
@@ -635,7 +635,7 @@ def gerar_pdf_diagnostico_completo(diag_data, user_data, perguntas_df, respostas
                     print(f"Erro ao adicionar logo do cliente ao PDF: {e_cl}")
                     pdf.set_y(initial_y_after_portal_logo) # Garante que Y está definido
             else:
-                 pdf.set_y(initial_y_after_portal_logo)
+                    pdf.set_y(initial_y_after_portal_logo)
 
 
             pdf.set_font("Arial", 'B', 18)
@@ -680,13 +680,13 @@ def gerar_pdf_diagnostico_completo(diag_data, user_data, perguntas_df, respostas
                 pdf.ln(5)
 
 
-            for titulo, campo in [("Resumo do Diagnóstico (Cliente):", "Diagnóstico"), 
-                                  ("Análise Adicional (Cliente):", "Análise do Cliente"), 
+            for titulo, campo in [("Resumo do Diagnóstico (Cliente):", "Diagnóstico"),  
+                                  ("Análise Adicional (Cliente):", "Análise do Cliente"),  
                                   ("Comentários do Consultor:", "Comentarios_Admin")]:
                 valor = diag_data.get(campo, "")
                 if valor and not pd.isna(valor) and str(valor).strip():
                     pdf.set_font("Arial", 'B', 12); pdf.multi_cell(0, 7, pdf_safe_text_output(titulo), ln=1)
-                    pdf.set_font("Arial", size=10); 
+                    pdf.set_font("Arial", size=10);  
                     pdf.set_draw_color(200,200,200) # Cor da borda da caixa de texto
                     pdf.multi_cell(0, 7, pdf_safe_text_output(str(valor)), border=1, ln=1, align='J') # Justificado
                     pdf.set_draw_color(0,0,0) # Resetar cor da borda
@@ -697,7 +697,7 @@ def gerar_pdf_diagnostico_completo(diag_data, user_data, perguntas_df, respostas
             
             categorias = perguntas_df["Categoria"].unique() if not perguntas_df.empty and "Categoria" in perguntas_df.columns else []
             for categoria in categorias:
-                pdf.set_font("Arial", 'B', 11); 
+                pdf.set_font("Arial", 'B', 11);  
                 pdf.set_fill_color(220, 220, 255) # Azul claro para cabeçalho de categoria
                 pdf.cell(0, 8, pdf_safe_text_output(f"Categoria: {categoria}"), 0, 1, 'L', fill=True)
                 pdf.set_font("Arial", size=9)
@@ -734,7 +734,7 @@ def gerar_pdf_diagnostico_completo(diag_data, user_data, perguntas_df, respostas
                 pdf.ln(4) # Espaço entre categorias
 
             pdf.add_page(); pdf.set_font("Arial", 'B', 14)
-            pdf.cell(0, 10, pdf_safe_text_output("Plano de Ação Sugerido (Matriz GUT)"), 0, 1, 'C'); pdf.ln(5); 
+            pdf.cell(0, 10, pdf_safe_text_output("Plano de Ação Sugerido (Matriz GUT)"), 0, 1, 'C'); pdf.ln(5);  
             
             gut_cards = []
             if not perguntas_df.empty:
@@ -767,14 +767,14 @@ def gerar_pdf_diagnostico_completo(diag_data, user_data, perguntas_df, respostas
                     pdf.cell(60, 6, pdf_safe_text_output(card['Prazo']), 1, 0)
                     pdf.multi_cell(100, 6, pdf_safe_text_output(card['Tarefa']), 1, 'L', ln=3 if pdf.get_string_width(card['Tarefa']) > 90 else 0) # Multi_cell para tarefas longas
                     if pdf.get_string_width(card['Tarefa']) <= 90: # Se não quebrou linha, precisa de ln=1 no próximo cell
-                         pdf.cell(30, 6, str(card['Score']), 1, 1, 'C')
+                            pdf.cell(30, 6, str(card['Score']), 1, 1, 'C')
                     else: # Se quebrou, o cursor já está na próxima linha
-                         current_x_after_multicell = pdf.get_x()
-                         pdf.set_xy(current_x_after_multicell + 100, pdf.get_y() - 6) # Ajustar X para alinhar
-                         pdf.cell(30, 6, str(card['Score']), 1, 1, 'C')
+                            current_x_after_multicell = pdf.get_x()
+                            pdf.set_xy(current_x_after_multicell + 100, pdf.get_y() - 6) # Ajustar X para alinhar
+                            pdf.cell(30, 6, str(card['Score']), 1, 1, 'C')
 
 
-            else: 
+            else:  
                 pdf.set_font("Arial", size=10)
                 pdf.multi_cell(0,6, pdf_safe_text_output("Nenhuma ação prioritária (GUT > 0) identificada."))
             
@@ -819,12 +819,12 @@ if aba == "Administrador" and not st.session_state.admin_logado:
                     if "Permissoes" in admin_match.columns and pd.notna(admin_match.iloc[0]["Permissoes"]):
                         st.session_state.admin_permissions = admin_match.iloc[0]["Permissoes"]
                     else:
-                        st.session_state.admin_permissions = "total" 
+                        st.session_state.admin_permissions = "total"  
                         idx_to_update = df_creds[(df_creds["Usuario"] == u)].index
                         if not idx_to_update.empty:
-                            if "Permissoes" not in df_creds.columns: 
+                            if "Permissoes" not in df_creds.columns:  
                                 df_creds["Permissoes"] = "total"
-                            else: 
+                            else:  
                                 df_creds.loc[idx_to_update, "Permissoes"] = "total"
                             df_creds.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
                     
@@ -839,7 +839,7 @@ if aba == "Cliente" and not st.session_state.cliente_logado:
     if portal_logo_login_path:
         st.image(portal_logo_login_path, use_column_width='auto', output_format='PNG', width=200)
     else: # Fallback
-        st.image("https://via.placeholder.com/200x80.png?text=Logo+do+Portal", width=200) 
+        st.image("https://via.placeholder.com/200x80.png?text=Logo+do+Portal", width=200)  
     st.markdown('<h2 class="login-title">Login Cliente</h2>', unsafe_allow_html=True)
     with st.form("form_cliente_login_v21"):
         c = st.text_input("CNPJ", key="cli_c_v21", value=st.session_state.get("last_cnpj_input",""))
@@ -884,9 +884,9 @@ if aba == "Cliente" and not st.session_state.cliente_logado:
                 st.session_state.feedbacks_respostas = {}
                 st.session_state.sac_feedback_registrado = {}
                 st.session_state.diagnostico_enviado_sucesso = False
-                st.session_state.target_diag_data_for_expansion = None 
-                st.session_state.respostas_atuais_satisfacao = {} 
-                st.session_state.pesquisa_satisfacao_enviada = False 
+                st.session_state.target_diag_data_for_expansion = None  
+                st.session_state.respostas_atuais_satisfacao = {}  
+                st.session_state.pesquisa_satisfacao_enviada = False  
 
                 st.toast("Login de cliente bem-sucedido!", icon="👋")
                 st.rerun()
@@ -901,7 +901,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
     st.sidebar.markdown(f"### Bem-vindo(a), {st.session_state.user.get('Empresa', 'Cliente')}!")
     with st.sidebar.expander("👤 Meu Perfil", expanded=True):
         logo_cliente_path = find_client_logo_path(st.session_state.cnpj)
-        if logo_cliente_path: 
+        if logo_cliente_path:  
             st.image(logo_cliente_path, width=100, caption=st.session_state.user.get('Empresa', ''))
         st.write(f"**Empresa:** {st.session_state.user.get('Empresa', 'N/D')}")
         st.write(f"**CNPJ:** {st.session_state.cnpj}")
@@ -936,7 +936,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         "Instruções": "📖 Instruções",
         "Novo Diagnóstico": "📋 Novo Diagnóstico",
         "Painel Principal": "🏠 Painel Principal",
-        "Pesquisa de Satisfação": "📝 Pesquisa de Satisfação", 
+        "Pesquisa de Satisfação": "📝 Pesquisa de Satisfação",  
         "Notificações": notificacoes_label,
         "SAC": "❓ SAC - Perguntas Frequentes"
     }
@@ -971,13 +971,13 @@ if aba == "Cliente" and st.session_state.cliente_logado:
     selected_page_cli_raw = st.sidebar.radio("Menu Cliente", menu_options_cli_display, index=current_idx_cli, key="cli_menu_v21_conditional")
     
     selected_page_cli_clean = ""
-    for key_page, val_page_display in menu_options_cli_map.items(): 
-        if val_page_display == selected_page_cli_raw: 
-            if key_page == "Notificações": 
+    for key_page, val_page_display in menu_options_cli_map.items():  
+        if val_page_display == selected_page_cli_raw:  
+            if key_page == "Notificações":  
                 selected_page_cli_clean = "Notificações"
             elif key_page == "SAC":
                 selected_page_cli_clean = "SAC"
-            elif key_page == "Pesquisa de Satisfação": 
+            elif key_page == "Pesquisa de Satisfação":  
                 selected_page_cli_clean = "Pesquisa de Satisfação"
             else:
                 selected_page_cli_clean = key_page
@@ -985,13 +985,13 @@ if aba == "Cliente" and st.session_state.cliente_logado:
     
     if selected_page_cli_clean and selected_page_cli_clean != st.session_state.cliente_page :
         st.session_state.cliente_page = selected_page_cli_clean
-        st.session_state.force_sidebar_rerun_after_notif_read_v19 = False 
-        st.session_state.target_diag_data_for_expansion = None 
+        st.session_state.force_sidebar_rerun_after_notif_read_v19 = False  
+        st.session_state.target_diag_data_for_expansion = None  
         st.rerun()
 
     if st.sidebar.button("Sair do Portal Cliente", icon="⬅️", key="logout_cliente_v21", use_container_width=True):
         keys_to_clear = [k for k in st.session_state.keys() if k not in ['admin_logado', 'last_cnpj_input']]
-        for key_item in keys_to_clear: del st.session_state[key_item] 
+        for key_item in keys_to_clear: del st.session_state[key_item]  
         for key_d, value_d in default_session_state.items():
             if key_d not in ['admin_logado', 'last_cnpj_input']: st.session_state[key_d] = value_d
         st.session_state.cliente_logado = False
@@ -999,13 +999,13 @@ if aba == "Cliente" and st.session_state.cliente_logado:
         st.rerun()
 
     if st.session_state.cliente_page == "Instruções":
-        st.subheader(menu_options_cli_map_full["Instruções"]) 
+        st.subheader(menu_options_cli_map_full["Instruções"])  
         instrucoes_content_md = ""
         if os.path.exists(instrucoes_custom_path):
             with open(instrucoes_custom_path, "r", encoding="utf-8") as f:
                 instrucoes_content_md = f.read()
         elif os.path.exists(instrucoes_default_path):
-            with open(instrucoes_default_path, "r", encoding="utf-8") as f: 
+            with open(instrucoes_default_path, "r", encoding="utf-8") as f:  
                 instrucoes_content_md = f.read()
             st.caption("Exibindo instruções padrão. O administrador pode personalizar este texto.")
         else:
@@ -1024,7 +1024,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
             st.session_state.cliente_page = "Novo Diagnóstico" if pode_fazer_novo_inst else "Painel Principal"
             st.rerun()
 
-    elif st.session_state.cliente_page == "Pesquisa de Satisfação": 
+    elif st.session_state.cliente_page == "Pesquisa de Satisfação":  
         st.subheader(menu_options_cli_map_full["Pesquisa de Satisfação"])
         
         if st.session_state.get("pesquisa_satisfacao_enviada", False):
@@ -1075,8 +1075,8 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                             default_idx_sat = 0
                             if current_val_sat in opcoes_list_sat:
                                 default_idx_sat = opcoes_list_sat.index(current_val_sat)
-                            elif opcoes_list_sat: 
-                                respostas_satisfacao[id_pergunta_sat] = opcoes_list_sat[0] 
+                            elif opcoes_list_sat:  
+                                respostas_satisfacao[id_pergunta_sat] = opcoes_list_sat[0]  
 
                             respostas_satisfacao[id_pergunta_sat] = st.radio("", options=opcoes_list_sat, index=default_idx_sat, key=widget_key_sat, horizontal=True)
                         else:
@@ -1085,7 +1085,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                         st.warning(f"Tipo de pergunta não suportado: {tipo_pergunta_sat}")
                     st.markdown(f"</div>", unsafe_allow_html=True)
                 
-                st.session_state.respostas_atuais_satisfacao = respostas_satisfacao 
+                st.session_state.respostas_atuais_satisfacao = respostas_satisfacao  
 
                 if st.form_submit_button("Enviar Pesquisa de Satisfação", icon="✔️", use_container_width=True):
                     df_respostas_salvar = carregar_satisfacao_respostas()
@@ -1100,7 +1100,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                             "ID_Resposta_Satisfacao": str(uuid.uuid4()),
                             "ID_Pergunta_Satisfacao": id_p_sat,
                             "CNPJ_Cliente": st.session_state.cnpj,
-                            "ID_Diagnostico_Relacionado": None, 
+                            "ID_Diagnostico_Relacionado": None,  
                             "Timestamp_Resposta": timestamp_atual,
                             "Resposta_Texto": None, "Resposta_Numerica": None, "Resposta_Opcao_Selecionada": None
                         }
@@ -1118,8 +1118,8 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                         df_respostas_salvar = pd.concat([df_respostas_salvar, df_novas_respostas_sat], ignore_index=True)
                         df_respostas_salvar.to_csv(satisfacao_respostas_csv, index=False, encoding='utf-8')
                         st.session_state.pesquisa_satisfacao_enviada = True
-                        st.session_state.respostas_atuais_satisfacao = {} 
-                        st.cache_data.clear() 
+                        st.session_state.respostas_atuais_satisfacao = {}  
+                        st.cache_data.clear()  
                         registrar_acao(st.session_state.cnpj, "Envio Pesquisa Satisfacao", "Cliente enviou pesquisa de satisfação.")
                         st.rerun()
                     else:
@@ -1155,7 +1155,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                 perguntas_na_categoria = df_sac_qa_sorted[df_sac_qa_sorted["Categoria_SAC"] == categoria]
                 for idx_sac, row_sac in perguntas_na_categoria.iterrows():
                     with st.expander(f"{row_sac['Pergunta_SAC']}"):
-                        st.markdown(row_sac['Resposta_SAC'], unsafe_allow_html=True) 
+                        st.markdown(row_sac['Resposta_SAC'], unsafe_allow_html=True)  
                         
                         feedback_key_base = f"sac_feedback_v21_{row_sac['ID_SAC_Pergunta']}"
                         feedback_dado = st.session_state.sac_feedback_registrado.get(row_sac['ID_SAC_Pergunta'])
@@ -1164,9 +1164,9 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                         with cols_feedback[0]:
                             btn_class_util = "active" if feedback_dado == "util" else ""
                             if st.button("👍 Útil", key=f"{feedback_key_base}_util", help="Esta resposta foi útil", use_container_width=True,
-                                        type="secondary" if feedback_dado != "util" else "primary"):
+                                         type="secondary" if feedback_dado != "util" else "primary"):
                                 try:
-                                    df_feedback_file = carregar_sac_uso_feedback() 
+                                    df_feedback_file = carregar_sac_uso_feedback()  
                                     novo_feedback = pd.DataFrame([{
                                         "ID_Uso_SAC": str(uuid.uuid4()), "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                         "CNPJ_Cliente": st.session_state.cnpj, "ID_SAC_Pergunta": row_sac['ID_SAC_Pergunta'],
@@ -1175,17 +1175,17 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                                     df_feedback_file = pd.concat([df_feedback_file, novo_feedback], ignore_index=True)
                                     df_feedback_file.to_csv(sac_uso_feedback_csv, index=False, encoding='utf-8')
                                     st.session_state.sac_feedback_registrado[row_sac['ID_SAC_Pergunta']] = "util"
-                                    st.cache_data.clear() 
+                                    st.cache_data.clear()  
                                     st.toast("Obrigado pelo seu feedback!", icon="😊")
-                                    st.rerun() 
+                                    st.rerun()  
                                 except Exception as e_fb:
                                     st.error(f"Erro ao registrar feedback: {e_fb}")
                         with cols_feedback[1]:
                             btn_class_nao_util = "active" if feedback_dado == "nao_util" else ""
                             if st.button("👎 Não útil", key=f"{feedback_key_base}_nao_util", help="Esta resposta não foi útil", use_container_width=True,
-                                        type="secondary" if feedback_dado != "nao_util" else "primary"):
+                                         type="secondary" if feedback_dado != "nao_util" else "primary"):
                                 try:
-                                    df_feedback_file = carregar_sac_uso_feedback() 
+                                    df_feedback_file = carregar_sac_uso_feedback()  
                                     novo_feedback = pd.DataFrame([{
                                         "ID_Uso_SAC": str(uuid.uuid4()), "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                         "CNPJ_Cliente": st.session_state.cnpj, "ID_SAC_Pergunta": row_sac['ID_SAC_Pergunta'],
@@ -1194,9 +1194,9 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                                     df_feedback_file = pd.concat([df_feedback_file, novo_feedback], ignore_index=True)
                                     df_feedback_file.to_csv(sac_uso_feedback_csv, index=False, encoding='utf-8')
                                     st.session_state.sac_feedback_registrado[row_sac['ID_SAC_Pergunta']] = "nao_util"
-                                    st.cache_data.clear() 
+                                    st.cache_data.clear()  
                                     st.toast("Obrigado pelo seu feedback! Vamos melhorar.", icon="🛠️")
-                                    st.rerun() 
+                                    st.rerun()  
                                 except Exception as e_fb:
                                     st.error(f"Erro ao registrar feedback: {e_fb}")
                         
@@ -1206,7 +1206,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                 st.markdown("---")
 
     elif st.session_state.cliente_page == "Notificações":
-        st.subheader(menu_options_cli_map_full["Notificações"].split(" (")[0]) 
+        st.subheader(menu_options_cli_map_full["Notificações"].split(" (")[0])  
         ids_para_marcar_como_lidas_on_display = []
         try:
             df_notificacoes_todas = pd.read_csv(notificacoes_csv, dtype={'CNPJ_Cliente': str, 'ID_Diagnostico_Relacionado': str})
@@ -1214,7 +1214,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                 df_notificacoes_todas['Lida'] = df_notificacoes_todas['Lida'].astype(str).str.lower().map({'true': True, 'false': False, '': False, 'nan': False}).fillna(False)
             else:
                 df_notificacoes_todas = pd.DataFrame(columns=colunas_base_notificacoes)
-            if 'ID_Diagnostico_Relacionado' not in df_notificacoes_todas.columns: 
+            if 'ID_Diagnostico_Relacionado' not in df_notificacoes_todas.columns:  
                 df_notificacoes_todas['ID_Diagnostico_Relacionado'] = None
 
 
@@ -1226,7 +1226,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                 st.info("Você não tem nenhuma notificação no momento.")
             else:
                 st.caption("As notificações novas são marcadas como lidas ao serem exibidas nesta página.")
-                for idx_notif, row_notif in minhas_notificacoes.iterrows(): 
+                for idx_notif, row_notif in minhas_notificacoes.iterrows():  
                     cor_borda = "#2563eb" if not row_notif["Lida"] else "#adb5bd"
                     icon_lida = "✉️" if not row_notif["Lida"] else "📨"
                     status_text = "Status: Nova" if not row_notif["Lida"] else "Status: Lida"
@@ -1252,7 +1252,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                     indices_para_atualizar = df_notificacoes_todas[df_notificacoes_todas["ID_Notificacao"].isin(ids_para_marcar_como_lidas_on_display)].index
                     df_notificacoes_todas.loc[indices_para_atualizar, "Lida"] = True
                     df_notificacoes_todas.to_csv(notificacoes_csv, index=False, encoding='utf-8')
-                    st.session_state['force_sidebar_rerun_after_notif_read_v19'] = True 
+                    st.session_state['force_sidebar_rerun_after_notif_read_v19'] = True  
 
         except (FileNotFoundError, pd.errors.EmptyDataError):
             st.info("Você não tem nenhuma notificação no momento.")
@@ -1266,7 +1266,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
             st.rerun()
 
     elif st.session_state.cliente_page == "Painel Principal":
-        st.subheader(menu_options_cli_map_full["Painel Principal"]) 
+        st.subheader(menu_options_cli_map_full["Painel Principal"])  
         
         target_diag_to_expand = st.session_state.pop("target_diag_data_for_expansion", None)
 
@@ -1275,8 +1275,8 @@ if aba == "Cliente" and st.session_state.cliente_logado:
             if st.session_state.pdf_gerado_path and st.session_state.pdf_gerado_filename:
                 with open(st.session_state.pdf_gerado_path, "rb") as f_pdf:
                     st.download_button(label="Baixar PDF do Diagnóstico Recém-Enviado", data=f_pdf,
-                                        file_name=st.session_state.pdf_gerado_filename, mime="application/pdf",
-                                        key="dl_novo_diag_painel_v21", icon="📄")
+                                         file_name=st.session_state.pdf_gerado_filename, mime="application/pdf",
+                                         key="dl_novo_diag_painel_v21", icon="📄")
                 st.session_state.pdf_gerado_path = None
                 st.session_state.pdf_gerado_filename = None
             st.session_state.diagnostico_enviado_sucesso = False
@@ -1288,7 +1288,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
             st.markdown("- Responda à nossa 'Pesquisa de Satisfação' para nos ajudar a melhorar!")
 
 
-        try: 
+        try:  
             df_antigos = pd.read_csv(arquivo_csv, dtype={'CNPJ': str}, encoding='utf-8')
             df_cliente_diags_raw = df_antigos[df_antigos["CNPJ"] == st.session_state.cnpj]
             if 'Data' in df_cliente_diags_raw.columns:
@@ -1371,11 +1371,11 @@ if aba == "Cliente" and st.session_state.cliente_logado:
 
                 analises_df_para_painel = carregar_analises_perguntas()
 
-                for idx_row_diag, row_diag_data in df_cliente_diags.iterrows(): 
+                for idx_row_diag, row_diag_data in df_cliente_diags.iterrows():  
                     expand_this_diag = (str(row_diag_data['Data']) == str(target_diag_to_expand))
 
                     with st.expander(f"📅 {row_diag_data['Data']} - {row_diag_data['Empresa']}", expanded=expand_this_diag):
-                        st.markdown('<div class="custom-card" style="padding-top: 10px; padding-bottom: 10px;">', unsafe_allow_html=True) 
+                        st.markdown('<div class="custom-card" style="padding-top: 10px; padding-bottom: 10px;">', unsafe_allow_html=True)  
                         cols_metricas = st.columns(2)
                         cols_metricas[0].metric("Média Geral", f"{pd.to_numeric(row_diag_data.get('Média Geral'), errors='coerce'):.2f}" if pd.notna(row_diag_data.get('Média Geral')) else "N/A")
                         cols_metricas[1].metric("GUT Média (G*U*T)", f"{pd.to_numeric(row_diag_data.get('GUT Média'), errors='coerce'):.2f}" if pd.notna(row_diag_data.get('GUT Média')) else "N/A")
@@ -1407,7 +1407,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                                     analise_texto_painel = obter_analise_para_resposta(p_texto_loop, valor_para_analise, analises_df_para_painel)
                                     if analise_texto_painel:
                                         st.markdown(f"<div class='analise-pergunta-cliente'><b>Análise Consultor:</b> {analise_texto_painel}</div>", unsafe_allow_html=True)
-                                st.markdown("---")
+                                    st.markdown("---")
                         else: st.caption("Estrutura de perguntas não carregada para detalhar respostas.")
 
                         analise_cli_val_cv_painel = row_diag_data.get("Análise do Cliente", "")
@@ -1432,7 +1432,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                         if com_admin_val_cv_painel and not pd.isna(com_admin_val_cv_painel) and str(com_admin_val_cv_painel).strip():
                             st.markdown("##### Comentários do Consultor:")
                             st.info(f"{com_admin_val_cv_painel}")
-                            if expand_this_diag: 
+                            if expand_this_diag:  
                                 st.markdown("<small><i>(Você foi direcionado para este comentário)</i></small>", unsafe_allow_html=True)
                         else: st.caption("Nenhum comentário do consultor para este diagnóstico.")
 
@@ -1442,10 +1442,10 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                             if pdf_path_antigo:
                                 with open(pdf_path_antigo, "rb") as f_antigo:
                                     st.download_button("Clique para Baixar", f_antigo,
-                                                        file_name=f"diag_{sanitize_column_name(row_diag_data['Empresa'])}_{str(row_diag_data['Data']).replace(':','-').replace(' ','_')}.pdf",
-                                                        mime="application/pdf",
-                                                        key=f"dl_confirm_antigo_v21_{idx_row_diag}_{time.time()}",
-                                                        icon="📄")
+                                                         file_name=f"diag_{sanitize_column_name(row_diag_data['Empresa'])}_{str(row_diag_data['Data']).replace(':','-').replace(' ','_')}.pdf",
+                                                         mime="application/pdf",
+                                                         key=f"dl_confirm_antigo_v21_{idx_row_diag}_{time.time()}",
+                                                         icon="📄")
                                 registrar_acao(st.session_state.cnpj, "Download PDF (Painel)", f"Baixou PDF de {row_diag_data['Data']}")
                             else: st.error("Erro ao gerar PDF para este diagnóstico.")
                         st.markdown('</div>', unsafe_allow_html=True)
@@ -1516,7 +1516,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
 
                 st.subheader("📊 Comparação Detalhada Entre Dois Diagnósticos")
                 if not df_cliente_diags.empty and len(df_cliente_diags) > 1:
-                    datas_opts_comp = df_cliente_diags["Data"].astype(str).tolist() 
+                    datas_opts_comp = df_cliente_diags["Data"].astype(str).tolist()  
                     idx_atual_comp = 0
                     idx_anterior_comp = 1 if len(datas_opts_comp) > 1 else 0
 
@@ -1563,15 +1563,15 @@ if aba == "Cliente" and st.session_state.cliente_logado:
 
 
     elif st.session_state.cliente_page == "Novo Diagnóstico":
-        st.subheader(menu_options_cli_map_full["Novo Diagnóstico"]) 
+        st.subheader(menu_options_cli_map_full["Novo Diagnóstico"])  
         
-        if st.session_state.diagnostico_enviado_sucesso: 
+        if st.session_state.diagnostico_enviado_sucesso:  
             st.success("🎯 Seu diagnóstico foi enviado com sucesso!")
             if st.session_state.pdf_gerado_path and st.session_state.pdf_gerado_filename:
                 with open(st.session_state.pdf_gerado_path, "rb") as f_pdf_dl_sucesso:
                     st.download_button(label="Baixar PDF do Diagnóstico Enviado", data=f_pdf_dl_sucesso,
-                                        file_name=st.session_state.pdf_gerado_filename, mime="application/pdf",
-                                        key="dl_pdf_sucesso_novo_diag_v21", icon="📄")
+                                         file_name=st.session_state.pdf_gerado_filename, mime="application/pdf",
+                                         key="dl_pdf_sucesso_novo_diag_v21", icon="📄")
             if st.button("Ir para o Painel Principal", key="ir_painel_apos_envio_sucesso_v21", icon="🏠"):
                 st.session_state.cliente_page = "Painel Principal"
                 st.session_state.diagnostico_enviado_sucesso = False; st.session_state.pdf_gerado_path = None; st.session_state.pdf_gerado_filename = None
@@ -1607,13 +1607,13 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                         if resp_prog_novo != "Selecione": respondidas_novo +=1
                     elif isinstance(resp_prog_novo, str):
                         if resp_prog_novo.strip() : respondidas_novo +=1
-                    elif isinstance(resp_prog_novo, (int,float)): 
-                        if pd.notna(resp_prog_novo): respondidas_novo +=1 
+                    elif isinstance(resp_prog_novo, (int,float)):  
+                        if pd.notna(resp_prog_novo): respondidas_novo +=1  
 
             st.session_state.progresso_diagnostico_contagem = (respondidas_novo, total_q_novo)
             st.session_state.progresso_diagnostico_percentual = round((respondidas_novo / total_q_novo) * 100) if total_q_novo > 0 else 0
             progresso_ph_novo.progress(st.session_state.progresso_diagnostico_percentual / 100,
-                                        text=f"📊 Progresso: {respondidas_novo} de {total_q_novo} respondidas ({st.session_state.progresso_diagnostico_percentual}%)")
+                                         text=f"📊 Progresso: {respondidas_novo} de {total_q_novo} respondidas ({st.session_state.progresso_diagnostico_percentual}%)")
 
 
         def on_change_resposta_novo(pergunta_txt_key_novo, widget_st_key_novo, tipo_pergunta_onchange_novo):
@@ -1631,7 +1631,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                 current_gut_novo["T"] = valor_widget_novo
                 st.session_state.respostas_atuais_diagnostico[pergunta_txt_key_novo] = current_gut_novo
             else: st.session_state.respostas_atuais_diagnostico[pergunta_txt_key_novo] = valor_widget_novo
-            st.session_state.feedbacks_respostas[pergunta_txt_key_novo] = "✓" 
+            st.session_state.feedbacks_respostas[pergunta_txt_key_novo] = "✓"  
             calcular_e_mostrar_progresso_novo()
 
         calcular_e_mostrar_progresso_novo()
@@ -1664,7 +1664,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                             opts_novo = ["Selecione", "Muito Baixo", "Baixo", "Médio", "Alto", "Muito Alto"]
                             curr_val_novo = st.session_state.respostas_atuais_diagnostico.get(p_texto_novo, "Selecione")
                             st.selectbox(p_texto_novo, opts_novo, index=opts_novo.index(curr_val_novo) if curr_val_novo in opts_novo else 0, key=w_key_novo, on_change=on_change_resposta_novo, args=(p_texto_novo, w_key_novo, "Escala"))
-                        else: 
+                        else:  
                             st.slider(p_texto_novo,0,10,value=int(st.session_state.respostas_atuais_diagnostico.get(p_texto_novo,0)), key=w_key_novo, on_change=on_change_resposta_novo, args=(p_texto_novo, w_key_novo, "SliderDefault"))
                     with cols_q_feedback[1]:
                         if st.session_state.feedbacks_respostas.get(p_texto_novo):
@@ -1673,10 +1673,10 @@ if aba == "Cliente" and st.session_state.cliente_logado:
 
         key_obs_cli_n = f"obs_cli_diag_v21_{st.session_state.id_formulario_atual}"
         st.text_area("Sua Análise/Observações (opcional):", value=st.session_state.respostas_atuais_diagnostico.get("__obs_cliente__", ""),
-                        key=key_obs_cli_n, on_change=on_change_resposta_novo, args=("__obs_cliente__", key_obs_cli_n, "ObsCliente"))
+                         key=key_obs_cli_n, on_change=on_change_resposta_novo, args=("__obs_cliente__", key_obs_cli_n, "ObsCliente"))
         key_res_cli_n = f"diag_resumo_diag_v21_{st.session_state.id_formulario_atual}"
         st.text_area("✍️ Resumo/principais insights (para PDF):", value=st.session_state.respostas_atuais_diagnostico.get("__resumo_cliente__", ""),
-                        key=key_res_cli_n, on_change=on_change_resposta_novo, args=("__resumo_cliente__", key_res_cli_n, "ResumoCliente"))
+                         key=key_res_cli_n, on_change=on_change_resposta_novo, args=("__resumo_cliente__", key_res_cli_n, "ResumoCliente"))
 
         if st.button("Concluir e Enviar Diagnóstico", key="enviar_diag_final_cliente_v21", icon="✔️", use_container_width=True):
             with st.spinner("Processando e salvando seu diagnóstico..."):
@@ -1722,8 +1722,8 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                     except (FileNotFoundError, pd.errors.EmptyDataError): df_todos_diags_n = pd.DataFrame()
                     
                     for col_n_n in nova_linha_diag_final_n.keys():
-                        if col_n_n not in df_todos_diags_n.columns: 
-                            df_todos_diags_n[col_n_n] = pd.NA 
+                        if col_n_n not in df_todos_diags_n.columns:  
+                            df_todos_diags_n[col_n_n] = pd.NA  
                     
                     df_todos_diags_n = pd.concat([df_todos_diags_n, pd.DataFrame([nova_linha_diag_final_n])], ignore_index=True)
                     df_todos_diags_n.to_csv(arquivo_csv, index=False, encoding='utf-8')
@@ -1745,8 +1745,8 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                     st.session_state.progresso_diagnostico_percentual = 0
                     st.session_state.progresso_diagnostico_contagem = (0,total_perguntas_form)
                     st.session_state.feedbacks_respostas = {}
-                    st.session_state.sac_feedback_registrado = {} 
-                    st.session_state.cliente_page = "Painel Principal" 
+                    st.session_state.sac_feedback_registrado = {}  
+                    st.session_state.cliente_page = "Painel Principal"  
                     st.rerun()
 
 # --- ÁREA DO ADMINISTRADOR LOGADO ---
@@ -1755,7 +1755,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
     if portal_logo_admin_path:
         st.sidebar.image(portal_logo_admin_path, use_column_width='auto')
     else:
-        st.sidebar.image("https://via.placeholder.com/200x80.png?text=Logo+Admin", use_container_width=True) 
+        st.sidebar.image("https://via.placeholder.com/200x80.png?text=Logo+Admin", use_container_width=True)  
 
     st.sidebar.success(f"🟢 Admin Logado: {st.session_state.get('admin_username', '')} ({st.session_state.get('admin_permissions', 'N/D')})")
 
@@ -1763,28 +1763,28 @@ if aba == "Administrador" and st.session_state.admin_logado:
     if st.sidebar.button("Sair do Painel Admin", icon="🚪", key="logout_admin_v21", use_container_width=True):
         st.session_state.admin_logado = False
         st.session_state.admin_username = None
-        st.session_state.admin_permissions = "visualizacao" 
+        st.session_state.admin_permissions = "visualizacao"  
         st.toast("Logout de admin realizado.", icon="👋")
         st.rerun()
 
     menu_admin_options_map = {
         "Visão Geral e Diagnósticos": "📊",
-        "Relatório de Engajamento": "📈", 
+        "Relatório de Engajamento": "📈",  
         "Gerenciar Notificações": "🔔",
         "Gerenciar Clientes": "👥",
-        "Gerenciar Perguntas (Diagnóstico)": "📝", 
+        "Gerenciar Perguntas (Diagnóstico)": "📝",  
         "Gerenciar Análises de Perguntas": "💡",
-        "Gerenciar Pesquisa de Satisfação": "🧐", 
+        "Gerenciar Pesquisa de Satisfação": " ",  
         "Gerenciar SAC": "📞",
         "Configurações do Portal": "⚙️", # Renomeado de "Gerenciar Instruções"
-        "Histórico de Usuários": "📜", 
+        "Histórico de Usuários": "📜",  
         "Gerenciar Administradores": "👮"
     }
     admin_page_text_keys = list(menu_admin_options_map.keys())
     admin_options_for_display = [f"{menu_admin_options_map[key]} {key}" for key in admin_page_text_keys]
 
-    SESSION_KEY_FOR_ADMIN_PAGE = "admin_current_page_text_key_v21" 
-    WIDGET_KEY_SB_ADMIN_MENU = "sb_admin_menu_v21" 
+    SESSION_KEY_FOR_ADMIN_PAGE = "admin_current_page_text_key_v21"  
+    WIDGET_KEY_SB_ADMIN_MENU = "sb_admin_menu_v21"  
 
     def admin_menu_on_change():
         selected_display_value = st.session_state[WIDGET_KEY_SB_ADMIN_MENU]
@@ -1854,8 +1854,8 @@ if aba == "Administrador" and st.session_state.admin_logado:
             try:
                 diagnosticos_df_admin_orig_view = pd.read_csv(arquivo_csv, encoding='utf-8', dtype={'CNPJ': str})
                 if 'Data' in diagnosticos_df_admin_orig_view.columns:
-                    diagnosticos_df_admin_orig_view['Data_dt'] = pd.to_datetime(diagnosticos_df_admin_orig_view['Data'], errors='coerce') 
-                    diagnosticos_df_admin_orig_view['Data'] = diagnosticos_df_admin_orig_view['Data'].astype(str) 
+                    diagnosticos_df_admin_orig_view['Data_dt'] = pd.to_datetime(diagnosticos_df_admin_orig_view['Data'], errors='coerce')  
+                    diagnosticos_df_admin_orig_view['Data'] = diagnosticos_df_admin_orig_view['Data'].astype(str)  
                 if not diagnosticos_df_admin_orig_view.empty:
                     admin_data_carregada_view_sucesso = True
                 else: st.info("Arquivo de diagnósticos lido, mas sem dados.")
@@ -1863,7 +1863,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             except Exception as e: st.error(f"ERRO AO CARREGAR DIAGNÓSTICOS: {e}"); st.exception(e)
 
         st.markdown("#### KPIs Gerais do Sistema")
-        kpi_cols_v21 = st.columns(3) 
+        kpi_cols_v21 = st.columns(3)  
         total_clientes_cadastrados_vg = len(df_usuarios_admin_geral) if not df_usuarios_admin_geral.empty else 0
         kpi_cols_v21[0].metric("👥 Clientes Cadastrados", total_clientes_cadastrados_vg)
 
@@ -1878,7 +1878,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         st.divider()
 
         st.markdown("#### Análises Gráficas do Sistema")
-        dash_cols1_v21 = st.columns(2) 
+        dash_cols1_v21 = st.columns(2)  
         with dash_cols1_v21[0]:
             st.markdown('<div class="dashboard-item">', unsafe_allow_html=True)
             st.markdown("##### Diagnósticos ao Longo do Tempo")
@@ -1911,16 +1911,16 @@ if aba == "Administrador" and st.session_state.admin_logado:
         st.divider()
 
         st.markdown("#### Filtros para Análise Detalhada de Diagnósticos")
-        filter_cols_v21 = st.columns(3) 
+        filter_cols_v21 = st.columns(3)  
 
         empresas_lista_admin_filtro_vg = []
         if not df_usuarios_admin_geral.empty and "Empresa" in df_usuarios_admin_geral.columns:
             empresas_lista_admin_filtro_vg = sorted(df_usuarios_admin_geral["Empresa"].astype(str).unique().tolist())
         options_empresa_filtro = ["Todos os Clientes"] + empresas_lista_admin_filtro_vg
         
-        KEY_WIDGET_EMPRESA_FILTRO_GV = "admin_filtro_emp_gv_v21_widget_sel" 
-        KEY_DT_INI_FILTRO_VALUE_GV = "admin_dt_ini_gv_v21_value_sel" 
-        KEY_DT_FIM_FILTRO_VALUE_GV = "admin_dt_fim_gv_v21_value_sel" 
+        KEY_WIDGET_EMPRESA_FILTRO_GV = "admin_filtro_emp_gv_v21_widget_sel"  
+        KEY_DT_INI_FILTRO_VALUE_GV = "admin_dt_ini_gv_v21_value_sel"  
+        KEY_DT_FIM_FILTRO_VALUE_GV = "admin_dt_fim_gv_v21_value_sel"  
 
         if KEY_WIDGET_EMPRESA_FILTRO_GV not in st.session_state or \
            st.session_state[KEY_WIDGET_EMPRESA_FILTRO_GV] not in options_empresa_filtro:
@@ -1934,12 +1934,12 @@ if aba == "Administrador" and st.session_state.admin_logado:
         
         with filter_cols_v21[1]:
             dt_ini_admin_vg = st.date_input("Data Início:",
-                                            value=st.session_state.get(KEY_DT_INI_FILTRO_VALUE_GV, None), 
-                                            key=KEY_DT_INI_FILTRO_VALUE_GV)
+                                             value=st.session_state.get(KEY_DT_INI_FILTRO_VALUE_GV, None),  
+                                             key=KEY_DT_INI_FILTRO_VALUE_GV)
         with filter_cols_v21[2]:
             dt_fim_admin_vg = st.date_input("Data Fim:",
-                                            value=st.session_state.get(KEY_DT_FIM_FILTRO_VALUE_GV, None), 
-                                            key=KEY_DT_FIM_FILTRO_VALUE_GV)
+                                             value=st.session_state.get(KEY_DT_FIM_FILTRO_VALUE_GV, None),  
+                                             key=KEY_DT_FIM_FILTRO_VALUE_GV)
         st.divider()
 
         df_diagnosticos_contexto_filtro_vg = diagnosticos_df_admin_orig_view.copy() if admin_data_carregada_view_sucesso else pd.DataFrame(columns=colunas_base_diagnosticos + ['Data_dt'])
@@ -1950,7 +1950,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             df_usuarios_contexto_filtro_vg = df_usuarios_contexto_filtro_vg[df_usuarios_contexto_filtro_vg["Empresa"] == emp_sel_admin_vg]
 
         df_diagnosticos_filtrados_view_final_vg = df_diagnosticos_contexto_filtro_vg.copy()
-        if dt_ini_admin_vg and 'Data_dt' in df_diagnosticos_filtrados_view_final_vg.columns: 
+        if dt_ini_admin_vg and 'Data_dt' in df_diagnosticos_filtrados_view_final_vg.columns:  
             df_diagnosticos_filtrados_view_final_vg = df_diagnosticos_filtrados_view_final_vg[
                 df_diagnosticos_filtrados_view_final_vg['Data_dt'] >= pd.to_datetime(dt_ini_admin_vg)
             ]
@@ -1962,7 +1962,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
         st.markdown(f"#### Análise para: **{emp_sel_admin_vg}** (Período de Diagnósticos: {dt_ini_admin_vg or 'Início'} a {dt_fim_admin_vg or 'Fim'})")
 
-        kpi_cols_filt_v21 = st.columns(3) 
+        kpi_cols_filt_v21 = st.columns(3)  
         cnpjs_usuarios_contexto_final_vg = set(df_usuarios_contexto_filtro_vg['CNPJ'].unique()) if not df_usuarios_contexto_filtro_vg.empty else set()
         cnpjs_com_diagnostico_contexto_final_vg = set(df_diagnosticos_filtrados_view_final_vg['CNPJ'].unique()) if not df_diagnosticos_filtrados_view_final_vg.empty else set()
 
@@ -1985,7 +1985,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             st.info(f"Nenhum diagnóstico encontrado para os filtros aplicados.")
         elif not df_diagnosticos_filtrados_view_final_vg.empty:
             st.markdown(f"##### Indicadores da Seleção Filtrada de Diagnósticos")
-            kpi_cols_sel_filt_v21 = st.columns(3) 
+            kpi_cols_sel_filt_v21 = st.columns(3)  
             kpi_cols_sel_filt_v21[0].metric("📦 Diagnósticos na Seleção", len(df_diagnosticos_filtrados_view_final_vg))
             media_geral_filtrada_adm_vg = pd.to_numeric(df_diagnosticos_filtrados_view_final_vg.get("Média Geral"), errors='coerce').mean()
             kpi_cols_sel_filt_v21[1].metric("📈 Média Geral da Seleção", f"{media_geral_filtrada_adm_vg:.2f}" if pd.notna(media_geral_filtrada_adm_vg) else "N/A")
@@ -1997,7 +1997,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             df_display_admin = df_diagnosticos_filtrados_view_final_vg.copy()
             if 'Data_dt' in df_display_admin.columns:
                 df_display_admin = df_display_admin.sort_values(by="Data_dt", ascending=False).reset_index(drop=True)
-            else: 
+            else:  
                 df_display_admin = df_display_admin.sort_values(by="Data", ascending=False).reset_index(drop=True)
 
 
@@ -2008,7 +2008,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             analises_df_admin_view = carregar_analises_perguntas()
 
             for idx_diag_adm, row_diag_adm in df_display_admin.iterrows():
-                diag_data_str = str(row_diag_adm['Data']) 
+                diag_data_str = str(row_diag_adm['Data'])  
                 with st.expander(f"🔎 {diag_data_str} - {row_diag_adm['Empresa']} (CNPJ: {row_diag_adm['CNPJ']})"):
                     st.markdown('<div class="custom-card" style="padding-top:10px; padding-bottom:10px;">', unsafe_allow_html=True)
 
@@ -2021,12 +2021,12 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
                     com_admin_atual = row_diag_adm.get("Comentarios_Admin", "")
                     com_admin_input = st.text_area("Comentários do Consultor (visível para o cliente):",
-                                                    value=com_admin_atual,
-                                                    key=f"com_admin_input_v21_{idx_diag_adm}_{row_diag_adm['CNPJ']}_{diag_data_str.replace(' ','_')}",
-                                                    disabled=not is_admin_total()) 
-                    if st.button("Salvar Comentário do Consultor", icon="💬", 
+                                                     value=com_admin_atual,
+                                                     key=f"com_admin_input_v21_{idx_diag_adm}_{row_diag_adm['CNPJ']}_{diag_data_str.replace(' ','_')}",
+                                                     disabled=not is_admin_total())  
+                    if st.button("Salvar Comentário do Consultor", icon="💬",  
                                  key=f"save_com_admin_v21_{idx_diag_adm}_{row_diag_adm['CNPJ']}_{diag_data_str.replace(' ','_')}",
-                                 disabled=not is_admin_total()): 
+                                 disabled=not is_admin_total()):  
                         if is_admin_total():
                             if com_admin_input != com_admin_atual:
                                 df_all_diags_update = pd.read_csv(arquivo_csv, encoding='utf-8', dtype={'CNPJ':str})
@@ -2034,7 +2034,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                                 
                                 match_indices = df_all_diags_update[
                                     (df_all_diags_update["CNPJ"] == row_diag_adm["CNPJ"]) &
-                                    (df_all_diags_update["Data"] == diag_data_str) 
+                                    (df_all_diags_update["Data"] == diag_data_str)  
                                 ].index
                                 
                                 if not match_indices.empty:
@@ -2055,7 +2055,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                                         "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                         "Mensagem": f"O consultor adicionou um novo comentário ao seu diagnóstico de {diag_data_str}.",
                                         "Lida": False,
-                                        "ID_Diagnostico_Relacionado": diag_data_str 
+                                        "ID_Diagnostico_Relacionado": diag_data_str  
                                     }])
                                     df_notificacoes = pd.concat([df_notificacoes, nova_notificacao], ignore_index=True)
                                     df_notificacoes.to_csv(notificacoes_csv, index=False, encoding='utf-8')
@@ -2067,7 +2067,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                             else:
                                 st.info("Nenhuma alteração no comentário.")
 
-                    if st.button("Baixar PDF Detalhado", icon="📄", key=f"dl_pdf_adm_diag_v21_{idx_diag_adm}_{row_diag_adm['CNPJ']}_{diag_data_str.replace(' ','_')}"): 
+                    if st.button("Baixar PDF Detalhado", icon="📄", key=f"dl_pdf_adm_diag_v21_{idx_diag_adm}_{row_diag_adm['CNPJ']}_{diag_data_str.replace(' ','_')}"):  
                         user_data_pdf_adm = {}
                         if not df_usuarios_admin_geral.empty:
                             match_user = df_usuarios_admin_geral[df_usuarios_admin_geral['CNPJ'] == row_diag_adm['CNPJ']]
@@ -2079,10 +2079,10 @@ if aba == "Administrador" and st.session_state.admin_logado:
                         if pdf_path_adm_d:
                             with open(pdf_path_adm_d, "rb") as f_adm_d:
                                 st.download_button("Download PDF Confirmado", f_adm_d,
-                                                    file_name=f"diag_{sanitize_column_name(row_diag_adm['Empresa'])}_{str(row_diag_adm['Data']).replace(':','-').replace(' ','_')}.pdf",
-                                                    mime="application/pdf",
-                                                    key=f"dl_confirm_adm_diag_v21_{idx_diag_adm}_{time.time()}", 
-                                                    icon="📄")
+                                                     file_name=f"diag_{sanitize_column_name(row_diag_adm['Empresa'])}_{str(row_diag_adm['Data']).replace(':','-').replace(' ','_')}.pdf",
+                                                     mime="application/pdf",
+                                                     key=f"dl_confirm_adm_diag_v21_{idx_diag_adm}_{time.time()}",  
+                                                     icon="📄")
                         else:
                             st.error("Erro ao gerar PDF para este diagnóstico.")
                     st.markdown('</div>', unsafe_allow_html=True)
@@ -2137,15 +2137,15 @@ if aba == "Administrador" and st.session_state.admin_logado:
             if 'Lida' in df_notificacoes_admin.columns:
                 df_notificacoes_admin['Lida'] = df_notificacoes_admin['Lida'].astype(str).str.lower().map({'true': True, 'false': False, 'nan': False, '': False}).fillna(False)
             else:
-                df_notificacoes_admin['Lida'] = False 
+                df_notificacoes_admin['Lida'] = False  
             if 'ID_Diagnostico_Relacionado' not in df_notificacoes_admin.columns:
                 df_notificacoes_admin['ID_Diagnostico_Relacionado'] = None
 
 
             if not df_usuarios_admin_geral.empty:
-                df_notificacoes_admin = pd.merge(df_notificacoes_admin, df_usuarios_admin_geral[['CNPJ', 'Empresa']], 
-                                                left_on='CNPJ_Cliente', right_on='CNPJ', how='left')
-                df_notificacoes_admin.drop(columns=['CNPJ'], inplace=True, errors='ignore') 
+                df_notificacoes_admin = pd.merge(df_notificacoes_admin, df_usuarios_admin_geral[['CNPJ', 'Empresa']],  
+                                                 left_on='CNPJ_Cliente', right_on='CNPJ', how='left')
+                df_notificacoes_admin.drop(columns=['CNPJ'], inplace=True, errors='ignore')  
                 df_notificacoes_admin.rename(columns={'Empresa': 'Empresa Cliente'}, inplace=True)
                 df_notificacoes_admin['Empresa Cliente'] = df_notificacoes_admin['Empresa Cliente'].fillna("N/D (Usuário não encontrado)")
 
@@ -2160,14 +2160,14 @@ if aba == "Administrador" and st.session_state.admin_logado:
             st.error(f"Erro ao carregar notificações para admin: {e_notif_admin}")
             df_notificacoes_admin = pd.DataFrame(columns=colunas_base_notificacoes + ['Empresa Cliente'])
 
-        st.sidebar.markdown("---") 
+        st.sidebar.markdown("---")  
         st.sidebar.subheader("Filtros de Notificações")
         
         clientes_notif_list = ["Todos"]
         if "Empresa Cliente" in df_notificacoes_admin.columns:
             clientes_notif_list.extend(sorted(df_notificacoes_admin["Empresa Cliente"].astype(str).unique().tolist()))
         
-        sel_cliente_notif = st.sidebar.selectbox("Filtrar por Cliente:", clientes_notif_list, key="admin_notif_cliente_filter_v21") 
+        sel_cliente_notif = st.sidebar.selectbox("Filtrar por Cliente:", clientes_notif_list, key="admin_notif_cliente_filter_v21")  
         sel_lida_notif = st.sidebar.selectbox("Filtrar por Status:", ["Todas", "Lidas", "Não Lidas"], key="admin_notif_lida_filter_v21")
         
         dt_ini_notif = st.sidebar.date_input("Data Início Notificação:", None, key="admin_notif_dt_ini_v21")
@@ -2211,14 +2211,14 @@ if aba == "Administrador" and st.session_state.admin_logado:
         else:
             st.info("Nenhuma notificação encontrada para os filtros aplicados.")
 
-    elif menu_admin == "Gerenciar Pesquisa de Satisfação": 
+    elif menu_admin == "Gerenciar Pesquisa de Satisfação":  
         st.markdown("#### Gerenciamento da Pesquisa de Satisfação")
         df_satisfacao_perguntas_admin = carregar_satisfacao_perguntas().copy()
         df_satisfacao_respostas_admin = carregar_satisfacao_respostas().copy()
 
         admin_satisfacao_tabs = st.tabs(["📝 Gerenciar Perguntas da Pesquisa", "📊 Resultados da Pesquisa"])
 
-        with admin_satisfacao_tabs[0]: 
+        with admin_satisfacao_tabs[0]:  
             st.subheader("Adicionar Nova Pergunta de Satisfação")
             with st.form("form_nova_pergunta_satisfacao_v21", clear_on_submit=True):
                 nova_pergunta_sat_texto = st.text_input("Texto da Pergunta:", key="nova_p_sat_texto_v21", disabled=not is_admin_total())
@@ -2251,8 +2251,8 @@ if aba == "Administrador" and st.session_state.admin_logado:
                                 st.warning("Para 'Escolha Única', as opções são obrigatórias.")
                                 st.stop()
                         elif tipo_pergunta_sat_valor == "Escolha_Unica" and not opcoes_pergunta_sat_str.strip():
-                             st.warning("Para 'Escolha Única', as opções são obrigatórias.")
-                             st.stop()
+                               st.warning("Para 'Escolha Única', as opções são obrigatórias.")
+                               st.stop()
 
 
                         nova_id_sat_p = str(uuid.uuid4())
@@ -2266,7 +2266,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                         }])
                         df_satisfacao_perguntas_admin = pd.concat([df_satisfacao_perguntas_admin, nova_entrada_sat_p], ignore_index=True)
                         df_satisfacao_perguntas_admin.to_csv(satisfacao_perguntas_csv, index=False, encoding='utf-8')
-                        st.cache_data.clear() 
+                        st.cache_data.clear()  
                         st.toast("Pergunta de satisfação adicionada!", icon="🎉")
                         st.rerun()
                     else:
@@ -2293,8 +2293,8 @@ if aba == "Administrador" and st.session_state.admin_logado:
                             current_type_val_edit = row_sat_p_item['Tipo_Pergunta']
                             current_type_display_edit = next((k for k, v in tipos_pergunta_sat_opts.items() if v == current_type_val_edit), list(tipos_pergunta_sat_opts.keys())[0])
                             
-                            edited_tipo_display_sat_p = st.selectbox("Editar Tipo:", list(tipos_pergunta_sat_opts.keys()), 
-                                                                     index=list(tipos_pergunta_sat_opts.keys()).index(current_type_display_edit), 
+                            edited_tipo_display_sat_p = st.selectbox("Editar Tipo:", list(tipos_pergunta_sat_opts.keys()),  
+                                                                     index=list(tipos_pergunta_sat_opts.keys()).index(current_type_display_edit),  
                                                                      key=f"edit_tipo_{form_key_edit_sat_p}", disabled=not is_admin_total())
                             edited_tipo_valor_sat_p = tipos_pergunta_sat_opts[edited_tipo_display_sat_p]
 
@@ -2303,7 +2303,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                                 try:
                                     edited_opcoes_list = json.loads(edited_opcoes_str_sat_p)
                                     edited_opcoes_str_sat_p = ",".join(edited_opcoes_list)
-                                except: 
+                                except:  
                                     edited_opcoes_str_sat_p = "" if not isinstance(edited_opcoes_str_sat_p, str) else edited_opcoes_str_sat_p
 
 
@@ -2321,9 +2321,9 @@ if aba == "Administrador" and st.session_state.admin_logado:
                                     if edited_tipo_valor_sat_p == "Escolha_Unica" and edited_opcoes_str_sat_p.strip():
                                         df_satisfacao_perguntas_admin.loc[i_sat_p, "Opcoes_Pergunta"] = json.dumps([opt.strip() for opt in edited_opcoes_str_sat_p.split(',')])
                                     elif edited_tipo_valor_sat_p != "Escolha_Unica":
-                                         df_satisfacao_perguntas_admin.loc[i_sat_p, "Opcoes_Pergunta"] = None 
+                                         df_satisfacao_perguntas_admin.loc[i_sat_p, "Opcoes_Pergunta"] = None  
                                     elif edited_tipo_valor_sat_p == "Escolha_Unica" and not edited_opcoes_str_sat_p.strip():
-                                        st.warning("Opções são obrigatórias para tipo 'Escolha Única'. Não foram salvas.")
+                                         st.warning("Opções são obrigatórias para tipo 'Escolha Única'. Não foram salvas.")
 
 
                                     df_satisfacao_perguntas_admin.loc[i_sat_p, "Ordem"] = int(edited_ordem_sat_p)
@@ -2343,15 +2343,15 @@ if aba == "Administrador" and st.session_state.admin_logado:
                     st.markdown("<hr style='margin-top: 5px; margin-bottom: 15px;'>", unsafe_allow_html=True)
 
 
-        with admin_satisfacao_tabs[1]: 
+        with admin_satisfacao_tabs[1]:  
             st.subheader("Resultados da Pesquisa de Satisfação")
             if df_satisfacao_respostas_admin.empty:
                 st.info("Nenhuma resposta de satisfação registrada ainda.")
             else:
                 df_respostas_display = df_satisfacao_respostas_admin.copy()
                 if not df_usuarios_admin_geral.empty:
-                    df_respostas_display = pd.merge(df_respostas_display, df_usuarios_admin_geral[['CNPJ', 'Empresa']], 
-                                                    left_on='CNPJ_Cliente', right_on='CNPJ', how='left')
+                    df_respostas_display = pd.merge(df_respostas_display, df_usuarios_admin_geral[['CNPJ', 'Empresa']],  
+                                                     left_on='CNPJ_Cliente', right_on='CNPJ', how='left')
                     df_respostas_display.rename(columns={'Empresa': 'Empresa_Cliente_Nome'}, inplace=True)
                     df_respostas_display['Empresa_Cliente_Nome'] = df_respostas_display['Empresa_Cliente_Nome'].fillna("N/D")
                     df_respostas_display.drop(columns=['CNPJ'], inplace=True, errors='ignore')
@@ -2360,7 +2360,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
                 if not df_satisfacao_perguntas_admin.empty:
                     df_respostas_display = pd.merge(df_respostas_display, df_satisfacao_perguntas_admin[['ID_Pergunta_Satisfacao', 'Texto_Pergunta', 'Tipo_Pergunta']],
-                                                    on='ID_Pergunta_Satisfacao', how='left')
+                                                     on='ID_Pergunta_Satisfacao', how='left')
                     df_respostas_display['Texto_Pergunta'] = df_respostas_display['Texto_Pergunta'].fillna("Pergunta Excluída/Desconhecida")
                     df_respostas_display['Tipo_Pergunta'] = df_respostas_display['Tipo_Pergunta'].fillna("N/D")
                 else:
@@ -2410,13 +2410,12 @@ if aba == "Administrador" and st.session_state.admin_logado:
                             for resp_texto in df_respostas_filtrado['Resposta_Texto'].dropna():
                                 st.markdown(f"- {resp_texto}")
                     
-                    st.markdown("##### Todas as Respostas Filtradas (Tabela)")
-                    cols_view_respostas = ['Timestamp_Resposta', 'Empresa_Cliente_Nome', 'CNPJ_Cliente', 'Texto_Pergunta', 
-                                           'Resposta_Texto', 'Resposta_Numerica', 'Resposta_Opcao_Selecionada']
+                    cols_view_respostas = ['Timestamp_Resposta', 'Empresa_Cliente_Nome', 'CNPJ_Cliente', 'Texto_Pergunta',  
+                                            'Resposta_Texto', 'Resposta_Numerica', 'Resposta_Opcao_Selecionada']
                     st.dataframe(df_respostas_filtrado[cols_view_respostas].sort_values(by="Timestamp_Resposta", ascending=False), use_container_width=True)
 
 
-    elif menu_admin == "Gerenciar Perguntas (Diagnóstico)": 
+    elif menu_admin == "Gerenciar Perguntas (Diagnóstico)":  
         tabs_perg_admin = st.tabs(["📋 Perguntas Atuais", "➕ Adicionar Nova Pergunta"])
         try:
             perguntas_df_admin_gp = pd.read_csv(perguntas_csv, encoding='utf-8')
@@ -2465,8 +2464,8 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 nova_cat_form_admin_gp = st.text_input("Nome da Nova Categoria:", key="nova_cat_input_admin_new_q_v21_gp", disabled=not is_admin_total()) if cat_selecionada_gp == "Nova Categoria" else cat_selecionada_gp
 
                 tipo_p_form_admin = st.selectbox("Tipo de Pergunta (será adicionado ao final do texto da pergunta):",
-                                                ["Pontuação (0-10)", "Pontuação (0-5)", "Texto Aberto", "Escala (Muito Baixo, Baixo, Médio, Alto, Muito Alto)", "[Matriz GUT]"],
-                                                key="tipo_p_select_admin_new_q_v21_gp", disabled=not is_admin_total())
+                                                 ["Pontuação (0-10)", "Pontuação (0-5)", "Texto Aberto", "Escala (Muito Baixo, Baixo, Médio, Alto, Muito Alto)", "[Matriz GUT]"],
+                                                 key="tipo_p_select_admin_new_q_v21_gp", disabled=not is_admin_total())
                 add_p_btn_admin = st.form_submit_button("Adicionar Pergunta", icon="➕", use_container_width=True, disabled=not is_admin_total())
                 if add_p_btn_admin and is_admin_total():
                     if nova_p_form_txt_admin.strip() and nova_cat_form_admin_gp.strip():
@@ -2494,11 +2493,11 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 st.caption(f"Pergunta selecionada: {pergunta_selecionada_analise_admin}")
 
                 tipo_condicao_analise_display_admin = st.selectbox("Tipo de Condição para a Análise:",
-                                                                ["Faixa Numérica (p/ Pontuação 0-X)",
-                                                                "Valor Exato (p/ Escala)",
-                                                                "Faixa de Score (p/ Matriz GUT)",
-                                                                "Análise Padrão (default para a pergunta)"],
-                                                                key="tipo_cond_analise_v21_ga", disabled=not is_admin_total())
+                                                                    ["Faixa Numérica (p/ Pontuação 0-X)",
+                                                                     "Valor Exato (p/ Escala)",
+                                                                     "Faixa de Score (p/ Matriz GUT)",
+                                                                     "Análise Padrão (default para a pergunta)"],
+                                                                     key="tipo_cond_analise_v21_ga", disabled=not is_admin_total())
 
                 map_tipo_cond_to_csv_admin = {
                     "Faixa Numérica (p/ Pontuação 0-X)": "FaixaNumerica",
@@ -2537,7 +2536,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                             }
                             df_analises_existentes_admin = pd.concat([df_analises_existentes_admin, pd.DataFrame([nova_entrada_analise_admin])], ignore_index=True)
                             df_analises_existentes_admin.to_csv(analises_perguntas_csv, index=False, encoding='utf-8')
-                            st.cache_data.clear() 
+                            st.cache_data.clear()  
                             st.toast("Nova análise salva!", icon="🎉"); st.rerun()
                         else: st.error("O texto da análise não pode estar vazio.")
 
@@ -2547,7 +2546,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             df_display_analises = df_analises_existentes_admin.copy()
             for col_num_format in ['CondicaoValorMin', 'CondicaoValorMax']:
                 if col_num_format in df_display_analises.columns:
-                    df_display_analises[col_num_format] = pd.to_numeric(df_display_analises[col_num_format], errors='coerce').fillna("") 
+                    df_display_analises[col_num_format] = pd.to_numeric(df_display_analises[col_num_format], errors='coerce').fillna("")  
             st.dataframe(df_display_analises, use_container_width=True)
 
             analise_del_id_admin = st.selectbox("Deletar Análise por ID:", [""] + df_analises_existentes_admin["ID_Analise"].astype(str).tolist(), key="del_analise_id_v21_ga", disabled=not is_admin_total())
@@ -2556,21 +2555,21 @@ if aba == "Administrador" and st.session_state.admin_logado:
                     if analise_del_id_admin:
                         df_analises_existentes_admin = df_analises_existentes_admin[df_analises_existentes_admin["ID_Analise"] != analise_del_id_admin]
                         df_analises_existentes_admin.to_csv(analises_perguntas_csv, index=False, encoding='utf-8')
-                        st.cache_data.clear() 
+                        st.cache_data.clear()  
                         st.toast("Análise deletada.", icon="🗑️"); st.rerun()
                     else:
                         st.warning("Selecione uma análise para deletar.")
     
     elif menu_admin == "Gerenciar SAC":
         st.markdown("#### Gerenciamento do SAC - Perguntas e Respostas")
-        df_sac_qa_admin = carregar_sac_perguntas_respostas().copy() 
+        df_sac_qa_admin = carregar_sac_perguntas_respostas().copy()  
         df_sac_uso_admin = carregar_sac_uso_feedback().copy()
 
         sac_admin_tabs = st.tabs(["📝 Gerenciar Perguntas e Respostas SAC", "📊 Relatório de Uso e Feedback SAC"])
 
         with sac_admin_tabs[0]:
             st.subheader("Adicionar Nova Pergunta ao SAC")
-            with st.form("form_nova_pergunta_sac_v21", clear_on_submit=True): 
+            with st.form("form_nova_pergunta_sac_v21", clear_on_submit=True):  
                 nova_pergunta_sac_txt = st.text_input("Texto da Pergunta SAC:", key="nova_p_sac_txt_v21", disabled=not is_admin_total())
                 nova_resposta_sac_txt = st.text_area("Texto da Resposta SAC:", key="nova_r_sac_txt_v21", height=150, disabled=not is_admin_total())
                 
@@ -2592,7 +2591,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                         }])
                         df_sac_qa_admin = pd.concat([df_sac_qa_admin, nova_entrada_sac], ignore_index=True)
                         df_sac_qa_admin.to_csv(sac_perguntas_respostas_csv, index=False, encoding='utf-8')
-                        st.cache_data.clear() 
+                        st.cache_data.clear()  
                         st.toast("Pergunta adicionada ao SAC!", icon="🎉")
                         st.rerun()
                     else:
@@ -2612,7 +2611,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                     </div>
                     """, unsafe_allow_html=True)
                     with st.expander("✏️ Editar / 🗑️ Deletar esta Pergunta/Resposta SAC"):
-                        form_key_edit_sac = f"form_edit_sac_v21_{row_sac_item['ID_SAC_Pergunta']}" 
+                        form_key_edit_sac = f"form_edit_sac_v21_{row_sac_item['ID_SAC_Pergunta']}"  
                         with st.form(form_key_edit_sac):
                             edited_p_sac = st.text_input("Editar Pergunta:", value=row_sac_item['Pergunta_SAC'], key=f"edit_p_{form_key_edit_sac}", disabled=not is_admin_total())
                             edited_r_sac = st.text_area("Editar Resposta:", value=row_sac_item['Resposta_SAC'], height=100, key=f"edit_r_{form_key_edit_sac}", disabled=not is_admin_total())
@@ -2624,7 +2623,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                             if sel_cat_edit_sac == "Nova Categoria (Editar Abaixo)":
                                 input_new_cat_edit_sac = st.text_input("Digite a Nova Categoria:", key=f"input_new_cat_edit_{form_key_edit_sac}", disabled=not is_admin_total())
                             
-                            final_cat_edit_sac = row_sac_item['Categoria_SAC'] 
+                            final_cat_edit_sac = row_sac_item['Categoria_SAC']  
                             if sel_cat_edit_sac == "Nova Categoria (Editar Abaixo)":
                                 if input_new_cat_edit_sac.strip(): final_cat_edit_sac = input_new_cat_edit_sac.strip()
                             elif sel_cat_edit_sac != "Manter Categoria Atual":
@@ -2636,7 +2635,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                                     df_sac_qa_admin.loc[i_sac, "Pergunta_SAC"] = edited_p_sac
                                     df_sac_qa_admin.loc[i_sac, "Resposta_SAC"] = edited_r_sac
                                     df_sac_qa_admin.loc[i_sac, "Categoria_SAC"] = final_cat_edit_sac
-                                    df_sac_qa_admin.loc[i_sac, "DataCriacao"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S") 
+                                    df_sac_qa_admin.loc[i_sac, "DataCriacao"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  
                                     df_sac_qa_admin.to_csv(sac_perguntas_respostas_csv, index=False, encoding='utf-8')
                                     st.cache_data.clear()
                                     st.toast("Alterações salvas no SAC!", icon="✅")
@@ -2660,7 +2659,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 df_sac_uso_display = df_sac_uso_admin.copy()
                 if not df_usuarios_admin_geral.empty:
                     df_sac_uso_display = pd.merge(df_sac_uso_display, df_usuarios_admin_geral[['CNPJ', 'Empresa']],
-                                                left_on='CNPJ_Cliente', right_on='CNPJ', how='left')
+                                                     left_on='CNPJ_Cliente', right_on='CNPJ', how='left')
                     df_sac_uso_display.rename(columns={'Empresa': 'Empresa Cliente'}, inplace=True)
                     df_sac_uso_display['Empresa Cliente'] = df_sac_uso_display['Empresa Cliente'].fillna("N/D (Usuário Desconhecido)")
                     df_sac_uso_display.drop(columns=['CNPJ'], inplace=True, errors='ignore')
@@ -2669,23 +2668,19 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
                 if not df_sac_qa_admin.empty:
                     df_sac_uso_display = pd.merge(df_sac_uso_display, df_sac_qa_admin[['ID_SAC_Pergunta', 'Pergunta_SAC', 'Categoria_SAC']],
-                                                on='ID_SAC_Pergunta', how='left')
+                                                     on='ID_SAC_Pergunta', how='left')
                     df_sac_uso_display['Pergunta_SAC'] = df_sac_uso_display['Pergunta_SAC'].fillna("N/D (Pergunta SAC Excluída)")
                     df_sac_uso_display['Categoria_SAC'] = df_sac_uso_display['Categoria_SAC'].fillna("N/D")
 
-                else:
-                    df_sac_uso_display['Pergunta_SAC'] = "N/D (Dados de Perguntas SAC Não Carregados)"
-                    df_sac_uso_display['Categoria_SAC'] = "N/D"
-                
                 filt_col1, filt_col2, filt_col3 = st.columns(3)
                 clientes_sac_uso_list = ["Todos"] + sorted(df_sac_uso_display["Empresa Cliente"].astype(str).unique().tolist())
-                sel_cliente_sac_uso = filt_col1.selectbox("Filtrar por Cliente:", clientes_sac_uso_list, key="sac_uso_cliente_filt_v21") 
+                sel_cliente_sac_uso = filt_col1.selectbox("Filtrar por Cliente:", clientes_sac_uso_list, key="sac_uso_cliente_filt_v21")  
 
                 perguntas_sac_uso_list = ["Todas"] + sorted(df_sac_uso_display["Pergunta_SAC"].astype(str).unique().tolist())
-                sel_pergunta_sac_uso = filt_col2.selectbox("Filtrar por Pergunta SAC:", perguntas_sac_uso_list, key="sac_uso_pergunta_filt_v21") 
+                sel_pergunta_sac_uso = filt_col2.selectbox("Filtrar por Pergunta SAC:", perguntas_sac_uso_list, key="sac_uso_pergunta_filt_v21")  
 
                 feedback_options_map = {"Todos": None, "Útil": True, "Não Útil": False, "Sem Feedback": pd.NA}
-                sel_feedback_sac_uso_display = filt_col3.selectbox("Filtrar por Feedback:", list(feedback_options_map.keys()), key="sac_uso_feedback_filt_v21") 
+                sel_feedback_sac_uso_display = filt_col3.selectbox("Filtrar por Feedback:", list(feedback_options_map.keys()), key="sac_uso_feedback_filt_v21")  
                 sel_feedback_sac_uso_actual = feedback_options_map[sel_feedback_sac_uso_display]
 
 
@@ -2695,10 +2690,10 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 if sel_pergunta_sac_uso != "Todas":
                     df_sac_uso_filtrado = df_sac_uso_filtrado[df_sac_uso_filtrado["Pergunta_SAC"] == sel_pergunta_sac_uso]
                 
-                if sel_feedback_sac_uso_actual is not None: 
-                    if pd.isna(sel_feedback_sac_uso_actual): 
+                if sel_feedback_sac_uso_actual is not None:  
+                    if pd.isna(sel_feedback_sac_uso_actual):  
                         df_sac_uso_filtrado = df_sac_uso_filtrado[df_sac_uso_filtrado["Feedback_Util"].isna()]
-                    else: 
+                    else:  
                         df_sac_uso_filtrado = df_sac_uso_filtrado[df_sac_uso_filtrado["Feedback_Util"] == sel_feedback_sac_uso_actual]
 
 
@@ -2746,14 +2741,14 @@ if aba == "Administrador" and st.session_state.admin_logado:
         st.subheader("✍️ Editar Texto das Instruções para Clientes")
         
         current_instructions_text = ""
-        instrucoes_loaded_source = None 
+        instrucoes_loaded_source = None  
 
         if os.path.exists(instrucoes_custom_path):
             with open(instrucoes_custom_path, "r", encoding="utf-8") as f:
                 current_instructions_text = f.read()
             instrucoes_loaded_source = instrucoes_custom_path
-        elif os.path.exists(instrucoes_default_path): 
-            with open(instrucoes_default_path, "r", encoding="utf-8") as f: 
+        elif os.path.exists(instrucoes_default_path):  
+            with open(instrucoes_default_path, "r", encoding="utf-8") as f:  
                 current_instructions_text = f.read()
             instrucoes_loaded_source = instrucoes_default_path
             try:
@@ -2762,7 +2757,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 st.info(f"Instruções carregadas de '{instrucoes_default_path}' e salvas como ponto de partida em '{instrucoes_custom_path}'.")
             except Exception as e_write_custom:
                 st.warning(f"Instruções carregadas de '{instrucoes_default_path}', mas não foi possível criar '{instrucoes_custom_path}': {e_write_custom}")
-        else: 
+        else:  
             st.warning(
                 f"Nenhum arquivo de instruções ('{instrucoes_custom_path}' ou '{instrucoes_default_path}') encontrado. "
                 f"Um texto base foi carregado. Edite e salve abaixo para criar '{instrucoes_custom_path}'."
@@ -2784,17 +2779,17 @@ if aba == "Administrador" and st.session_state.admin_logado:
             "Edite o texto abaixo (suporta Markdown). Após salvar, este texto será usado como as instruções para os clientes:",
             value=current_instructions_text,
             height=600,
-            key="instrucoes_editor_v21", 
+            key="instrucoes_editor_v21",  
             disabled=not is_admin_total()
         )
 
-        if st.button("Salvar Instruções", key="save_instrucoes_v21", icon="💾", use_container_width=True, disabled=not is_admin_total()): 
+        if st.button("Salvar Instruções", key="save_instrucoes_v21", icon="💾", use_container_width=True, disabled=not is_admin_total()):  
             if is_admin_total():
                 try:
                     with open(instrucoes_custom_path, "w", encoding="utf-8") as f:
                         f.write(edited_text)
                     st.toast("Instruções salvas com sucesso!", icon="🎉")
-                    st.rerun() 
+                    st.rerun()  
                 except Exception as e_save_instr:
                     st.error(f"Erro ao salvar as instruções: {e_save_instr}")
                 
@@ -2804,7 +2799,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             df_usuarios_para_filtro_hu = pd.read_csv(usuarios_csv, encoding='utf-8', usecols=['CNPJ', 'Empresa', 'NomeContato'], dtype={'CNPJ': str})
         except FileNotFoundError:
             st.error("Arquivo de histórico ou usuários não encontrado.")
-            df_historico_completo_hu = pd.DataFrame(columns=["Data", "CNPJ", "Ação", "Descrição"]) 
+            df_historico_completo_hu = pd.DataFrame(columns=["Data", "CNPJ", "Ação", "Descrição"])  
             df_usuarios_para_filtro_hu = pd.DataFrame(columns=['CNPJ', 'Empresa', 'NomeContato'])
         except Exception as e_hu:
             st.error(f"Erro ao carregar dados para o histórico: {e_hu}")
@@ -2817,8 +2812,8 @@ if aba == "Administrador" and st.session_state.admin_logado:
         if not df_usuarios_para_filtro_hu.empty and 'Empresa' in df_usuarios_para_filtro_hu.columns:
             empresas_hist_list_hu.extend(sorted(df_usuarios_para_filtro_hu['Empresa'].astype(str).unique().tolist()))
         
-        emp_sel_hu = col_hu_f1.selectbox("Filtrar por Empresa:", empresas_hist_list_hu, key="hist_emp_sel_v21") 
-        termo_busca_hu = col_hu_f2.text_input("Buscar por Nome do Contato, CNPJ, Ação ou Descrição:", key="hist_termo_busca_v21") 
+        emp_sel_hu = col_hu_f1.selectbox("Filtrar por Empresa:", empresas_hist_list_hu, key="hist_emp_sel_v21")  
+        termo_busca_hu = col_hu_f2.text_input("Buscar por Nome do Contato, CNPJ, Ação ou Descrição:", key="hist_termo_busca_v21")  
 
         df_historico_filtrado_view_hu = df_historico_completo_hu.copy()
 
@@ -2835,7 +2830,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 ]['CNPJ'].tolist()
             
             df_historico_filtrado_view_hu = df_historico_filtrado_view_hu[
-                df_historico_filtrado_view_hu['CNPJ'].isin(cnpjs_match_nome_hu) | 
+                df_historico_filtrado_view_hu['CNPJ'].isin(cnpjs_match_nome_hu) |  
                 df_historico_filtrado_view_hu['CNPJ'].astype(str).str.lower().str.contains(busca_lower_hu) |
                 df_historico_filtrado_view_hu['Ação'].astype(str).str.lower().str.contains(busca_lower_hu, na=False) |
                 df_historico_filtrado_view_hu['Descrição'].astype(str).str.lower().str.contains(busca_lower_hu, na=False)
@@ -2850,12 +2845,12 @@ if aba == "Administrador" and st.session_state.admin_logado:
     elif menu_admin == "Gerenciar Clientes":
         df_usuarios_gc = df_usuarios_admin_geral.copy()
 
-        st.sidebar.markdown("---") 
+        st.sidebar.markdown("---")  
         st.sidebar.subheader("Filtros para Gerenciar Clientes")
         filter_instrucoes_status_gc = st.sidebar.selectbox(
             "Status das Instruções:",
             ["Todos", "Visualizaram Instruções", "Não Visualizaram Instruções"],
-            key="admin_gc_filter_instrucoes_status_v21" 
+            key="admin_gc_filter_instrucoes_status_v21"  
         )
 
         df_display_clientes_gc = df_usuarios_gc.copy()
@@ -2875,7 +2870,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             
             if not df_display_clientes_gc.empty:
                 clientes_lista_gc_ops = df_display_clientes_gc.apply(lambda row: f"{row['Empresa']} ({row['CNPJ']})", axis=1).tolist()
-                cliente_selecionado_str_gc = st.selectbox("Selecione o cliente para gerenciar:", [""] + clientes_lista_gc_ops, key="sel_cliente_gc_v21_filtered") 
+                cliente_selecionado_str_gc = st.selectbox("Selecione o cliente para gerenciar:", [""] + clientes_lista_gc_ops, key="sel_cliente_gc_v21_filtered")  
 
                 if cliente_selecionado_str_gc:
                     cnpj_selecionado_gc_val = cliente_selecionado_str_gc.split('(')[-1].replace(')','').strip()
@@ -2931,6 +2926,249 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
                         action_cols = st.columns(2)
                         with action_cols[0]:
-                            if st.button(f"Conceder +1 Diagnóstico", key=f"conceder_diag_gc_v21_{cnpj_selecionado_gc_val}", icon="➕", use_container_width=True, disabled=not is_admin_total()): 
+                            if st.button(f"Conceder +1 Diagnóstico", key=f"conceder_diag_gc_v21_{cnpj_selecionado_gc_val}", icon="➕", use_container_width=True, disabled=not is_admin_total()):  
                                 if is_admin_total():
-                                    novos_ 
+                                    novos_disponiveis = int(cliente_data_gc_val['DiagnosticosDisponiveis']) + 1
+                                    if update_user_data(cnpj_selecionado_gc_val, "DiagnosticosDisponiveis", novos_disponiveis):
+                                        st.toast(f"1 Diagnóstico concedido para {cliente_data_gc_val['Empresa']}!", icon="✅")
+                                        st.rerun()
+                                    else:
+                                        st.error("Erro ao conceder diagnóstico.")
+
+                            if st.button(f"Resetar Senha", key=f"reset_senha_gc_v21_{cnpj_selecionado_gc_val}", icon="🔑", use_container_width=True, disabled=not is_admin_total()):
+                                if is_admin_total():
+                                    nova_senha_padrao = "12345" # Senha padrão para reset
+                                    try:
+                                        df_usuarios_reset = pd.read_csv(usuarios_csv, dtype={'CNPJ': str}, encoding='utf-8')
+                                        idx_reset = df_usuarios_reset[df_usuarios_reset['CNPJ'] == cnpj_selecionado_gc_val].index
+                                        if not idx_reset.empty:
+                                            df_usuarios_reset.loc[idx_reset, "Senha"] = nova_senha_padrao
+                                            df_usuarios_reset.to_csv(usuarios_csv, index=False, encoding='utf-8')
+                                            registrar_acao(cnpj_selecionado_gc_val, "Reset Senha", f"Senha resetada para {nova_senha_padrao}")
+                                            st.toast(f"Senha de {cliente_data_gc_val['Empresa']} resetada para '{nova_senha_padrao}'!", icon="✅")
+                                            st.rerun()
+                                        else:
+                                            st.error("Cliente não encontrado para reset de senha.")
+                                    except Exception as e_reset_senha:
+                                        st.error(f"Erro ao resetar senha: {e_reset_senha}")
+
+                        with action_cols[1]:
+                            is_blocked = False
+                            try:
+                                df_blocked = pd.read_csv(usuarios_bloqueados_csv, dtype={'CNPJ': str}, encoding='utf-8')
+                                is_blocked = cnpj_selecionado_gc_val in df_blocked["CNPJ"].values
+                            except (FileNotFoundError, pd.errors.EmptyDataError):
+                                pass # No blocked users file or empty
+
+                            if is_blocked:
+                                if st.button(f"Desbloquear Cliente", key=f"desbloquear_gc_v21_{cnpj_selecionado_gc_val}", icon="🔓", use_container_width=True, type="secondary", disabled=not is_admin_total()):
+                                    if is_admin_total():
+                                        try:
+                                            df_blocked = df_blocked[df_blocked["CNPJ"] != cnpj_selecionado_gc_val]
+                                            df_blocked.to_csv(usuarios_bloqueados_csv, index=False, encoding='utf-8')
+                                            registrar_acao(cnpj_selecionado_gc_val, "Desbloqueio", "Cliente desbloqueado.")
+                                            st.toast(f"Cliente {cliente_data_gc_val['Empresa']} desbloqueado!", icon="✅")
+                                            st.rerun()
+                                        except Exception as e_unblock:
+                                            st.error(f"Erro ao desbloquear cliente: {e_unblock}")
+                            else:
+                                if st.button(f"Bloquear Cliente", key=f"bloquear_gc_v21_{cnpj_selecionado_gc_val}", icon="🔒", use_container_width=True, type="primary", disabled=not is_admin_total()):
+                                    if is_admin_total():
+                                        try:
+                                            df_blocked = pd.read_csv(usuarios_bloqueados_csv, dtype={'CNPJ': str}, encoding='utf-8')
+                                            new_blocked_entry = pd.DataFrame([{"CNPJ": cnpj_selecionado_gc_val}])
+                                            df_blocked = pd.concat([df_blocked, new_blocked_entry], ignore_index=True)
+                                            df_blocked.to_csv(usuarios_bloqueados_csv, index=False, encoding='utf-8')
+                                            registrar_acao(cnpj_selecionado_gc_val, "Bloqueio", "Cliente bloqueado.")
+                                            st.toast(f"Cliente {cliente_data_gc_val['Empresa']} bloqueado!", icon="🚨")
+                                            st.rerun()
+                                        except Exception as e_block:
+                                            st.error(f"Erro ao bloquear cliente: {e_block}")
+                            
+                            if st.button(f"Deletar Cliente", key=f"deletar_cliente_gc_v21_{cnpj_selecionado_gc_val}", icon="🗑️", use_container_width=True, type="primary", disabled=not is_admin_total()):
+                                if is_admin_total():
+                                    if st.checkbox(f"Confirmar exclusão de {cliente_data_gc_val['Empresa']} (irreversível)?", key=f"confirm_del_gc_v21_{cnpj_selecionado_gc_val}"):
+                                        try:
+                                            # Remover do CSV de usuários
+                                            df_usuarios_gc = df_usuarios_gc[df_usuarios_gc['CNPJ'] != cnpj_selecionado_gc_val]
+                                            df_usuarios_gc.to_csv(usuarios_csv, index=False, encoding='utf-8')
+
+                                            # Remover diagnósticos relacionados
+                                            df_diagnosticos_existentes = pd.read_csv(arquivo_csv, dtype={'CNPJ': str}, encoding='utf-8')
+                                            df_diagnosticos_existentes = df_diagnosticos_existentes[df_diagnosticos_existentes['CNPJ'] != cnpj_selecionado_gc_val]
+                                            df_diagnosticos_existentes.to_csv(arquivo_csv, index=False, encoding='utf-8')
+
+                                            # Remover notificações relacionadas
+                                            df_notificacoes_existentes = pd.read_csv(notificacoes_csv, dtype={'CNPJ_Cliente': str}, encoding='utf-8')
+                                            df_notificacoes_existentes = df_notificacoes_existentes[df_notificacoes_existentes['CNPJ_Cliente'] != cnpj_selecionado_gc_val]
+                                            df_notificacoes_existentes.to_csv(notificacoes_csv, index=False, encoding='utf-8')
+
+                                            # Remover SAC uso/feedback relacionado
+                                            df_sac_uso_existente = pd.read_csv(sac_uso_feedback_csv, dtype={'CNPJ_Cliente': str}, encoding='utf-8')
+                                            df_sac_uso_existente = df_sac_uso_existente[df_sac_uso_existente['CNPJ_Cliente'] != cnpj_selecionado_gc_val]
+                                            df_sac_uso_existente.to_csv(sac_uso_feedback_csv, index=False, encoding='utf-8')
+
+                                            # Remover respostas de satisfação relacionadas
+                                            df_satisfacao_resp_existente = pd.read_csv(satisfacao_respostas_csv, dtype={'CNPJ_Cliente': str}, encoding='utf-8')
+                                            df_satisfacao_resp_existente = df_satisfacao_resp_existente[df_satisfacao_resp_existente['CNPJ_Cliente'] != cnpj_selecionado_gc_val]
+                                            df_satisfacao_resp_existente.to_csv(satisfacao_respostas_csv, index=False, encoding='utf-8')
+
+                                            # Remover logo do cliente, se existir
+                                            logo_to_remove = find_client_logo_path(cnpj_selecionado_gc_val)
+                                            if logo_to_remove and os.path.exists(logo_to_remove):
+                                                os.remove(logo_to_remove)
+
+                                            registrar_acao(cnpj_selecionado_gc_val, "Deleção Cliente", "Cliente e todos os dados relacionados deletados.")
+                                            st.toast(f"Cliente {cliente_data_gc_val['Empresa']} e todos os dados relacionados foram deletados!", icon="🗑️")
+                                            st.cache_data.clear()
+                                            st.rerun()
+                                        except Exception as e_del_cliente:
+                                            st.error(f"Erro ao deletar cliente e dados relacionados: {e_del_cliente}")
+                                            st.exception(e_del_cliente)
+            else:
+                st.info("Nenhum cliente selecionado para gerenciar.")
+        else:
+            st.info("Nenhum cliente encontrado para os filtros aplicados.")
+        
+        st.markdown("#### Adicionar Novo Cliente")
+        if not is_admin_total():
+            st.warning("Apenas administradores com permissão 'total' podem adicionar novos clientes.")
+
+        with st.form("form_add_cliente_admin_v21", clear_on_submit=True):
+            new_cnpj = st.text_input("CNPJ do Novo Cliente:", key="new_cli_cnpj_v21", disabled=not is_admin_total())
+            new_senha = st.text_input("Senha do Novo Cliente:", type="password", key="new_cli_senha_v21", disabled=not is_admin_total())
+            new_empresa = st.text_input("Nome da Empresa:", key="new_cli_empresa_v21", disabled=not is_admin_total())
+            new_contato = st.text_input("Nome do Contato:", key="new_cli_contato_v21", disabled=not is_admin_total())
+            new_telefone = st.text_input("Telefone do Contato:", key="new_cli_telefone_v21", disabled=not is_admin_total())
+            new_slots = st.number_input("Diagnósticos Disponíveis (Slots):", min_value=1, value=1, step=1, key="new_cli_slots_v21", disabled=not is_admin_total())
+
+            if st.form_submit_button("Adicionar Cliente", icon="➕", use_container_width=True, disabled=not is_admin_total()):
+                if is_admin_total():
+                    if new_cnpj and new_senha and new_empresa and new_contato:
+                        try:
+                            users_df_add = pd.read_csv(usuarios_csv, dtype={'CNPJ': str}, encoding='utf-8')
+                            if new_cnpj in users_df_add["CNPJ"].values:
+                                st.error("CNPJ já cadastrado.")
+                            else:
+                                new_user_data = {
+                                    "CNPJ": new_cnpj,
+                                    "Senha": new_senha,
+                                    "Empresa": new_empresa,
+                                    "NomeContato": new_contato,
+                                    "Telefone": new_telefone,
+                                    "JaVisualizouInstrucoes": False,
+                                    "DiagnosticosDisponiveis": int(new_slots),
+                                    "TotalDiagnosticosRealizados": 0
+                                }
+                                new_user_df = pd.DataFrame([new_user_data])
+                                users_df_add = pd.concat([users_df_add, new_user_df], ignore_index=True)
+                                users_df_add.to_csv(usuarios_csv, index=False, encoding='utf-8')
+                                registrar_acao(new_cnpj, "Cadastro Cliente", f"Novo cliente '{new_empresa}' cadastrado.")
+                                st.toast(f"Cliente {new_empresa} adicionado com sucesso!", icon="🎉")
+                                st.cache_data.clear()
+                                st.rerun()
+                        except Exception as e_add_user:
+                            st.error(f"Erro ao adicionar novo cliente: {e_add_user}")
+                            st.exception(e_add_user)
+                    else:
+                        st.warning("Preencha todos os campos obrigatórios (CNPJ, Senha, Empresa, Nome do Contato).")
+    
+    elif menu_admin == "Gerenciar Administradores":
+        st.markdown("#### Gerenciamento de Usuários Administradores")
+        if not is_admin_total():
+            st.warning("Apenas administradores com permissão 'total' podem gerenciar outros administradores.")
+        
+        try:
+            df_admins = pd.read_csv(admin_credenciais_csv, encoding='utf-8')
+            if "Permissoes" not in df_admins.columns:
+                df_admins["Permissoes"] = "total" # Default to total if column is missing
+                df_admins.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
+        except (FileNotFoundError, pd.errors.EmptyDataError):
+            st.info("Nenhum administrador cadastrado. Por favor, adicione um novo administrador abaixo.")
+            df_admins = pd.DataFrame(columns=colunas_base_admin_credenciais)
+        except Exception as e:
+            st.error(f"Erro ao carregar dados de administradores: {e}")
+            df_admins = pd.DataFrame(columns=colunas_base_admin_credenciais)
+
+        st.subheader("Administradores Atuais")
+        if not df_admins.empty:
+            st.dataframe(df_admins, use_container_width=True)
+        else:
+            st.info("Nenhum administrador cadastrado.")
+
+        st.subheader("Adicionar Novo Administrador")
+        with st.form("form_add_admin_v21", clear_on_submit=True):
+            new_admin_user = st.text_input("Usuário:", key="new_admin_user_v21", disabled=not is_admin_total())
+            new_admin_pass = st.text_input("Senha:", type="password", key="new_admin_pass_v21", disabled=not is_admin_total())
+            new_admin_perms = st.selectbox("Permissões:", ["visualizacao", "total"], key="new_admin_perms_v21", disabled=not is_admin_total())
+            
+            if st.form_submit_button("Adicionar Administrador", icon="➕", use_container_width=True, disabled=not is_admin_total()):
+                if is_admin_total():
+                    if new_admin_user.strip() and new_admin_pass.strip():
+                        if new_admin_user in df_admins["Usuario"].values:
+                            st.error("Usuário já existe.")
+                        else:
+                            new_admin_entry = pd.DataFrame([{
+                                "Usuario": new_admin_user.strip(),
+                                "Senha": new_admin_pass.strip(),
+                                "Permissoes": new_admin_perms
+                            }])
+                            df_admins = pd.concat([df_admins, new_admin_entry], ignore_index=True)
+                            df_admins.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
+                            st.toast("Novo administrador adicionado!", icon="🎉")
+                            st.rerun()
+                    else:
+                        st.warning("Usuário e senha são obrigatórios.")
+
+        st.subheader("Editar Administrador Existente")
+        if not df_admins.empty:
+            admin_to_edit_user = st.selectbox("Selecione o Administrador para Editar:", [""] + df_admins["Usuario"].tolist(), key="edit_admin_sel_user_v21", disabled=not is_admin_total())
+            
+            if admin_to_edit_user:
+                current_admin_data = df_admins[df_admins["Usuario"] == admin_to_edit_user].iloc[0]
+                
+                with st.form(f"form_edit_admin_{admin_to_edit_user}_v21"):
+                    edited_admin_pass = st.text_input("Nova Senha (deixe em branco para não alterar):", type="password", key=f"edited_admin_pass_{admin_to_edit_user}_v21", disabled=not is_admin_total())
+                    
+                    current_perms_idx = 0
+                    if "Permissoes" in current_admin_data and current_admin_data["Permissoes"] in ["visualizacao", "total"]:
+                        current_perms_idx = ["visualizacao", "total"].index(current_admin_data["Permissoes"])
+                    
+                    edited_admin_perms = st.selectbox("Permissões:", ["visualizacao", "total"], index=current_perms_idx, key=f"edited_admin_perms_{admin_to_edit_user}_v21", disabled=not is_admin_total())
+                    
+                    if st.form_submit_button("Salvar Alterações do Administrador", icon="💾", use_container_width=True, disabled=not is_admin_total()):
+                        if is_admin_total():
+                            idx_to_update = df_admins[df_admins["Usuario"] == admin_to_edit_user].index
+                            if not idx_to_update.empty:
+                                if edited_admin_pass.strip():
+                                    df_admins.loc[idx_to_update, "Senha"] = edited_admin_pass.strip()
+                                df_admins.loc[idx_to_update, "Permissoes"] = edited_admin_perms
+                                df_admins.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
+                                st.toast(f"Administrador {admin_to_edit_user} atualizado!", icon="✅")
+                                st.rerun()
+                            else:
+                                st.error("Erro: Administrador não encontrado.")
+        else:
+            st.info("Nenhum administrador para editar.")
+
+        st.subheader("Deletar Administrador")
+        if not df_admins.empty:
+            admin_to_delete_user = st.selectbox("Selecione o Administrador para Deletar:", [""] + df_admins["Usuario"].tolist(), key="del_admin_sel_user_v21", disabled=not is_admin_total())
+            
+            if st.button("Deletar Administrador Selecionado", icon="🗑️", type="primary", use_container_width=True, disabled=not is_admin_total()):
+                if is_admin_total():
+                    if admin_to_delete_user:
+                        if admin_to_delete_user == st.session_state.admin_username:
+                            st.error("Você não pode deletar a si mesmo!")
+                        elif len(df_admins) == 1:
+                            st.error("Não é possível deletar o último administrador do sistema.")
+                        else:
+                            df_admins = df_admins[df_admins["Usuario"] != admin_to_delete_user]
+                            df_admins.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
+                            st.toast(f"Administrador {admin_to_delete_user} deletado!", icon="🗑️")
+                            st.rerun()
+                    else:
+                        st.warning("Selecione um administrador para deletar.")
+        else:
+            st.info("Nenhum administrador para deletar.")
+ 
