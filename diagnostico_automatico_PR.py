@@ -3090,107 +3090,178 @@ if aba == "Administrador" and st.session_state.admin_logado:
                     else:
                         st.warning("Preencha todos os campos obrigatórios (CNPJ, Senha, Empresa, Nome do Contato).")
     
-    elif menu_admin == "Gerenciar Administradores":
-        st.markdown("#### Gerenciamento de Usuários Administradores")
-        # Mensagem de aviso se o admin não tem permissão total
-        if not is_admin_total():
-            st.warning("Apenas administradores com permissão 'total' podem gerenciar outros administradores.")
-        
-        try:
-            df_admins = pd.read_csv(admin_credenciais_csv, encoding='utf-8')
-            # Garante que a coluna 'Permissoes' exista
-            if "Permissoes" not in df_admins.columns:
-                df_admins["Permissoes"] = "total" # Define 'total' como padrão se a coluna estiver faltando
-                df_admins.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
-        except (FileNotFoundError, pd.errors.EmptyDataError):
-            st.info("Nenhum administrador cadastrado. Por favor, adicione um novo administrador abaixo.")
-            df_admins = pd.DataFrame(columns=colunas_base_admin_credenciais)
-        except Exception as e:
-            st.error(f"Erro ao carregar dados de administradores: {e}")
-            df_admins = pd.DataFrame(columns=colunas_base_admin_credenciais)
+   # auth.py
+import bcrypt
+import pandas as pd
 
-        st.subheader("Administradores Atuais")
-        if not df_admins.empty:
-            st.dataframe(df_admins, use_container_width=True)
-        else:
-            st.info("Nenhum administrador cadastrado.")
+# Supondo que você tenha constantes para os nomes das colunas em um arquivo constants.py
+# from constants import COL_USUARIO, COL_SENHA_HASH, COL_PERMISSOES, COL_CNPJ, COL_EMPRESA, etc.
+# Por simplicidade, usaremos strings diretamente aqui.
 
-        st.subheader("Adicionar Novo Administrador")
-        with st.form("form_add_admin_v21", clear_on_submit=True):
-            new_admin_user = st.text_input("Usuário:", key="new_admin_user_v21", disabled=not is_admin_total())
-            new_admin_pass = st.text_input("Senha:", type="password", key="new_admin_pass_v21", disabled=not is_admin_total())
-            # Selectbox para definir as permissões do novo administrador
-            new_admin_perms = st.selectbox("Permissões:", ["visualizacao", "total"], key="new_admin_perms_v21", disabled=not is_admin_total())
-            
-            if st.form_submit_button("Adicionar Administrador", icon="➕", use_container_width=True, disabled=not is_admin_total()):
-                if is_admin_total(): # Verifica permissão antes de executar
-                    if new_admin_user.strip() and new_admin_pass.strip():
-                        if new_admin_user in df_admins["Usuario"].values:
-                            st.error("Usuário já existe.")
-                        else:
-                            new_admin_entry = pd.DataFrame([{
-                                "Usuario": new_admin_user.strip(),
-                                "Senha": new_admin_pass.strip(),
-                                "Permissoes": new_admin_perms # Salva a permissão selecionada
-                            }])
-                            df_admins = pd.concat([df_admins, new_admin_entry], ignore_index=True)
-                            df_admins.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
-                            st.toast("Novo administrador adicionado!", icon="🎉")
-                            st.rerun()
-                    else:
-                        st.warning("Usuário e senha são obrigatórios.")
+# --- Funções de Hashing de Senha ---
 
-        st.subheader("Editar Administrador Existente")
-        if not df_admins.empty:
-            admin_to_edit_user = st.selectbox("Selecione o Administrador para Editar:", [""] + df_admins["Usuario"].tolist(), key="edit_admin_sel_user_v21", disabled=not is_admin_total())
-            
-            if admin_to_edit_user:
-                current_admin_data = df_admins[df_admins["Usuario"] == admin_to_edit_user].iloc[0]
-                
-                with st.form(f"form_edit_admin_{admin_to_edit_user}_v21"):
-                    edited_admin_pass = st.text_input("Nova Senha (deixe em branco para não alterar):", type="password", key=f"edited_admin_pass_{admin_to_edit_user}_v21", disabled=not is_admin_total())
-                    
-                    # Define o índice padrão para o selectbox de permissões
-                    current_perms_idx = 0
-                    if "Permissoes" in current_admin_data and current_admin_data["Permissoes"] in ["visualizacao", "total"]:
-                        current_perms_idx = ["visualizacao", "total"].index(current_admin_data["Permissoes"])
-                    
-                    # Selectbox para editar as permissões do administrador
-                    edited_admin_perms = st.selectbox("Permissões:", ["visualizacao", "total"], index=current_perms_idx, key=f"edited_admin_perms_{admin_to_edit_user}_v21", disabled=not is_admin_total())
-                    
-                    if st.form_submit_button("Salvar Alterações do Administrador", icon="💾", use_container_width=True, disabled=not is_admin_total()):
-                        if is_admin_total(): # Verifica permissão antes de executar
-                            idx_to_update = df_admins[df_admins["Usuario"] == admin_to_edit_user].index
-                            if not idx_to_update.empty:
-                                if edited_admin_pass.strip():
-                                    df_admins.loc[idx_to_update, "Senha"] = edited_admin_pass.strip()
-                                df_admins.loc[idx_to_update, "Permissoes"] = edited_admin_perms # Salva a permissão editada
-                                df_admins.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
-                                st.toast(f"Administrador {admin_to_edit_user} atualizado!", icon="✅")
-                                st.rerun()
-                            else:
-                                st.error("Erro: Administrador não encontrado.")
-        else:
-            st.info("Nenhum administrador para editar.")
+def hash_password(password: str) -> str:
+    """
+    Gera um hash para a senha fornecida usando bcrypt.
 
-        st.subheader("Deletar Administrador")
-        if not df_admins.empty:
-            admin_to_delete_user = st.selectbox("Selecione o Administrador para Deletar:", [""] + df_admins["Usuario"].tolist(), key="del_admin_sel_user_v21", disabled=not is_admin_total())
-            
-            if st.button("Deletar Administrador Selecionado", icon="🗑️", type="primary", use_container_width=True, disabled=not is_admin_total()):
-                if is_admin_total(): # Verifica permissão antes de executar
-                    if admin_to_delete_user:
-                        if admin_to_delete_user == st.session_state.admin_username:
-                            st.error("Você não pode deletar a si mesmo!")
-                        elif len(df_admins) == 1:
-                            st.error("Não é possível deletar o último administrador do sistema.")
-                        else:
-                            df_admins = df_admins[df_admins["Usuario"] != admin_to_delete_user]
-                            df_admins.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
-                            st.toast(f"Administrador {admin_to_delete_user} deletado!", icon="🗑️")
-                            st.rerun()
-                    else:
-                        st.warning("Selecione um administrador para deletar.")
-        else:
-            st.info("Nenhum administrador para deletar.")
- 
+    Args:
+        password: A senha em texto plano.
+
+    Returns:
+        O hash da senha como uma string decodificada em utf-8.
+    """
+    password_bytes = password.encode('utf-8')
+    salt = bcrypt.gensalt()
+    hashed_bytes = bcrypt.hashpw(password_bytes, salt)
+    return hashed_bytes.decode('utf-8')
+
+def verify_password(plain_password: str, hashed_password_str: str) -> bool:
+    """
+    Verifica se a senha em texto plano corresponde ao hash armazenado.
+
+    Args:
+        plain_password: A senha em texto plano fornecida pelo usuário.
+        hashed_password_str: O hash da senha armazenado (como string).
+
+    Returns:
+        True se a senha corresponder, False caso contrário.
+    """
+    plain_password_bytes = plain_password.encode('utf-8')
+    hashed_password_bytes = hashed_password_str.encode('utf-8')
+    return bcrypt.checkpw(plain_password_bytes, hashed_password_bytes)
+
+# --- Funções de Login ---
+
+def realizar_login_admin(username: str, password_input: str, admin_creds_df: pd.DataFrame):
+    """
+    Tenta autenticar um administrador.
+
+    Args:
+        username: O nome de usuário do administrador.
+        password_input: A senha fornecida pelo administrador.
+        admin_creds_df: DataFrame contendo as credenciais dos administradores
+                        (espera colunas 'Usuario', 'Senha' (que deve ser o hash), 'Permissoes').
+
+    Returns:
+        Um dicionário com os dados do administrador (incluindo 'Usuario' e 'Permissoes')
+        se o login for bem-sucedido, None caso contrário.
+    """
+    if admin_creds_df.empty or "Usuario" not in admin_creds_df.columns or "Senha" not in admin_creds_df.columns:
+        # st.error("Arquivo de credenciais de administrador não configurado corretamente.") # Use logging em produção
+        print("Erro: Arquivo de credenciais de administrador não configurado corretamente.")
+        return None
+
+    admin_data = admin_creds_df[admin_creds_df["Usuario"] == username]
+
+    if not admin_data.empty:
+        stored_hashed_password = admin_data.iloc[0]["Senha"] # Esta deve ser a coluna com o HASH
+        if verify_password(password_input, stored_hashed_password):
+            permissions = admin_data.iloc[0].get("Permissoes", "visualizacao") # Padrão se não houver
+            return {"Usuario": username, "Permissoes": permissions}
+    return None
+
+def realizar_login_cliente(cnpj_input: str, password_input: str, user_creds_df: pd.DataFrame, blocked_users_df: pd.DataFrame):
+    """
+    Tenta autenticar um cliente.
+
+    Args:
+        cnpj_input: O CNPJ do cliente.
+        password_input: A senha fornecida pelo cliente.
+        user_creds_df: DataFrame contendo as credenciais dos clientes
+                       (espera colunas 'CNPJ', 'Senha' (hash), 'Empresa', etc.).
+        blocked_users_df: DataFrame contendo CNPJs de usuários bloqueados.
+
+    Returns:
+        Um dicionário com os dados do cliente se o login for bem-sucedido,
+        uma string indicando o motivo do erro ("bloqueado", "invalido"), ou None se houver erro de config.
+    """
+    if user_creds_df.empty or "CNPJ" not in user_creds_df.columns or "Senha" not in user_creds_df.columns:
+        print("Erro: Arquivo de credenciais de usuário não configurado corretamente.")
+        return None # Indica erro de configuração
+
+    if not blocked_users_df.empty and cnpj_input in blocked_users_df["CNPJ"].values:
+        return "bloqueado"
+
+    user_data_row = user_creds_df[user_creds_df["CNPJ"] == cnpj_input]
+
+    if not user_data_row.empty:
+        stored_hashed_password = user_data_row.iloc[0]["Senha"] # Coluna com o HASH
+        if verify_password(password_input, stored_hashed_password):
+            # Retorna todos os dados do usuário da linha encontrada
+            user_info = user_data_row.iloc[0].to_dict()
+            # Assegurar tipos corretos para colunas importantes ao carregar no session_state
+            user_info["JaVisualizouInstrucoes"] = bool(user_info.get("JaVisualizouInstrucoes", False))
+            user_info["DiagnosticosDisponiveis"] = int(user_info.get("DiagnosticosDisponiveis", 1))
+            user_info["TotalDiagnosticosRealizados"] = int(user_info.get("TotalDiagnosticosRealizados", 0))
+            return user_info
+    return "invalido"
+
+
+# --- Exemplo de uso (para teste, não faria parte do app.py diretamente assim) ---
+if __name__ == '__main__':
+    # Criar um hash para uma nova senha de admin
+    # nova_senha_admin = "admin123"
+    # hash_admin = hash_password(nova_senha_admin)
+    # print(f"Hash para admin 'admin_user': {hash_admin}")
+    # Você adicionaria isso ao seu admins.csv na coluna 'Senha'
+
+    # Criar um hash para uma nova senha de cliente
+    # nova_senha_cliente = "clienteP@ss"
+    # hash_cliente = hash_password(nova_senha_cliente)
+    # print(f"Hash para cliente '12345678000199': {hash_cliente}")
+    # Você adicionaria isso ao seu usuarios.csv na coluna 'Senha'
+
+    # Simulação de DataFrames (em um app real, você carregaria dos CSVs)
+    mock_admins_data = {
+        'Usuario': ['admin_user', 'outro_admin'],
+        # Lembre-se de substituir pelos hashes reais gerados!
+        'Senha': [hash_password("admin123"), hash_password("segredo")],
+        'Permissoes': ['total', 'visao_geral_diagnosticos,gerenciar_clientes']
+    }
+    mock_admins_df = pd.DataFrame(mock_admins_data)
+
+    mock_users_data = {
+        'CNPJ': ['11111111000111', '22222222000122'],
+        'Senha': [hash_password("cliente1"), hash_password("cliente2")],
+        'Empresa': ['Empresa Alpha', 'Empresa Beta'],
+        'NomeContato': ['Contato Alpha', 'Contato Beta'],
+        'Telefone': ['1111-1111', '2222-2222'],
+        'JaVisualizouInstrucoes': [True, False],
+        'DiagnosticosDisponiveis': [2, 1],
+        'TotalDiagnosticosRealizados': [1, 0]
+    }
+    mock_users_df = pd.DataFrame(mock_users_data)
+    mock_blocked_df = pd.DataFrame({'CNPJ': ['99999999000199']})
+
+    print("\n--- Teste Login Admin ---")
+    admin_login_result = realizar_login_admin("admin_user", "admin123", mock_admins_df)
+    if admin_login_result:
+        print(f"Login Admin OK: {admin_login_result}")
+    else:
+        print("Login Admin Falhou.")
+
+    admin_login_fail = realizar_login_admin("admin_user", "senhaerrada", mock_admins_df)
+    if admin_login_fail:
+        print(f"Login Admin OK (inesperado): {admin_login_fail}")
+    else:
+        print("Login Admin Falhou (esperado).")
+
+
+    print("\n--- Teste Login Cliente ---")
+    client_login_result = realizar_login_cliente("11111111000111", "cliente1", mock_users_df, mock_blocked_df)
+    if isinstance(client_login_result, dict):
+        print(f"Login Cliente OK: {client_login_result['Empresa']}")
+    else:
+        print(f"Login Cliente Falhou: {client_login_result}")
+
+    client_login_blocked = realizar_login_cliente("99999999000199", "qualquer", mock_users_df, mock_blocked_df)
+    if isinstance(client_login_blocked, dict):
+         print(f"Login Cliente OK (inesperado): {client_login_blocked['Empresa']}")
+    else:
+        print(f"Login Cliente Falhou (esperado): {client_login_blocked}")
+
+    client_login_invalid = realizar_login_cliente("11111111000111", "errada", mock_users_df, mock_blocked_df)
+    if isinstance(client_login_invalid, dict):
+         print(f"Login Cliente OK (inesperado): {client_login_invalid['Empresa']}")
+    else:
+        print(f"Login Cliente Falhou (esperado): {client_login_invalid}")
