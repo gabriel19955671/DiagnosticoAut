@@ -432,6 +432,7 @@ colunas_base_satisfacao_respostas = ["ID_Resposta_Satisfacao", "ID_Pergunta_Sati
                                       "Resposta_Texto", "Resposta_Numerica", "Resposta_Opcao_Selecionada"]
 
 def is_admin_total():
+    """Verifica se o administrador logado possui permissão 'total'."""
     return st.session_state.get("admin_permissions") == "total"
 
 def inicializar_csv(filepath, columns, defaults=None):
@@ -452,10 +453,11 @@ def inicializar_csv(filepath, columns, defaults=None):
                 
                 df_init = pd.read_csv(filepath, encoding='utf-8', dtype=dtype_spec)
 
+                # Garante que a coluna 'Permissoes' existe para admins.csv
                 if filepath == admin_credenciais_csv and "Permissoes" not in df_init.columns:
-                    df_init["Permissoes"] = "total"  
+                    df_init["Permissoes"] = "total"  # Define 'total' como padrão para entradas existentes sem permissão
                     df_init.to_csv(filepath, index=False, encoding='utf-8')
-                    df_init = pd.read_csv(filepath, encoding='utf-8')  
+                    df_init = pd.read_csv(filepath, encoding='utf-8')  # Recarrega para garantir o dtype correto
 
             except ValueError as ve:  
                 st.warning(f"Problema ao ler {filepath} com dtypes específicos ({ve}), tentando leitura genérica.")
@@ -816,10 +818,12 @@ if aba == "Administrador" and not st.session_state.admin_logado:
                 if not admin_match.empty:
                     st.session_state.admin_logado = True
                     st.session_state.admin_username = u
+                    # Carrega a permissão do administrador logado
                     if "Permissoes" in admin_match.columns and pd.notna(admin_match.iloc[0]["Permissoes"]):
                         st.session_state.admin_permissions = admin_match.iloc[0]["Permissoes"]
                     else:
-                        st.session_state.admin_permissions = "total"  
+                        st.session_state.admin_permissions = "total"  # Padrão se a coluna estiver faltando ou vazia
+                        # Atualiza o CSV se a coluna 'Permissoes' estava faltando para este usuário
                         idx_to_update = df_creds[(df_creds["Usuario"] == u)].index
                         if not idx_to_update.empty:
                             if "Permissoes" not in df_creds.columns:  
@@ -1481,7 +1485,7 @@ if aba == "Cliente" and st.session_state.cliente_logado:
                                     st.markdown(f"#### ⏱️ {prazo_k_col}")
                                     for card_k_item in gut_cards_sorted_kanban:
                                         if card_k_item["Prazo"] == prazo_k_col:
-                                            st.markdown(f"""<div class="custom-card"><b>{card_k_item['Tarefa']}</b> (Score GUT: {card_k_item['Score']})<br><small><i>👤 {card_k_item['Responsável']}</i></small></div>""", unsafe_allow_html=True)
+                                            st.markdown(f"""<div class="custom-card"><b>{card_k_item['Tarefa']}</b> (Score GUT: {card_k_item['Score']})<br><small><i>  {card_k_item['Responsável']}</i></small></div>""", unsafe_allow_html=True)
                         else:
                             st.info("Nenhuma ação prioritária (GUT > 0) identificada no último diagnóstico para o Kanban.")
                     else:
@@ -1774,7 +1778,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         "Gerenciar Clientes": "👥",
         "Gerenciar Perguntas (Diagnóstico)": "📝",  
         "Gerenciar Análises de Perguntas": "💡",
-        "Gerenciar Pesquisa de Satisfação": " ",  
+        "Gerenciar Pesquisa de Satisfação": "🧐",  
         "Gerenciar SAC": "📞",
         "Configurações do Portal": "⚙️", # Renomeado de "Gerenciar Instruções"
         "Histórico de Usuários": "📜",  
@@ -1787,6 +1791,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
     WIDGET_KEY_SB_ADMIN_MENU = "sb_admin_menu_v21"  
 
     def admin_menu_on_change():
+        """Função de callback para o selectbox do menu do administrador."""
         selected_display_value = st.session_state[WIDGET_KEY_SB_ADMIN_MENU]
         new_text_key = None
         for text_key, emoji in menu_admin_options_map.items():
@@ -1796,6 +1801,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         if new_text_key and new_text_key != st.session_state.get(SESSION_KEY_FOR_ADMIN_PAGE):
             st.session_state[SESSION_KEY_FOR_ADMIN_PAGE] = new_text_key
 
+    # Define a página inicial do administrador ou mantém a última selecionada
     if SESSION_KEY_FOR_ADMIN_PAGE not in st.session_state or \
        st.session_state[SESSION_KEY_FOR_ADMIN_PAGE] not in admin_page_text_keys:
         st.session_state[SESSION_KEY_FOR_ADMIN_PAGE] = admin_page_text_keys[0]
@@ -1808,6 +1814,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         current_admin_menu_index = 0
         st.session_state[SESSION_KEY_FOR_ADMIN_PAGE] = admin_page_text_keys[0]
 
+    # Menu de navegação do administrador na sidebar
     st.sidebar.selectbox(
         "Funcionalidades Admin:",
         options=admin_options_for_display,
@@ -1820,21 +1827,25 @@ if aba == "Administrador" and st.session_state.admin_logado:
     header_display_name = f"{menu_admin_options_map[menu_admin]} {menu_admin}"
     st.header(header_display_name)
 
+    # Carrega dados de usuários para uso em várias seções do admin
     df_usuarios_admin_geral = pd.DataFrame(columns=colunas_base_usuarios)
     try:
         df_usuarios_admin_temp_load = pd.read_csv(usuarios_csv, dtype={'CNPJ': str}, encoding='utf-8')
         
+        # Garante que as colunas numéricas tenham o tipo correto
         if "DiagnosticosDisponiveis" not in df_usuarios_admin_temp_load.columns: df_usuarios_admin_temp_load["DiagnosticosDisponiveis"] = 1
         df_usuarios_admin_temp_load["DiagnosticosDisponiveis"] = pd.to_numeric(df_usuarios_admin_temp_load["DiagnosticosDisponiveis"], errors='coerce').fillna(1).astype(int)
         
         if "TotalDiagnosticosRealizados" not in df_usuarios_admin_temp_load.columns: df_usuarios_admin_temp_load["TotalDiagnosticosRealizados"] = 0
         df_usuarios_admin_temp_load["TotalDiagnosticosRealizados"] = pd.to_numeric(df_usuarios_admin_temp_load["TotalDiagnosticosRealizados"], errors='coerce').fillna(0).astype(int)
         
+        # Garante que a coluna booleana tenha o tipo correto
         if "JaVisualizouInstrucoes" not in df_usuarios_admin_temp_load.columns: df_usuarios_admin_temp_load["JaVisualizouInstrucoes"] = "False"
         df_usuarios_admin_temp_load["JaVisualizouInstrucoes"] = df_usuarios_admin_temp_load["JaVisualizouInstrucoes"].astype(str).str.lower().map({'true': True, 'false': False, 'nan':False, '':False}).fillna(False)
         
         df_usuarios_admin_geral = df_usuarios_admin_temp_load
     except FileNotFoundError:
+        # Mensagem de erro apenas se o arquivo for necessário para a página atual
         if menu_admin in ["Visão Geral e Diagnósticos", "Histórico de Usuários", "Gerenciar Clientes", "Gerenciar Notificações", "Relatório de Engajamento", "Gerenciar SAC", "Gerenciar Pesquisa de Satisfação"]:
             st.sidebar.error(f"Arquivo '{usuarios_csv}' não encontrado. Funcionalidades limitadas.")
     except Exception as e_load_users_adm_global:
@@ -1842,6 +1853,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             st.sidebar.error(f"Erro ao carregar usuários para admin: {e_load_users_adm_global}")
 
 
+    # --- Conteúdo das Páginas do Administrador ---
     if menu_admin == "Visão Geral e Diagnósticos":
         diagnosticos_df_admin_orig_view = pd.DataFrame()
         admin_data_carregada_view_sucesso = False
@@ -2708,6 +2720,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         st.markdown("#### ⚙️ Configurações Gerais do Portal")
         
         st.subheader("🖼️ Logo do Portal")
+        # Mensagem de aviso se o admin não tem permissão total
         if not is_admin_total():
             st.warning("Apenas administradores com permissão 'total' podem alterar o logo do portal.")
         
@@ -2715,7 +2728,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         if current_portal_logo:
             st.image(current_portal_logo, caption="Logo Atual do Portal", width=200)
             if st.button("Remover Logo do Portal", key="remove_portal_logo_v21", disabled=not is_admin_total()):
-                if is_admin_total():
+                if is_admin_total(): # Verifica permissão antes de executar
                     try:
                         os.remove(current_portal_logo)
                         st.toast("Logo do portal removida!", icon="🗑️")
@@ -2726,7 +2739,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             st.info("Nenhuma logo do portal configurada.")
 
         uploaded_portal_logo = st.file_uploader("Carregar Nova Logo para o Portal (PNG recomendado, máx 2MB):", type=["png", "jpg", "jpeg"], key="upload_portal_logo_v21", disabled=not is_admin_total())
-        if uploaded_portal_logo is not None and is_admin_total():
+        if uploaded_portal_logo is not None and is_admin_total(): # Verifica permissão antes de executar
             try:
                 # Salvar com nome fixo, substituindo se existir
                 save_path = os.path.join(PORTAL_ASSETS_DIR, PORTAL_LOGO_FILENAME)
@@ -2752,6 +2765,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 current_instructions_text = f.read()
             instrucoes_loaded_source = instrucoes_default_path
             try:
+                # Se o arquivo customizado não existe, copia o default para ele como ponto de partida
                 with open(instrucoes_custom_path, "w", encoding="utf-8") as f_custom:
                     f_custom.write(current_instructions_text)
                 st.info(f"Instruções carregadas de '{instrucoes_default_path}' e salvas como ponto de partida em '{instrucoes_custom_path}'.")
@@ -2780,11 +2794,11 @@ if aba == "Administrador" and st.session_state.admin_logado:
             value=current_instructions_text,
             height=600,
             key="instrucoes_editor_v21",  
-            disabled=not is_admin_total()
+            disabled=not is_admin_total() # Desabilita edição se não tiver permissão total
         )
 
         if st.button("Salvar Instruções", key="save_instrucoes_v21", icon="💾", use_container_width=True, disabled=not is_admin_total()):  
-            if is_admin_total():
+            if is_admin_total(): # Verifica permissão antes de executar
                 try:
                     with open(instrucoes_custom_path, "w", encoding="utf-8") as f:
                         f.write(edited_text)
@@ -2796,6 +2810,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
     elif menu_admin == "Histórico de Usuários":
         try:
             df_historico_completo_hu = pd.read_csv(historico_csv, encoding='utf-8', dtype={'CNPJ': str})
+            # Carrega apenas as colunas necessárias de usuários para o filtro
             df_usuarios_para_filtro_hu = pd.read_csv(usuarios_csv, encoding='utf-8', usecols=['CNPJ', 'Empresa', 'NomeContato'], dtype={'CNPJ': str})
         except FileNotFoundError:
             st.error("Arquivo de histórico ou usuários não encontrado.")
@@ -2830,7 +2845,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 ]['CNPJ'].tolist()
             
             df_historico_filtrado_view_hu = df_historico_filtrado_view_hu[
-                df_historico_filtrado_view_hu['CNPJ'].isin(cnpjs_match_nome_hu) |  
+                df_historico_filtrado_view_hu['CNPJ'].isin(cnpjs_match_nome_hu) |  # Busca por CNPJ do contato
                 df_historico_filtrado_view_hu['CNPJ'].astype(str).str.lower().str.contains(busca_lower_hu) |
                 df_historico_filtrado_view_hu['Ação'].astype(str).str.lower().str.contains(busca_lower_hu, na=False) |
                 df_historico_filtrado_view_hu['Descrição'].astype(str).str.lower().str.contains(busca_lower_hu, na=False)
@@ -2987,6 +3002,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                             
                             if st.button(f"Deletar Cliente", key=f"deletar_cliente_gc_v21_{cnpj_selecionado_gc_val}", icon="🗑️", use_container_width=True, type="primary", disabled=not is_admin_total()):
                                 if is_admin_total():
+                                    # Confirmação antes de deletar
                                     if st.checkbox(f"Confirmar exclusão de {cliente_data_gc_val['Empresa']} (irreversível)?", key=f"confirm_del_gc_v21_{cnpj_selecionado_gc_val}"):
                                         try:
                                             # Remover do CSV de usuários
@@ -3020,7 +3036,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
 
                                             registrar_acao(cnpj_selecionado_gc_val, "Deleção Cliente", "Cliente e todos os dados relacionados deletados.")
                                             st.toast(f"Cliente {cliente_data_gc_val['Empresa']} e todos os dados relacionados foram deletados!", icon="🗑️")
-                                            st.cache_data.clear()
+                                            st.cache_data.clear() # Limpa o cache para recarregar os dados atualizados
                                             st.rerun()
                                         except Exception as e_del_cliente:
                                             st.error(f"Erro ao deletar cliente e dados relacionados: {e_del_cliente}")
@@ -3031,6 +3047,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             st.info("Nenhum cliente encontrado para os filtros aplicados.")
         
         st.markdown("#### Adicionar Novo Cliente")
+        # Mensagem de aviso se o admin não tem permissão total
         if not is_admin_total():
             st.warning("Apenas administradores com permissão 'total' podem adicionar novos clientes.")
 
@@ -3043,7 +3060,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             new_slots = st.number_input("Diagnósticos Disponíveis (Slots):", min_value=1, value=1, step=1, key="new_cli_slots_v21", disabled=not is_admin_total())
 
             if st.form_submit_button("Adicionar Cliente", icon="➕", use_container_width=True, disabled=not is_admin_total()):
-                if is_admin_total():
+                if is_admin_total(): # Verifica permissão antes de executar
                     if new_cnpj and new_senha and new_empresa and new_contato:
                         try:
                             users_df_add = pd.read_csv(usuarios_csv, dtype={'CNPJ': str}, encoding='utf-8')
@@ -3065,7 +3082,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                                 users_df_add.to_csv(usuarios_csv, index=False, encoding='utf-8')
                                 registrar_acao(new_cnpj, "Cadastro Cliente", f"Novo cliente '{new_empresa}' cadastrado.")
                                 st.toast(f"Cliente {new_empresa} adicionado com sucesso!", icon="🎉")
-                                st.cache_data.clear()
+                                st.cache_data.clear() # Limpa o cache para recarregar os dados atualizados
                                 st.rerun()
                         except Exception as e_add_user:
                             st.error(f"Erro ao adicionar novo cliente: {e_add_user}")
@@ -3075,13 +3092,15 @@ if aba == "Administrador" and st.session_state.admin_logado:
     
     elif menu_admin == "Gerenciar Administradores":
         st.markdown("#### Gerenciamento de Usuários Administradores")
+        # Mensagem de aviso se o admin não tem permissão total
         if not is_admin_total():
             st.warning("Apenas administradores com permissão 'total' podem gerenciar outros administradores.")
         
         try:
             df_admins = pd.read_csv(admin_credenciais_csv, encoding='utf-8')
+            # Garante que a coluna 'Permissoes' exista
             if "Permissoes" not in df_admins.columns:
-                df_admins["Permissoes"] = "total" # Default to total if column is missing
+                df_admins["Permissoes"] = "total" # Define 'total' como padrão se a coluna estiver faltando
                 df_admins.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
         except (FileNotFoundError, pd.errors.EmptyDataError):
             st.info("Nenhum administrador cadastrado. Por favor, adicione um novo administrador abaixo.")
@@ -3100,10 +3119,11 @@ if aba == "Administrador" and st.session_state.admin_logado:
         with st.form("form_add_admin_v21", clear_on_submit=True):
             new_admin_user = st.text_input("Usuário:", key="new_admin_user_v21", disabled=not is_admin_total())
             new_admin_pass = st.text_input("Senha:", type="password", key="new_admin_pass_v21", disabled=not is_admin_total())
+            # Selectbox para definir as permissões do novo administrador
             new_admin_perms = st.selectbox("Permissões:", ["visualizacao", "total"], key="new_admin_perms_v21", disabled=not is_admin_total())
             
             if st.form_submit_button("Adicionar Administrador", icon="➕", use_container_width=True, disabled=not is_admin_total()):
-                if is_admin_total():
+                if is_admin_total(): # Verifica permissão antes de executar
                     if new_admin_user.strip() and new_admin_pass.strip():
                         if new_admin_user in df_admins["Usuario"].values:
                             st.error("Usuário já existe.")
@@ -3111,7 +3131,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
                             new_admin_entry = pd.DataFrame([{
                                 "Usuario": new_admin_user.strip(),
                                 "Senha": new_admin_pass.strip(),
-                                "Permissoes": new_admin_perms
+                                "Permissoes": new_admin_perms # Salva a permissão selecionada
                             }])
                             df_admins = pd.concat([df_admins, new_admin_entry], ignore_index=True)
                             df_admins.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
@@ -3130,19 +3150,21 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 with st.form(f"form_edit_admin_{admin_to_edit_user}_v21"):
                     edited_admin_pass = st.text_input("Nova Senha (deixe em branco para não alterar):", type="password", key=f"edited_admin_pass_{admin_to_edit_user}_v21", disabled=not is_admin_total())
                     
+                    # Define o índice padrão para o selectbox de permissões
                     current_perms_idx = 0
                     if "Permissoes" in current_admin_data and current_admin_data["Permissoes"] in ["visualizacao", "total"]:
                         current_perms_idx = ["visualizacao", "total"].index(current_admin_data["Permissoes"])
                     
+                    # Selectbox para editar as permissões do administrador
                     edited_admin_perms = st.selectbox("Permissões:", ["visualizacao", "total"], index=current_perms_idx, key=f"edited_admin_perms_{admin_to_edit_user}_v21", disabled=not is_admin_total())
                     
                     if st.form_submit_button("Salvar Alterações do Administrador", icon="💾", use_container_width=True, disabled=not is_admin_total()):
-                        if is_admin_total():
+                        if is_admin_total(): # Verifica permissão antes de executar
                             idx_to_update = df_admins[df_admins["Usuario"] == admin_to_edit_user].index
                             if not idx_to_update.empty:
                                 if edited_admin_pass.strip():
                                     df_admins.loc[idx_to_update, "Senha"] = edited_admin_pass.strip()
-                                df_admins.loc[idx_to_update, "Permissoes"] = edited_admin_perms
+                                df_admins.loc[idx_to_update, "Permissoes"] = edited_admin_perms # Salva a permissão editada
                                 df_admins.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
                                 st.toast(f"Administrador {admin_to_edit_user} atualizado!", icon="✅")
                                 st.rerun()
@@ -3156,7 +3178,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             admin_to_delete_user = st.selectbox("Selecione o Administrador para Deletar:", [""] + df_admins["Usuario"].tolist(), key="del_admin_sel_user_v21", disabled=not is_admin_total())
             
             if st.button("Deletar Administrador Selecionado", icon="🗑️", type="primary", use_container_width=True, disabled=not is_admin_total()):
-                if is_admin_total():
+                if is_admin_total(): # Verifica permissão antes de executar
                     if admin_to_delete_user:
                         if admin_to_delete_user == st.session_state.admin_username:
                             st.error("Você não pode deletar a si mesmo!")
