@@ -3113,6 +3113,63 @@ elif menu_admin == "Gerenciar Clientes":
     
 elif menu_admin == "Gerenciar Administradores":
 
+elif menu_admin == "Visão Geral e Diagnósticos":
+    st.header("📊 Visão Geral e Diagnósticos")
+
+    if not admin_data_carregada_view_sucesso:
+        st.warning("Dados de diagnósticos não puderam ser carregados. Funcionalidades limitadas.")
+    else:
+        st.markdown("### 📌 Resumo por Cliente")
+        for idx_diag_adm, row_diag_adm in diagnosticos_df_admin_orig_view.iterrows():
+            st.markdown(f"**{row_diag_adm['Empresa']}** - {row_diag_adm['Data'].strftime('%d/%m/%Y')}")
+            pdf_path_adm_d = gerar_pdf_diagnostico_completo(
+                row_diag_adm.to_dict(), user_data_pdf_adm, perguntas_df_admin_view,
+                row_diag_adm.to_dict(), medias_cat_pdf_adm, analises_df_admin_view
+            )
+            if pdf_path_adm_d:
+                with open(pdf_path_adm_d, "rb") as f_adm_d:
+                    st.download_button("Download PDF Confirmado", f_adm_d,
+                        file_name=f"diag_{sanitize_column_name(row_diag_adm['Empresa'])}_{str(row_diag_adm['Data']).replace(':','-').replace(' ','_')}.pdf",
+                        mime="application/pdf",
+                        key=f"dl_confirm_adm_diag_v21_{idx_diag_adm}_{time.time()}",
+                        icon="📄")
+            else:
+                st.error("Erro ao gerar PDF para este diagnóstico.")
+
+elif menu_admin == "Relatório de Engajamento":
+    st.header("📈 Relatório de Engajamento")
+    st.markdown("Aqui serão exibidas métricas de engajamento dos clientes.")
+
+elif menu_admin == "Gerenciar Notificações":
+    st.header("🔔 Gerenciar Notificações")
+    st.markdown("Configurações e envio de notificações automáticas para os usuários.")
+
+elif menu_admin == "Gerenciar Clientes":
+    st.header("👥 Gerenciar Clientes")
+    st.markdown("Cadastro, edição e status dos clientes cadastrados.")
+
+elif menu_admin == "Renovação de Prazos":
+    st.header("⏳ Renovação Rápida de Prazo dos Clientes")
+
+    usuarios_csv = "usuarios.csv"  # ajuste conforme sua estrutura
+    df_todos = pd.read_csv(usuarios_csv, dtype={'CNPJ': str})
+    df_todos["PrazoFimAcesso"] = pd.to_datetime(df_todos["PrazoFimAcesso"], errors="coerce")
+    df_todos["DiasRestantes"] = df_todos["PrazoFimAcesso"].apply(
+        lambda x: (x.date() - date.today()).days if pd.notna(x) else None
+    )
+
+    for idx, row in df_todos.iterrows():
+        st.markdown(f"**{row['Empresa']}** — Dias Restantes: `{row['DiasRestantes']}`")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("➕ Adicionar 5 Dias", key=f"add5_{row['CNPJ']}_{idx}"):
+                renovar_dias_usuario(row['CNPJ'], 5)
+                st.experimental_rerun()
+        with col2:
+            if st.button("❌ Bloquear Cliente", key=f"block_{row['CNPJ']}_{idx}"):
+                bloquear_usuario(row['CNPJ'])
+                st.experimental_rerun()
+
     st.header("⏳ Renovação Rápida de Prazo dos Clientes")
 
     usuarios_csv = "usuarios.csv"  # ajuste conforme sua estrutura
