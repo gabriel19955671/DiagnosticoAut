@@ -3239,6 +3239,55 @@ if 'cliente_logado' in st.session_state and st.session_state['cliente_logado']:
     else:
         st.error("Cliente não encontrado.")
 
+# ========== CONTROLE DE PRAZO DE CLIENTES ==========
+df_users = pd.read_csv(usuarios_csv, dtype={'CNPJ': str})
+
+# Garante que a coluna exista com prazo padrão de 10 dias
+if "PrazoFimAcesso" not in df_users.columns:
+    df_users["PrazoFimAcesso"] = (date.today() + pd.Timedelta(days=10)).strftime('%Y-%m-%d')
+    df_users.to_csv(usuarios_csv, index=False)
+
+# Conversão segura da coluna para datetime
+df_users["PrazoFimAcesso"] = pd.to_datetime(df_users["PrazoFimAcesso"], errors="coerce")
+
+# Calcula dias restantes para cada cliente
+df_users["DiasRestantes"] = df_users["PrazoFimAcesso"].apply(
+    lambda x: (x.date() - date.today()).days if pd.notna(x) else None
+)
+
+# Define o status com base no número de dias restantes
+def classificar_prazo(dias):
+    if dias is None:
+        return "Indefinido"
+    elif dias <= 0:
+        return "Expirado"
+    elif dias <= 3:
+        return "Crítico"
+    elif dias <= 5:
+        return "Encerrando"
+    else:
+        return "Ativo"
+
+df_users["StatusPrazo"] = df_users["DiasRestantes"].apply(classificar_prazo)
+
+# Enviar notificações para clientes com 5 ou 3 dias restantes
+notificacoes = []
+for _, row in df_users.iterrows():
+    if row["DiasRestantes"] == 5:
+        notificacoes.append(f"⚠️ Cliente **{row['Empresa']}** está com 5 dias restantes de acesso.")
+    elif row["DiasRestantes"] == 3:
+        notificacoes.append(f"🔴 Cliente **{row['Empresa']}** está com 3 dias restantes (prazo crítico).")
+
+# Exibir notificações na tela
+for nota in notificacoes:
+    st.warning(nota)
+
+# Exibir métricas visuais no painel do administrador
+col1, col2, col3 = st.columns(3)
+col1.metric("✅ Ativos", df_users[df_users['StatusPrazo'] == 'Ativo'].shape[0])
+col2.metric("🟡 Encerrando (≤ 5 dias)", df_users[df_users['StatusPrazo'] == 'Encerrando'].shape[0])
+col3.metric("🔴 Críticos (≤ 3 dias)", df_users[df_users['StatusPrazo'] == 'Crítico'].shape[0])
+
 # Painel Admin - Renovação rápida de prazo e bloqueio
 st.subheader("Renovação Rápida de Prazo dos Clientes")
 # Adiciona a coluna DiasRestantes ao DataFrame df_users
