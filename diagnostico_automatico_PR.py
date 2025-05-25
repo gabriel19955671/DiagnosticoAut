@@ -3261,7 +3261,12 @@ for idx, row in df_users.iterrows():
 with st.sidebar.expander("Liberação Diagnósticos Clientes"):
     cnpj_cliente = st.selectbox("CNPJ Cliente", df_users['CNPJ'])
     diagnosticos_disponiveis = ["Financeiro", "Operacional", "RH", "TI"]
-    atuais = json.loads(df_users[df_users['CNPJ'] == cnpj_cliente]['DiagnosticosPermitidos'].iloc[0] or '[]')
+
+    linha_cliente = df_users[df_users['CNPJ'] == cnpj_cliente]
+    if not linha_cliente.empty:
+        atuais = json.loads(linha_cliente['DiagnosticosPermitidos'].iloc[0] or '[]')
+    else:
+        atuais = []
 
     novos_diagnosticos = st.multiselect("Diagnósticos Permitidos", diagnosticos_disponiveis, default=atuais)
 
