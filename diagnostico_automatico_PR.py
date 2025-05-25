@@ -2128,7 +2128,7 @@ elif menu_admin == "Renovação de Prazos":
         elif not admin_data_carregada_view_sucesso:
             st.warning("Dados de diagnósticos não puderam ser carregados. Funcionalidades limitadas.")
     
-    elif menu_admin == "Relatório de Engajamento":
+elif menu_admin == "Relatório de Engajamento":
         st.markdown("#### Métricas de Engajamento dos Clientes")
 
         if df_usuarios_admin_geral.empty:
