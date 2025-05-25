@@ -1860,29 +1860,21 @@ if aba == "Administrador" and st.session_state.admin_logado:
             st.sidebar.error(f"Erro ao carregar usuários para admin: {e_load_users_adm_global}")
 
 
-    if menu_admin == "Visão Geral e Diagnósticos":
-        diagnosticos_df_admin_orig_view = pd.DataFrame()
-        admin_data_carregada_view_sucesso = False
+    menu_admin = st.sidebar.selectbox("Menu", list(menu_admin_options_map.keys()))
 
-        if not os.path.exists(arquivo_csv):
-            st.error(f"ATENÇÃO: O arquivo de diagnósticos '{arquivo_csv}' não foi encontrado.")
-        elif os.path.getsize(arquivo_csv) == 0:
-            st.warning(f"O arquivo de diagnósticos '{arquivo_csv}' está completamente vazio.")
-        else:
-            try:
-                diagnosticos_df_admin_orig_view = pd.read_csv(arquivo_csv, encoding='utf-8', dtype={'CNPJ': str})
-                if 'Data' in diagnosticos_df_admin_orig_view.columns:
-                    diagnosticos_df_admin_orig_view['Data_dt'] = pd.to_datetime(diagnosticos_df_admin_orig_view['Data'], errors='coerce')  
-                    diagnosticos_df_admin_orig_view['Data'] = diagnosticos_df_admin_orig_view['Data'].astype(str)  
-                if not diagnosticos_df_admin_orig_view.empty:
-                    admin_data_carregada_view_sucesso = True
-                else: st.info("Arquivo de diagnósticos lido, mas sem dados.")
-            except pd.errors.EmptyDataError: st.warning(f"Arquivo '{arquivo_csv}' parece vazio ou só com cabeçalhos.")
-            except Exception as e: st.error(f"ERRO AO CARREGAR DIAGNÓSTICOS: {e}"); st.exception(e)
-        
+# ==================== VISÃO GERAL ====================
+if menu_admin == "Visão Geral e Diagnósticos":
+    st.subheader("📊 Visão Geral e Diagnósticos")
+
+# ==================== RELATÓRIO DE ENGAJAMENTO ====================
+elif menu_admin == "Relatório de Engajamento":
+    st.subheader("📈 Relatório de Engajamento")
+
+# ==================== RENOVAÇÃO DE PRAZOS ====================
 elif menu_admin == "Renovação de Prazos":
     st.header("⏳ Renovação Rápida de Prazo dos Clientes")
 
+    usuarios_csv = "usuarios.csv"  # ajuste conforme sua estrutura
     df_todos = pd.read_csv(usuarios_csv, dtype={'CNPJ': str})
     df_todos["PrazoFimAcesso"] = pd.to_datetime(df_todos["PrazoFimAcesso"], errors="coerce")
     df_todos["DiasRestantes"] = df_todos["PrazoFimAcesso"].apply(
