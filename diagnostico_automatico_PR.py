@@ -2168,7 +2168,7 @@ elif menu_admin == "Relatório de Engajamento":
                 else:
                     st.info("Nenhum cliente visualizou as instruções e completou um diagnóstico ainda.")
 
-    elif menu_admin == "Gerenciar Notificações":
+elif menu_admin == "Gerenciar Notificações":
         st.markdown("#### Lista de Todas as Notificações do Sistema")
         try:
             df_notificacoes_admin = pd.read_csv(notificacoes_csv, dtype={'CNPJ_Cliente': str, 'ID_Diagnostico_Relacionado': str})
