@@ -3219,9 +3219,20 @@ with st.sidebar.expander("Permissões do Administrador", expanded=True):
 
 # Painel Cliente mostrando prazo restante
 if 'cliente_logado' in st.session_state and st.session_state['cliente_logado']:
-    idx_cliente = df_users[df_users['CNPJ'] == st.session_state['cliente_cnpj']].index[0]
-    dias_restantes_cliente = calcular_dias_restantes(df_users.loc[idx_cliente, 'PrazoFimAcesso'])
-    st.info(f"Você possui {dias_restantes_cliente} dias restantes até o fim do seu acesso.")
+    df_users = pd.read_csv(usuarios_csv, dtype={'CNPJ': str})  # Garante leitura atualizada do arquivo
+    if "PrazoFimAcesso" in df_users.columns:
+        df_users["PrazoFimAcesso"] = pd.to_datetime(df_users["PrazoFimAcesso"], errors="coerce")
+
+        idx_cliente = df_users[df_users['CNPJ'] == st.session_state['cnpj']].index
+        if not idx_cliente.empty:
+            prazo = df_users.loc[idx_cliente[0], 'PrazoFimAcesso']
+            if pd.notna(prazo):
+                dias_restantes = (prazo.date() - date.today()).days
+                st.info(f"⏳ Você possui **{dias_restantes} dias restantes** até o fim do seu acesso.")
+            else:
+                st.warning("⚠️ Seu prazo de acesso ainda não foi definido.")
+        else:
+            st.error("Cliente não encontrado.")
 
 # Painel Admin - Renovação rápida de prazo e bloqueio
 st.subheader("Renovação Rápida de Prazo dos Clientes")
