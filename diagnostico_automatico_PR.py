@@ -3242,6 +3242,39 @@ if 'cliente_logado' in st.session_state and st.session_state['cliente_logado']:
 # ========== CONTROLE DE PRAZO DE CLIENTES ==========
 df_users = pd.read_csv(usuarios_csv, dtype={'CNPJ': str})
 
+# Leitura e validação da base de usuários
+df_users = pd.read_csv(usuarios_csv, dtype={'CNPJ': str})
+
+# Garante coluna de status de diagnóstico (evita erro)
+if "StatusDiag" not in df_users.columns:
+    df_users["StatusDiag"] = "Não Enviado"
+
+# Garante que a coluna de prazo exista
+if "PrazoFimAcesso" not in df_users.columns:
+    df_users["PrazoFimAcesso"] = (date.today() + pd.Timedelta(days=10)).strftime('%Y-%m-%d')
+    df_users.to_csv(usuarios_csv, index=False)
+
+df_users["PrazoFimAcesso"] = pd.to_datetime(df_users["PrazoFimAcesso"], errors="coerce")
+
+df_users["DiasRestantes"] = df_users["PrazoFimAcesso"].apply(
+    lambda x: (x.date() - date.today()).days if pd.notna(x) else None
+)
+
+def classificar_prazo(dias):
+    if dias is None:
+        return "Indefinido"
+    elif dias <= 0:
+        return "Expirado"
+    elif dias <= 3:
+        return "Crítico"
+    elif dias <= 5:
+        return "Encerrando"
+    else:
+        return "Ativo"
+
+df_users["StatusPrazo"] = df_users["DiasRestantes"].apply(classificar_prazo)
+
+
 # Garante que a coluna exista com prazo padrão de 10 dias
 if "PrazoFimAcesso" not in df_users.columns:
     df_users["PrazoFimAcesso"] = (date.today() + pd.Timedelta(days=10)).strftime('%Y-%m-%d')
@@ -3325,6 +3358,7 @@ with st.sidebar.expander("Liberação Diagnósticos Clientes"):
         st.success("Diagnósticos atualizados!")
 
 # Métricas adicionais para o administrador
+
 st.subheader("Métricas Gerais")
 st.metric("Clientes com Prazo Finalizando", df_users[df_users['StatusPrazo'] == 'Encerrando'].shape[0])
 st.metric("Clientes Finalizando com Diagnóstico Enviado", df_users[(df_users['StatusPrazo'] == 'Encerrando') & (df_users['StatusDiag'] == 'Enviado')].shape[0])
