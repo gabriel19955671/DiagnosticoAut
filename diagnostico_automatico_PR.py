@@ -1879,8 +1879,28 @@ if aba == "Administrador" and st.session_state.admin_logado:
                 else: st.info("Arquivo de diagnósticos lido, mas sem dados.")
             except pd.errors.EmptyDataError: st.warning(f"Arquivo '{arquivo_csv}' parece vazio ou só com cabeçalhos.")
             except Exception as e: st.error(f"ERRO AO CARREGAR DIAGNÓSTICOS: {e}"); st.exception(e)
+        
+elif menu_admin == "Renovação de Prazos":
+    st.header("⏳ Renovação Rápida de Prazo dos Clientes")
 
-         elif menu_admin == "Renovação de Prazos":
+    df_todos = pd.read_csv(usuarios_csv, dtype={'CNPJ': str})
+    df_todos["PrazoFimAcesso"] = pd.to_datetime(df_todos["PrazoFimAcesso"], errors="coerce")
+    df_todos["DiasRestantes"] = df_todos["PrazoFimAcesso"].apply(
+        lambda x: (x.date() - date.today()).days if pd.notna(x) else None
+    )
+
+    for idx, row in df_todos.iterrows():
+        st.markdown(f"**{row['Empresa']}** — Dias Restantes: `{row['DiasRestantes']}`")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("➕ Adicionar 5 Dias", key=f"add5_{row['CNPJ']}_{idx}"):
+                renovar_dias_usuario(row['CNPJ'], 5)
+                st.experimental_rerun()
+        with col2:
+            if st.button("❌ Bloquear Cliente", key=f"block_{row['CNPJ']}_{idx}"):
+                bloquear_usuario(row['CNPJ'])
+                st.experimental_rerun()        
+
     st.header("⏳ Renovação Rápida de Prazo dos Clientes")
 
     df_todos = pd.read_csv(usuarios_csv, dtype={'CNPJ': str})
