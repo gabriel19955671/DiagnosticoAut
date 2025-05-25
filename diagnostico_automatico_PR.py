@@ -1892,6 +1892,7 @@ elif menu_admin == "Renovação de Prazos":
             if st.button("❌ Bloquear Cliente", key=f"block_{row['CNPJ']}_{idx}"):
                 bloquear_usuario(row['CNPJ'])
                 st.experimental_rerun()
+
         st.markdown("#### KPIs Gerais do Sistema")
         kpi_cols_v21 = st.columns(3)  
         total_clientes_cadastrados_vg = len(df_usuarios_admin_geral) if not df_usuarios_admin_geral.empty else 0
