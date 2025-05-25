@@ -3172,3 +3172,68 @@ if aba == "Administrador" and st.session_state.admin_logado:
         else:
             st.info("Nenhum administrador para deletar.")
  
+
+# ========= FUNCIONALIDADES SOLICITADAS PELO USUÁRIO =========
+
+# Função para prazo inicial padrão dos clientes (5 dias)
+def prazo_inicial_cliente():
+    return (date.today() + pd.Timedelta(days=5)).strftime('%Y-%m-%d')
+
+# Inicialização da coluna 'DiagnosticosPermitidos' nos usuários
+usuarios_csv = "usuarios.csv"
+df_users = pd.read_csv(usuarios_csv, dtype={'CNPJ': str})
+if "DiagnosticosPermitidos" not in df_users.columns:
+    df_users["DiagnosticosPermitidos"] = "[]"
+    df_users.to_csv(usuarios_csv, index=False)
+
+# Permissões detalhadas do Administrador
+permissoes_lista = ["SAC", "PerguntaSatisfacao", "GestaoClientes", "Relatorios", "Personalizacao"]
+
+with st.sidebar.expander("Permissões do Administrador", expanded=True):
+    df_admin = pd.read_csv(admin_credenciais_csv, encoding='utf-8')
+    admin_sel = st.selectbox("Selecionar admin", df_admin['Usuario'].tolist(), index=0)
+    permissoes_atual = get_admin_permissoes(admin_sel)
+
+    permissoes_novas = st.multiselect("Permissões", permissoes_lista, default=permissoes_atual)
+
+    if st.button("Salvar Permissões"):
+        set_admin_permissoes(admin_sel, permissoes_novas)
+        st.success("Permissões atualizadas!")
+
+# Painel Cliente mostrando prazo restante
+if 'cliente_logado' in st.session_state and st.session_state['cliente_logado']:
+    idx_cliente = df_users[df_users['CNPJ'] == st.session_state['cliente_cnpj']].index[0]
+    dias_restantes_cliente = calcular_dias_restantes(df_users.loc[idx_cliente, 'PrazoFimAcesso'])
+    st.info(f"Você possui {dias_restantes_cliente} dias restantes até o fim do seu acesso.")
+
+# Painel Admin - Renovação rápida de prazo e bloqueio
+st.subheader("Renovação Rápida de Prazo dos Clientes")
+for idx, row in df_users.iterrows():
+    st.markdown(f"Cliente: {row['Empresa']} - Dias Restantes: {row['DiasRestantes']}")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button(f"Adicionar 5 Dias", key=f"add5_{row['CNPJ']}"):
+            renovar_dias_usuario(row['CNPJ'], 5)
+            st.experimental_rerun()
+    with col2:
+        if st.button(f"Bloquear Cliente", key=f"block_{row['CNPJ']}"):
+            bloquear_usuario(row['CNPJ'])
+            st.experimental_rerun()
+
+# Liberação de Diagnósticos específicos pelo Admin
+with st.sidebar.expander("Liberação Diagnósticos Clientes"):
+    cnpj_cliente = st.selectbox("CNPJ Cliente", df_users['CNPJ'])
+    diagnosticos_disponiveis = ["Financeiro", "Operacional", "RH", "TI"]
+    atuais = json.loads(df_users[df_users['CNPJ'] == cnpj_cliente]['DiagnosticosPermitidos'].iloc[0] or '[]')
+
+    novos_diagnosticos = st.multiselect("Diagnósticos Permitidos", diagnosticos_disponiveis, default=atuais)
+
+    if st.button("Salvar Diagnósticos Permitidos"):
+        df_users.loc[df_users['CNPJ'] == cnpj_cliente, 'DiagnosticosPermitidos'] = json.dumps(novos_diagnosticos)
+        df_users.to_csv(usuarios_csv, index=False)
+        st.success("Diagnósticos atualizados!")
+
+# Métricas adicionais para o administrador
+st.subheader("Métricas Gerais")
+st.metric("Clientes com Prazo Finalizando", df_users[df_users['StatusPrazo'] == 'Encerrando'].shape[0])
+st.metric("Clientes Finalizando com Diagnóstico Enviado", df_users[(df_users['StatusPrazo'] == 'Encerrando') & (df_users['StatusDiag'] == 'Enviado')].shape[0])
