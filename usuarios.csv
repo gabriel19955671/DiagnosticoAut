@@ -1,5 +1,5 @@
-CNPJ,Senha,Empresa, nomecontato, telefone;BenchmarkingHabilitado;
-12345678000199,senha123,Empresa Alpha LTDA;;
-98765432000100,acesso2024,Beta Soluções ME;;
-11222333000188,potencialize,Potencialize Resultados;;
-5,56E+11;gabriel;gabriel
+CNPJ,Senha,Empresa, nomecontato, telefone, BenchmarkingHabilitado, PrazoFimAcesso, PrazoDiasRestantes;BenchmarkingHabilitado;PrazoFimAcesso;PrazoDiasRestantes
+12345678000199,senha123,Empresa Alpha LTDA;;;
+98765432000100,acesso2024,Beta Soluções ME;;;
+11222333000188,potencialize,Potencialize Resultados;;;
+5,56E+11;gabriel;gabriel;
