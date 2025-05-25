@@ -1863,6 +1863,9 @@ if aba == "Administrador" and st.session_state.admin_logado:
 if menu_admin == "Visão Geral e Diagnósticos":
     st.header("📊 Visão Geral e Diagnósticos")
 
+    if 'admin_data_carregada_view_sucesso' not in globals():
+        admin_data_carregada_view_sucesso = False
+
     if not admin_data_carregada_view_sucesso:
         st.warning("Dados de diagnósticos não puderam ser carregados. Funcionalidades limitadas.")
     else:
@@ -1878,7 +1881,7 @@ if menu_admin == "Visão Geral e Diagnósticos":
                     st.download_button("Download PDF Confirmado", f_adm_d,
                         file_name=f"diag_{sanitize_column_name(row_diag_adm['Empresa'])}_{str(row_diag_adm['Data']).replace(':','-').replace(' ','_')}.pdf",
                         mime="application/pdf",
-                        key=f"dl_confirm_adm_diag_v21_{idx_diag_adm}_{time.time()}",
+                        key=f"dl_confirm_adm_diag_v21_{idx_diag_adm}_{int(time.time() * 1000)}",
                         icon="📄")
             else:
                 st.error("Erro ao gerar PDF para este diagnóstico.")
@@ -1909,11 +1912,11 @@ elif menu_admin == "Renovação de Prazos":
         st.markdown(f"**{row['Empresa']}** — Dias Restantes: `{row['DiasRestantes']}`")
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("➕ Adicionar 5 Dias", key=f"add5_{row['CNPJ']}_{idx}"):
+            if st.button("➕ Adicionar 5 Dias", key=f"add5_{row['CNPJ']}_{idx}_{int(time.time() * 1000)}"):
                 renovar_dias_usuario(row['CNPJ'], 5)
                 st.experimental_rerun()
         with col2:
-            if st.button("❌ Bloquear Cliente", key=f"block_{row['CNPJ']}_{idx}"):
+            if st.button("❌ Bloquear Cliente", key=f"block_{row['CNPJ']}_{idx}_{int(time.time() * 1000)}"):
                 bloquear_usuario(row['CNPJ'])
                 st.experimental_rerun()
 
