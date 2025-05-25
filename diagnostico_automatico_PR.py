@@ -13,22 +13,6 @@ import uuid # Para IDs de análise, SAC e Pesquisa de Satisfação
 # !!! st.set_page_config() DEVE SER O PRIMEIRO COMANDO STREAMLIT !!!
 st.set_page_config(page_title="Portal de Diagnóstico", layout="wide", page_icon=" ")
 
-# Função para obter as permissões atuais do administrador
-def get_admin_permissoes(usuario):
-    df = pd.read_csv(admin_credenciais_csv, encoding='utf-8')
-    linha = df[df['Usuario'] == usuario]
-    if not linha.empty:
-        return str(linha.iloc[0]['Permissoes']).split(',')
-    return []
-
-# Função para definir permissões do administrador
-def set_admin_permissoes(usuario, permissoes):
-    df = pd.read_csv(admin_credenciais_csv, encoding='utf-8')
-    idx = df[df['Usuario'] == usuario].index
-    if not idx.empty:
-        df.loc[idx, 'Permissoes'] = ','.join(permissoes)
-        df.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
-
 # --- CSS Melhorado ---
 st.markdown("""
 <style>
@@ -1794,9 +1778,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         "Gerenciar SAC": "📞",
         "Configurações do Portal": "⚙️", # Renomeado de "Gerenciar Instruções"
         "Histórico de Usuários": "📜",  
-        "Renovação de Prazos": "⏳",
         "Gerenciar Administradores": "👮"
-         
     }
     admin_page_text_keys = list(menu_admin_options_map.keys())
     admin_options_for_display = [f"{menu_admin_options_map[key]} {key}" for key in admin_page_text_keys]
@@ -1860,68 +1842,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
             st.sidebar.error(f"Erro ao carregar usuários para admin: {e_load_users_adm_global}")
 
 
-if menu_admin == "Visão Geral e Diagnósticos":
-    st.header("📊 Visão Geral e Diagnósticos")
-
-    try:
-        admin_data_carregada_view_sucesso
-    except NameError:
-        admin_data_carregada_view_sucesso = False
-
-    if not admin_data_carregada_view_sucesso:
-        st.warning("Dados de diagnósticos não puderam ser carregados. Funcionalidades limitadas.")
-    else:
-        st.markdown("### 📌 Resumo por Cliente")
-        for idx_diag_adm, row_diag_adm in diagnosticos_df_admin_orig_view.iterrows():
-            st.markdown(f"**{row_diag_adm['Empresa']}** - {row_diag_adm['Data'].strftime('%d/%m/%Y')}")
-            pdf_path_adm_d = gerar_pdf_diagnostico_completo(
-                row_diag_adm.to_dict(), user_data_pdf_adm, perguntas_df_admin_view,
-                row_diag_adm.to_dict(), medias_cat_pdf_adm, analises_df_admin_view
-            )
-            if pdf_path_adm_d:
-                with open(pdf_path_adm_d, "rb") as f_adm_d:
-                    st.download_button("Download PDF Confirmado", f_adm_d,
-                        file_name=f"diag_{sanitize_column_name(row_diag_adm['Empresa'])}_{str(row_diag_adm['Data']).replace(':','-').replace(' ','_')}.pdf",
-                        mime="application/pdf",
-                        key=f"dl_confirm_adm_diag_v21_{idx_diag_adm}_{int(time.time() * 1000)}",
-                        icon="📄")
-            else:
-                st.error("Erro ao gerar PDF para este diagnóstico.")
-
-if menu_admin == "Relatório de Engajamento":
-    st.header("📈 Relatório de Engajamento")
-    st.markdown("Aqui serão exibidas métricas de engajamento dos clientes.")
-
-if menu_admin == "Gerenciar Notificações":
-    st.header("🔔 Gerenciar Notificações")
-    st.markdown("Configurações e envio de notificações automáticas para os usuários.")
-
-if menu_admin == "Gerenciar Clientes":
-    st.header("👥 Gerenciar Clientes")
-    st.markdown("Cadastro, edição e status dos clientes cadastrados.")
-
-if menu_admin == "Renovação de Prazos":
-    st.header("⏳ Renovação Rápida de Prazo dos Clientes")
-
-    usuarios_csv = "usuarios.csv"  # ajuste conforme sua estrutura
-    df_todos = pd.read_csv(usuarios_csv, dtype={'CNPJ': str})
-    df_todos["PrazoFimAcesso"] = pd.to_datetime(df_todos["PrazoFimAcesso"], errors="coerce")
-    df_todos["DiasRestantes"] = df_todos["PrazoFimAcesso"].apply(
-        lambda x: (x.date() - date.today()).days if pd.notna(x) else None
-    )
-
-    for idx, row in df_todos.iterrows():
-        st.markdown(f"**{row['Empresa']}** — Dias Restantes: `{row['DiasRestantes']}`")
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("➕ Adicionar 5 Dias", key=f"add5_{row['CNPJ']}_{idx}_{int(time.time() * 1000)}"):
-                renovar_dias_usuario(row['CNPJ'], 5)
-                st.experimental_rerun()
-        with col2:
-            if st.button("❌ Bloquear Cliente", key=f"block_{row['CNPJ']}_{idx}_{int(time.time() * 1000)}"):
-                bloquear_usuario(row['CNPJ'])
-                st.experimental_rerun()
-
+    if menu_admin == "Visão Geral e Diagnósticos":
         diagnosticos_df_admin_orig_view = pd.DataFrame()
         admin_data_carregada_view_sucesso = False
 
@@ -1940,27 +1861,6 @@ if menu_admin == "Renovação de Prazos":
                 else: st.info("Arquivo de diagnósticos lido, mas sem dados.")
             except pd.errors.EmptyDataError: st.warning(f"Arquivo '{arquivo_csv}' parece vazio ou só com cabeçalhos.")
             except Exception as e: st.error(f"ERRO AO CARREGAR DIAGNÓSTICOS: {e}"); st.exception(e)
-        
-elif menu_admin == "Renovação de Prazos":
-    st.header("⏳ Renovação Rápida de Prazo dos Clientes")
-
-df_todos = pd.read_csv(usuarios_csv, dtype={'CNPJ': str})
-df_todos["PrazoFimAcesso"] = pd.to_datetime(df_todos["PrazoFimAcesso"], errors="coerce")
-df_todos["DiasRestantes"] = df_todos["PrazoFimAcesso"].apply(
-    lambda x: (x.date() - date.today()).days if pd.notna(x) else None
-)
-
-for idx, row in df_todos.iterrows():
-    st.markdown(f"**{row['Empresa']}** — Dias Restantes: `{row['DiasRestantes']}`")
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("➕ Adicionar 5 Dias", key=f"add5_{row['CNPJ']}_{idx}"):
-            renovar_dias_usuario(row['CNPJ'], 5)
-            st.experimental_rerun()
-    with col2:
-        if st.button("❌ Bloquear Cliente", key=f"block_{row['CNPJ']}_{idx}"):
-            bloquear_usuario(row['CNPJ'])
-            st.experimental_rerun()
 
         st.markdown("#### KPIs Gerais do Sistema")
         kpi_cols_v21 = st.columns(3)  
@@ -3272,159 +3172,3 @@ for idx, row in df_todos.iterrows():
         else:
             st.info("Nenhum administrador para deletar.")
  
-
-# ========= FUNCIONALIDADES SOLICITADAS PELO USUÁRIO =========
-
-# Função para prazo inicial padrão dos clientes (5 dias)
-def prazo_inicial_cliente():
-    return (date.today() + pd.Timedelta(days=5)).strftime('%Y-%m-%d')
-
-# Inicialização da coluna 'DiagnosticosPermitidos' nos usuários
-usuarios_csv = "usuarios.csv"
-df_users = pd.read_csv(usuarios_csv, dtype={'CNPJ': str})
-if "DiagnosticosPermitidos" not in df_users.columns:
-    df_users["DiagnosticosPermitidos"] = "[]"
-    df_users.to_csv(usuarios_csv, index=False)
-
-# Permissões detalhadas do Administrador
-permissoes_lista = ["SAC", "PerguntaSatisfacao", "GestaoClientes", "Relatorios", "Personalizacao"]
-
-with st.sidebar.expander("Permissões do Administrador", expanded=True):
-    df_admin = pd.read_csv(admin_credenciais_csv, encoding='utf-8')
-    admin_sel = st.selectbox("Selecionar admin", df_admin['Usuario'].tolist(), index=0)
-    permissoes_atual = get_admin_permissoes(admin_sel)
-
-    permissoes_novas = st.multiselect(
-    "Permissões", 
-    permissoes_lista, 
-    default=[perm for perm in permissoes_atual if perm in permissoes_lista]
-)
-
-
-# Painel Cliente mostrando prazo restante
-if 'cliente_logado' in st.session_state and st.session_state['cliente_logado']:
-    df_users = pd.read_csv(usuarios_csv, dtype={'CNPJ': str})
-
-    # Garante que a coluna exista
-    if "PrazoFimAcesso" not in df_users.columns:
-        df_users["PrazoFimAcesso"] = (date.today() + pd.Timedelta(days=5)).strftime('%Y-%m-%d')
-        df_users.to_csv(usuarios_csv, index=False)
-
-    df_users["PrazoFimAcesso"] = pd.to_datetime(df_users["PrazoFimAcesso"], errors="coerce")
-
-    idx_cliente = df_users[df_users['CNPJ'] == st.session_state['cnpj']].index
-    if not idx_cliente.empty:
-        prazo = df_users.loc[idx_cliente[0], 'PrazoFimAcesso']
-        if pd.notna(prazo):
-            dias_restantes = (prazo.date() - date.today()).days
-            st.info(f"⏳ Você possui **{dias_restantes} dias restantes** até o fim do seu acesso.")
-        else:
-            st.warning("⚠️ Seu prazo de acesso ainda não está definido.")
-    else:
-        st.error("Cliente não encontrado.")
-
-# ========== CONTROLE DE PRAZO DE CLIENTES ==========
-df_users = pd.read_csv(usuarios_csv, dtype={'CNPJ': str})
-
-# Leitura e validação da base de usuários
-df_users = pd.read_csv(usuarios_csv, dtype={'CNPJ': str})
-
-# Garante coluna de status de diagnóstico (evita erro)
-if "StatusDiag" not in df_users.columns:
-    df_users["StatusDiag"] = "Não Enviado"
-
-# Garante que a coluna de prazo exista
-if "PrazoFimAcesso" not in df_users.columns:
-    df_users["PrazoFimAcesso"] = (date.today() + pd.Timedelta(days=10)).strftime('%Y-%m-%d')
-    df_users.to_csv(usuarios_csv, index=False)
-
-df_users["PrazoFimAcesso"] = pd.to_datetime(df_users["PrazoFimAcesso"], errors="coerce")
-
-df_users["DiasRestantes"] = df_users["PrazoFimAcesso"].apply(
-    lambda x: (x.date() - date.today()).days if pd.notna(x) else None
-)
-
-def classificar_prazo(dias):
-    if dias is None:
-        return "Indefinido"
-    elif dias <= 0:
-        return "Expirado"
-    elif dias <= 3:
-        return "Crítico"
-    elif dias <= 5:
-        return "Encerrando"
-    else:
-        return "Ativo"
-
-df_users["StatusPrazo"] = df_users["DiasRestantes"].apply(classificar_prazo)
-
-
-# Garante que a coluna exista com prazo padrão de 10 dias
-if "PrazoFimAcesso" not in df_users.columns:
-    df_users["PrazoFimAcesso"] = (date.today() + pd.Timedelta(days=10)).strftime('%Y-%m-%d')
-    df_users.to_csv(usuarios_csv, index=False)
-
-# Conversão segura da coluna para datetime
-df_users["PrazoFimAcesso"] = pd.to_datetime(df_users["PrazoFimAcesso"], errors="coerce")
-
-# Calcula dias restantes para cada cliente
-df_users["DiasRestantes"] = df_users["PrazoFimAcesso"].apply(
-    lambda x: (x.date() - date.today()).days if pd.notna(x) else None
-)
-
-# Define o status com base no número de dias restantes
-def classificar_prazo(dias):
-    if dias is None:
-        return "Indefinido"
-    elif dias <= 0:
-        return "Expirado"
-    elif dias <= 3:
-        return "Crítico"
-    elif dias <= 5:
-        return "Encerrando"
-    else:
-        return "Ativo"
-
-df_users["StatusPrazo"] = df_users["DiasRestantes"].apply(classificar_prazo)
-
-# Enviar notificações para clientes com 5 ou 3 dias restantes
-notificacoes = []
-for _, row in df_users.iterrows():
-    if row["DiasRestantes"] == 5:
-        notificacoes.append(f"⚠️ Cliente **{row['Empresa']}** está com 5 dias restantes de acesso.")
-    elif row["DiasRestantes"] == 3:
-        notificacoes.append(f"🔴 Cliente **{row['Empresa']}** está com 3 dias restantes (prazo crítico).")
-
-# Exibir notificações na tela
-for nota in notificacoes:
-    st.warning(nota)
-
-# Exibir métricas visuais no painel do administrador
-col1, col2, col3 = st.columns(3)
-col1.metric("✅ Ativos", df_users[df_users['StatusPrazo'] == 'Ativo'].shape[0])
-col2.metric("🟡 Encerrando (≤ 5 dias)", df_users[df_users['StatusPrazo'] == 'Encerrando'].shape[0])
-col3.metric("🔴 Críticos (≤ 3 dias)", df_users[df_users['StatusPrazo'] == 'Crítico'].shape[0])
-
-# Liberação de Diagnósticos específicos pelo Admin
-with st.sidebar.expander("Liberação Diagnósticos Clientes"):
-    cnpj_cliente = st.selectbox("CNPJ Cliente", df_users['CNPJ'])
-    diagnosticos_disponiveis = ["Financeiro", "Operacional", "RH", "TI"]
-
-    linha_cliente = df_users[df_users['CNPJ'] == cnpj_cliente]
-    if not linha_cliente.empty:
-        atuais = json.loads(linha_cliente['DiagnosticosPermitidos'].iloc[0] or '[]')
-    else:
-        atuais = []
-
-    novos_diagnosticos = st.multiselect("Diagnósticos Permitidos", diagnosticos_disponiveis, default=atuais)
-
-    if st.button("Salvar Diagnósticos Permitidos"):
-        df_users.loc[df_users['CNPJ'] == cnpj_cliente, 'DiagnosticosPermitidos'] = json.dumps(novos_diagnosticos)
-        df_users.to_csv(usuarios_csv, index=False)
-        st.success("Diagnósticos atualizados!")
-
-# Métricas adicionais para o administrador
-
-st.subheader("Métricas Gerais")
-st.metric("Clientes com Prazo Finalizando", df_users[df_users['StatusPrazo'] == 'Encerrando'].shape[0])
-st.metric("Clientes Finalizando com Diagnóstico Enviado", df_users[(df_users['StatusPrazo'] == 'Encerrando') & (df_users['StatusDiag'] == 'Enviado')].shape[0])
