@@ -1881,7 +1881,6 @@ if aba == "Administrador" and st.session_state.admin_logado:
             except Exception as e: st.error(f"ERRO AO CARREGAR DIAGNÓSTICOS: {e}"); st.exception(e)
         
 elif menu_admin == "Renovação de Prazos":
-    elif menu_admin == "Renovação de Prazos":
     st.header("⏳ Renovação Rápida de Prazo dos Clientes")
 
     df_todos = pd.read_csv(usuarios_csv, dtype={'CNPJ': str})
