@@ -3405,24 +3405,6 @@ col1.metric("✅ Ativos", df_users[df_users['StatusPrazo'] == 'Ativo'].shape[0])
 col2.metric("🟡 Encerrando (≤ 5 dias)", df_users[df_users['StatusPrazo'] == 'Encerrando'].shape[0])
 col3.metric("🔴 Críticos (≤ 3 dias)", df_users[df_users['StatusPrazo'] == 'Crítico'].shape[0])
 
-# Painel Admin - Renovação rápida de prazo e bloqueio
-st.subheader("Renovação Rápida de Prazo dos Clientes")
-# Adiciona a coluna DiasRestantes ao DataFrame df_users
-df_users["PrazoFimAcesso"] = pd.to_datetime(df_users["PrazoFimAcesso"], errors="coerce")
-df_users["DiasRestantes"] = df_users["PrazoFimAcesso"].apply(lambda x: (x.date() - date.today()).days if pd.notna(x) else None)
-for idx, row in df_users.iterrows():
-    st.markdown(f"Cliente: {row['Empresa']} - Dias Restantes: {row['DiasRestantes']}")
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("Adicionar 5 Dias", key=f"add5_{row['CNPJ']}_{idx}"):
-            renovar_dias_usuario(row['CNPJ'], 5)
-            st.experimental_rerun()
-    with col2:
-        if st.button("Bloquear Cliente", key=f"block_{row['CNPJ']}_{idx}"):
-            bloquear_usuario(row['CNPJ'])
-            st.experimental_rerun()
-
-
 # Liberação de Diagnósticos específicos pelo Admin
 with st.sidebar.expander("Liberação Diagnósticos Clientes"):
     cnpj_cliente = st.selectbox("CNPJ Cliente", df_users['CNPJ'])
