@@ -3225,6 +3225,9 @@ if 'cliente_logado' in st.session_state and st.session_state['cliente_logado']:
 
 # Painel Admin - Renovação rápida de prazo e bloqueio
 st.subheader("Renovação Rápida de Prazo dos Clientes")
+# Adiciona a coluna DiasRestantes ao DataFrame df_users
+df_users["PrazoFimAcesso"] = pd.to_datetime(df_users["PrazoFimAcesso"], errors="coerce")
+df_users["DiasRestantes"] = df_users["PrazoFimAcesso"].apply(lambda x: (x.date() - date.today()).days if pd.notna(x) else None)
 for idx, row in df_users.iterrows():
     st.markdown(f"Cliente: {row['Empresa']} - Dias Restantes: {row['DiasRestantes']}")
     col1, col2 = st.columns(2)
