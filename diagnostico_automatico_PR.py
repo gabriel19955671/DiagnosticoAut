@@ -3248,13 +3248,14 @@ for idx, row in df_users.iterrows():
     st.markdown(f"Cliente: {row['Empresa']} - Dias Restantes: {row['DiasRestantes']}")
     col1, col2 = st.columns(2)
     with col1:
-        if st.button(f"Adicionar 5 Dias", key=f"add5_{row['CNPJ']}"):
+        if st.button("Adicionar 5 Dias", key=f"add5_{row['CNPJ']}_{idx}"):
             renovar_dias_usuario(row['CNPJ'], 5)
             st.experimental_rerun()
     with col2:
-        if st.button(f"Bloquear Cliente", key=f"block_{row['CNPJ']}"):
+        if st.button("Bloquear Cliente", key=f"block_{row['CNPJ']}_{idx}"):
             bloquear_usuario(row['CNPJ'])
             st.experimental_rerun()
+
 
 # Liberação de Diagnósticos específicos pelo Admin
 with st.sidebar.expander("Liberação Diagnósticos Clientes"):
