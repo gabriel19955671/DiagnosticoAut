@@ -13,6 +13,22 @@ import uuid # Para IDs de análise, SAC e Pesquisa de Satisfação
 # !!! st.set_page_config() DEVE SER O PRIMEIRO COMANDO STREAMLIT !!!
 st.set_page_config(page_title="Portal de Diagnóstico", layout="wide", page_icon=" ")
 
+# Função para obter as permissões atuais do administrador
+def get_admin_permissoes(usuario):
+    df = pd.read_csv(admin_credenciais_csv, encoding='utf-8')
+    linha = df[df['Usuario'] == usuario]
+    if not linha.empty:
+        return str(linha.iloc[0]['Permissoes']).split(',')
+    return []
+
+# Função para definir permissões do administrador
+def set_admin_permissoes(usuario, permissoes):
+    df = pd.read_csv(admin_credenciais_csv, encoding='utf-8')
+    idx = df[df['Usuario'] == usuario].index
+    if not idx.empty:
+        df.loc[idx, 'Permissoes'] = ','.join(permissoes)
+        df.to_csv(admin_credenciais_csv, index=False, encoding='utf-8')
+
 # --- CSS Melhorado ---
 st.markdown("""
 <style>
