@@ -1860,21 +1860,30 @@ if aba == "Administrador" and st.session_state.admin_logado:
             st.sidebar.error(f"Erro ao carregar usuários para admin: {e_load_users_adm_global}")
 
 
-    menu_admin = st.sidebar.selectbox("Menu", list(menu_admin_options_map.keys()))
+    if menu_admin == "Visão Geral e Diagnósticos":
+        diagnosticos_df_admin_orig_view = pd.DataFrame()
+        admin_data_carregada_view_sucesso = False
 
-# ==================== VISÃO GERAL ====================
-if menu_admin == "Visão Geral e Diagnósticos":
-    st.subheader("📊 Visão Geral e Diagnósticos")
-
-# ==================== RELATÓRIO DE ENGAJAMENTO ====================
-elif menu_admin == "Relatório de Engajamento":
-    st.subheader("📈 Relatório de Engajamento")
-
-# ==================== RENOVAÇÃO DE PRAZOS ====================
+        if not os.path.exists(arquivo_csv):
+            st.error(f"ATENÇÃO: O arquivo de diagnósticos '{arquivo_csv}' não foi encontrado.")
+        elif os.path.getsize(arquivo_csv) == 0:
+            st.warning(f"O arquivo de diagnósticos '{arquivo_csv}' está completamente vazio.")
+        else:
+            try:
+                diagnosticos_df_admin_orig_view = pd.read_csv(arquivo_csv, encoding='utf-8', dtype={'CNPJ': str})
+                if 'Data' in diagnosticos_df_admin_orig_view.columns:
+                    diagnosticos_df_admin_orig_view['Data_dt'] = pd.to_datetime(diagnosticos_df_admin_orig_view['Data'], errors='coerce')  
+                    diagnosticos_df_admin_orig_view['Data'] = diagnosticos_df_admin_orig_view['Data'].astype(str)  
+                if not diagnosticos_df_admin_orig_view.empty:
+                    admin_data_carregada_view_sucesso = True
+                else: st.info("Arquivo de diagnósticos lido, mas sem dados.")
+            except pd.errors.EmptyDataError: st.warning(f"Arquivo '{arquivo_csv}' parece vazio ou só com cabeçalhos.")
+            except Exception as e: st.error(f"ERRO AO CARREGAR DIAGNÓSTICOS: {e}"); st.exception(e)
+        
 elif menu_admin == "Renovação de Prazos":
+    elif menu_admin == "Renovação de Prazos":
     st.header("⏳ Renovação Rápida de Prazo dos Clientes")
 
-    usuarios_csv = "usuarios.csv"  # ajuste conforme sua estrutura
     df_todos = pd.read_csv(usuarios_csv, dtype={'CNPJ': str})
     df_todos["PrazoFimAcesso"] = pd.to_datetime(df_todos["PrazoFimAcesso"], errors="coerce")
     df_todos["DiasRestantes"] = df_todos["PrazoFimAcesso"].apply(
@@ -1892,7 +1901,6 @@ elif menu_admin == "Renovação de Prazos":
             if st.button("❌ Bloquear Cliente", key=f"block_{row['CNPJ']}_{idx}"):
                 bloquear_usuario(row['CNPJ'])
                 st.experimental_rerun()
-
         st.markdown("#### KPIs Gerais do Sistema")
         kpi_cols_v21 = st.columns(3)  
         total_clientes_cadastrados_vg = len(df_usuarios_admin_geral) if not df_usuarios_admin_geral.empty else 0
@@ -3105,6 +3113,28 @@ elif menu_admin == "Renovação de Prazos":
                         st.warning("Preencha todos os campos obrigatórios (CNPJ, Senha, Empresa, Nome do Contato).")
     
     elif menu_admin == "Gerenciar Administradores":
+
+elif menu_admin == "Renovação de Prazos":
+    st.header("⏳ Renovação Rápida de Prazo dos Clientes")
+
+    usuarios_csv = "usuarios.csv"  # ajuste conforme sua estrutura
+    df_todos = pd.read_csv(usuarios_csv, dtype={'CNPJ': str})
+    df_todos["PrazoFimAcesso"] = pd.to_datetime(df_todos["PrazoFimAcesso"], errors="coerce")
+    df_todos["DiasRestantes"] = df_todos["PrazoFimAcesso"].apply(
+        lambda x: (x.date() - date.today()).days if pd.notna(x) else None
+    )
+
+    for idx, row in df_todos.iterrows():
+        st.markdown(f"**{row['Empresa']}** — Dias Restantes: `{row['DiasRestantes']}`")
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("➕ Adicionar 5 Dias", key=f"add5_{row['CNPJ']}_{idx}"):
+                renovar_dias_usuario(row['CNPJ'], 5)
+                st.experimental_rerun()
+        with col2:
+            if st.button("❌ Bloquear Cliente", key=f"block_{row['CNPJ']}_{idx}"):
+                bloquear_usuario(row['CNPJ'])
+                st.experimental_rerun()
         st.markdown("#### Gerenciamento de Usuários Administradores")
         if not is_admin_total():
             st.warning("Apenas administradores com permissão 'total' podem gerenciar outros administradores.")
