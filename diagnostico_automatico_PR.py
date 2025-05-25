@@ -1863,7 +1863,9 @@ if aba == "Administrador" and st.session_state.admin_logado:
 if menu_admin == "Visão Geral e Diagnósticos":
     st.header("📊 Visão Geral e Diagnósticos")
 
-    if 'admin_data_carregada_view_sucesso' not in globals():
+    try:
+        admin_data_carregada_view_sucesso
+    except NameError:
         admin_data_carregada_view_sucesso = False
 
     if not admin_data_carregada_view_sucesso:
@@ -1940,6 +1942,7 @@ elif menu_admin == "Renovação de Prazos":
             except Exception as e: st.error(f"ERRO AO CARREGAR DIAGNÓSTICOS: {e}"); st.exception(e)
         
 elif menu_admin == "Renovação de Prazos":
+    elif menu_admin == "Renovação de Prazos":
     st.header("⏳ Renovação Rápida de Prazo dos Clientes")
 
     df_todos = pd.read_csv(usuarios_csv, dtype={'CNPJ': str})
@@ -2187,7 +2190,7 @@ elif menu_admin == "Renovação de Prazos":
         elif not admin_data_carregada_view_sucesso:
             st.warning("Dados de diagnósticos não puderam ser carregados. Funcionalidades limitadas.")
     
-elif menu_admin == "Relatório de Engajamento":
+    elif menu_admin == "Relatório de Engajamento":
         st.markdown("#### Métricas de Engajamento dos Clientes")
 
         if df_usuarios_admin_geral.empty:
@@ -2227,7 +2230,7 @@ elif menu_admin == "Relatório de Engajamento":
                 else:
                     st.info("Nenhum cliente visualizou as instruções e completou um diagnóstico ainda.")
 
-elif menu_admin == "Gerenciar Notificações":
+    elif menu_admin == "Gerenciar Notificações":
         st.markdown("#### Lista de Todas as Notificações do Sistema")
         try:
             df_notificacoes_admin = pd.read_csv(notificacoes_csv, dtype={'CNPJ_Cliente': str, 'ID_Diagnostico_Relacionado': str})
@@ -2308,7 +2311,7 @@ elif menu_admin == "Gerenciar Notificações":
         else:
             st.info("Nenhuma notificação encontrada para os filtros aplicados.")
 
-elif menu_admin == "Gerenciar Pesquisa de Satisfação":  
+    elif menu_admin == "Gerenciar Pesquisa de Satisfação":  
         st.markdown("#### Gerenciamento da Pesquisa de Satisfação")
         df_satisfacao_perguntas_admin = carregar_satisfacao_perguntas().copy()
         df_satisfacao_respostas_admin = carregar_satisfacao_respostas().copy()
@@ -2512,7 +2515,7 @@ elif menu_admin == "Gerenciar Pesquisa de Satisfação":
                     st.dataframe(df_respostas_filtrado[cols_view_respostas].sort_values(by="Timestamp_Resposta", ascending=False), use_container_width=True)
 
 
-elif menu_admin == "Gerenciar Perguntas (Diagnóstico)":  
+    elif menu_admin == "Gerenciar Perguntas (Diagnóstico)":  
         tabs_perg_admin = st.tabs(["📋 Perguntas Atuais", "➕ Adicionar Nova Pergunta"])
         try:
             perguntas_df_admin_gp = pd.read_csv(perguntas_csv, encoding='utf-8')
@@ -2574,7 +2577,7 @@ elif menu_admin == "Gerenciar Perguntas (Diagnóstico)":
                     else: st.warning("Texto da pergunta e categoria são obrigatórios.")
 
 
-elif menu_admin == "Gerenciar Análises de Perguntas":
+    elif menu_admin == "Gerenciar Análises de Perguntas":
         df_analises_existentes_admin = carregar_analises_perguntas()
         try: df_perguntas_formulario_admin = pd.read_csv(perguntas_csv, encoding='utf-8')
         except: df_perguntas_formulario_admin = pd.DataFrame(columns=colunas_base_perguntas)
@@ -2657,7 +2660,7 @@ elif menu_admin == "Gerenciar Análises de Perguntas":
                     else:
                         st.warning("Selecione uma análise para deletar.")
     
-elif menu_admin == "Gerenciar SAC":
+    elif menu_admin == "Gerenciar SAC":
         st.markdown("#### Gerenciamento do SAC - Perguntas e Respostas")
         df_sac_qa_admin = carregar_sac_perguntas_respostas().copy()  
         df_sac_uso_admin = carregar_sac_uso_feedback().copy()
@@ -2801,7 +2804,7 @@ elif menu_admin == "Gerenciar SAC":
                     df_sac_uso_filtrado['Feedback_Util'] = df_sac_uso_filtrado['Feedback_Util'].map({True: '👍 Útil', False: '👎 Não Útil', pd.NA: '➖ Sem Feedback'}).fillna('➖ Sem Feedback')
                     st.dataframe(df_sac_uso_filtrado[cols_show_sac_uso].sort_values(by="Timestamp", ascending=False), use_container_width=True)
 
-elif menu_admin == "Configurações do Portal": # Renomeado
+    elif menu_admin == "Configurações do Portal": # Renomeado
         st.markdown("#### ⚙️ Configurações Gerais do Portal")
         
         st.subheader("🖼️ Logo do Portal")
@@ -2890,7 +2893,7 @@ elif menu_admin == "Configurações do Portal": # Renomeado
                 except Exception as e_save_instr:
                     st.error(f"Erro ao salvar as instruções: {e_save_instr}")
                 
-elif menu_admin == "Histórico de Usuários":
+    elif menu_admin == "Histórico de Usuários":
         try:
             df_historico_completo_hu = pd.read_csv(historico_csv, encoding='utf-8', dtype={'CNPJ': str})
             df_usuarios_para_filtro_hu = pd.read_csv(usuarios_csv, encoding='utf-8', usecols=['CNPJ', 'Empresa', 'NomeContato'], dtype={'CNPJ': str})
@@ -2939,7 +2942,7 @@ elif menu_admin == "Histórico de Usuários":
         else:
             st.info("Nenhum registro de histórico encontrado para os filtros aplicados.")
 
-elif menu_admin == "Gerenciar Clientes":
+    elif menu_admin == "Gerenciar Clientes":
         df_usuarios_gc = df_usuarios_admin_geral.copy()
 
         st.sidebar.markdown("---")  
@@ -3170,28 +3173,7 @@ elif menu_admin == "Gerenciar Clientes":
                     else:
                         st.warning("Preencha todos os campos obrigatórios (CNPJ, Senha, Empresa, Nome do Contato).")
     
-elif menu_admin == "Gerenciar Administradores":
-
-    st.header("⏳ Renovação Rápida de Prazo dos Clientes")
-
-    usuarios_csv = "usuarios.csv"  # ajuste conforme sua estrutura
-    df_todos = pd.read_csv(usuarios_csv, dtype={'CNPJ': str})
-    df_todos["PrazoFimAcesso"] = pd.to_datetime(df_todos["PrazoFimAcesso"], errors="coerce")
-    df_todos["DiasRestantes"] = df_todos["PrazoFimAcesso"].apply(
-        lambda x: (x.date() - date.today()).days if pd.notna(x) else None
-    )
-
-    for idx, row in df_todos.iterrows():
-        st.markdown(f"**{row['Empresa']}** — Dias Restantes: `{row['DiasRestantes']}`")
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("➕ Adicionar 5 Dias", key=f"add5_{row['CNPJ']}_{idx}"):
-                renovar_dias_usuario(row['CNPJ'], 5)
-                st.experimental_rerun()
-        with col2:
-            if st.button("❌ Bloquear Cliente", key=f"block_{row['CNPJ']}_{idx}"):
-                bloquear_usuario(row['CNPJ'])
-                st.experimental_rerun()
+    elif menu_admin == "Gerenciar Administradores":
         st.markdown("#### Gerenciamento de Usuários Administradores")
         if not is_admin_total():
             st.warning("Apenas administradores com permissão 'total' podem gerenciar outros administradores.")
