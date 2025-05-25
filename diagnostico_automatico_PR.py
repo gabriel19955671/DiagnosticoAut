@@ -3210,11 +3210,12 @@ with st.sidebar.expander("Permissões do Administrador", expanded=True):
     admin_sel = st.selectbox("Selecionar admin", df_admin['Usuario'].tolist(), index=0)
     permissoes_atual = get_admin_permissoes(admin_sel)
 
-    permissoes_novas = st.multiselect("Permissões", permissoes_lista, default=permissoes_atual)
+    permissoes_novas = st.multiselect(
+    "Permissões", 
+    permissoes_lista, 
+    default=[perm for perm in permissoes_atual if perm in permissoes_lista]
+)
 
-    if st.button("Salvar Permissões"):
-        set_admin_permissoes(admin_sel, permissoes_novas)
-        st.success("Permissões atualizadas!")
 
 # Painel Cliente mostrando prazo restante
 if 'cliente_logado' in st.session_state and st.session_state['cliente_logado']:
