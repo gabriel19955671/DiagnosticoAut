@@ -3171,4 +3171,88 @@ if aba == "Administrador" and st.session_state.admin_logado:
                         st.warning("Selecione um administrador para deletar.")
         else:
             st.info("Nenhum administrador para deletar.")
- 
+
+# ==== ATUALIZAÇÕES DE PERMISSÕES E PRAZOS ====
+
+# Adicionando tipo de diagnóstico permitido por cliente
+import streamlit as st
+import pandas as pd
+from datetime import datetime, timedelta
+import os
+
+usuarios_csv = "usuarios.csv"
+
+if not os.path.exists(usuarios_csv):
+    df_usuarios = pd.DataFrame(columns=[
+        "CNPJ", "Senha", "Empresa", "NomeContato", "Telefone",
+        "JaVisualizouInstrucoes", "DiagnosticosDisponiveis", "TotalDiagnosticosRealizados",
+        "DataInicioAcesso", "DataFimAcesso", "TipoDiagnostico"
+    ])
+    df_usuarios.to_csv(usuarios_csv, index=False)
+else:
+    df_usuarios = pd.read_csv(usuarios_csv, dtype=str)
+
+st.title("👨‍💼 Administração de Clientes")
+
+st.subheader("📋 Gerenciar Clientes e Tipos de Diagnóstico")
+for i, row in df_usuarios.iterrows():
+    cnpj = row["CNPJ"]
+    empresa = row.get("Empresa", "N/D")
+    tipo_atual = row.get("TipoDiagnostico", "Diagnóstico Padrão")
+    with st.expander(f"{empresa} ({cnpj})"):
+        st.write(f"**Contato:** {row.get('NomeContato')} | **Telefone:** {row.get('Telefone')}")
+        tipo_escolhido = st.selectbox(
+            f"Tipo de Diagnóstico disponível para {empresa}",
+            ["Diagnóstico Padrão", "Diagnóstico Financeiro", "Diagnóstico Tributário", "Diagnóstico Operacional"],
+            index=["Diagnóstico Padrão", "Diagnóstico Financeiro", "Diagnóstico Tributário", "Diagnóstico Operacional"].index(tipo_atual),
+            key=f"tipo_{cnpj}"
+        )
+        if st.button(f"💾 Salvar tipo para {empresa}", key=f"save_tipo_{cnpj}"):
+            df_usuarios.loc[i, "TipoDiagnostico"] = tipo_escolhido
+            df_usuarios.to_csv(usuarios_csv, index=False)
+            st.success("Tipo de diagnóstico atualizado com sucesso!")
+
+st.subheader("📆 Renovar Prazo de Acesso dos Clientes")
+for i, row in df_usuarios.iterrows():
+    cnpj = row["CNPJ"]
+    empresa = row.get("Empresa", "N/A")
+    data_fim = row.get("DataFimAcesso")
+    dias_restantes = (pd.to_datetime(data_fim) - pd.Timestamp.today()).days if data_fim else "Indefinido"
+
+    with st.expander(f"{empresa} ({cnpj}) - Acesso até {data_fim} ({dias_restantes} dias restantes)"):
+        dias_adicionais = st.number_input(f"Dias adicionais para {empresa}", min_value=0, step=1, key=f"dias_{cnpj}")
+        if st.button(f"➕ Liberar dias", key=f"btn_{cnpj}"):
+            nova_data = pd.to_datetime(data_fim) + timedelta(days=int(dias_adicionais)) if data_fim else pd.Timestamp.today() + timedelta(days=int(dias_adicionais))
+            df_usuarios.loc[i, "DataFimAcesso"] = nova_data.strftime("%Y-%m-%d")
+            st.success(f"Prazo estendido até {nova_data.date()} para {empresa}.")
+            df_usuarios.to_csv(usuarios_csv, index=False)
+
+st.subheader("🔐 Permissões de Administrador")
+st.markdown("Você pode definir quais seções o administrador tem acesso:")
+permissoes = {
+    "acesso_sac": st.checkbox("✔️ Acesso ao SAC"),
+    "acesso_satisfacao": st.checkbox("✔️ Acesso à Pesquisa de Satisfação"),
+    "acesso_grafico_engajamento": st.checkbox("✔️ Acesso aos Gráficos de Engajamento"),
+    "acesso_renovacao_prazo": st.checkbox("✔️ Renovação de Prazos dos Clientes")
+}
+st.write("Essas permissões devem ser gravadas e consultadas no login do admin no sistema principal.")
+
+st.title("🔓 Portal do Cliente")
+login_cnpj = st.text_input("Digite seu CNPJ")
+login_senha = st.text_input("Digite sua Senha", type="password")
+
+if st.button("Entrar"):
+    match = df_usuarios[(df_usuarios["CNPJ"] == login_cnpj) & (df_usuarios["Senha"] == login_senha)]
+    if match.empty:
+        st.error("CNPJ ou senha inválidos.")
+    else:
+        cliente = match.iloc[0]
+        data_fim = cliente.get("DataFimAcesso")
+        if not data_fim or pd.to_datetime(data_fim) < pd.Timestamp.today():
+            st.warning("⚠️ Seu acesso expirou. Contrato finalizado.")
+        else:
+            dias_restantes = (pd.to_datetime(data_fim) - pd.Timestamp.today()).days
+            st.success(f"✅ Acesso autorizado. Você tem {dias_restantes} dia(s) restantes de acesso.")
+            st.markdown(f"**Empresa:** {cliente['Empresa']}")
+            st.markdown(f"**Contato:** {cliente['NomeContato']} | Tel: {cliente['Telefone']}")
+            st.markdown(f"**Tipo de Diagnóstico liberado:** {cliente['TipoDiagnostico']}")
