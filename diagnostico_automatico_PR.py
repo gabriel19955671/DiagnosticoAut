@@ -3172,7 +3172,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         else:
             st.info("Nenhum administrador para deletar.")
 
-# ==== ATUALIZAÇÕES DE PERMISSÕES E PRAZOS CORRIGIDAS ====
+# ===== FUNCIONALIDADES ADICIONAIS INTEGRADAS =====
 
 # Adicionando tipo de diagnóstico permitido por cliente
 import streamlit as st
@@ -3192,7 +3192,14 @@ if not os.path.exists(usuarios_csv):
 else:
     df_usuarios = pd.read_csv(usuarios_csv, dtype=str)
 
+# --- VERIFICAÇÃO DE ACESSO ADMIN ---
+def is_admin():
+    if "auth_admin" not in st.session_state or not st.session_state["auth_admin"]:
+        st.error("Acesso restrito. Faça login como administrador.")
+        st.stop()
+
 st.title("👨‍💼 Administração de Clientes")
+is_admin()
 
 st.subheader("📋 Gerenciar Clientes e Tipos de Diagnóstico")
 for i, row in df_usuarios.iterrows():
