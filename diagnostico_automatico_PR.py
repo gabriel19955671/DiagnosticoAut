@@ -3172,7 +3172,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         else:
             st.info("Nenhum administrador para deletar.")
 
-# ==== ATUALIZAÇÕES DE PERMISSÕES E PRAZOS ====
+# ==== ATUALIZAÇÕES DE PERMISSÕES E PRAZOS CORRIGIDAS ====
 
 # Adicionando tipo de diagnóstico permitido por cliente
 import streamlit as st
@@ -3205,9 +3205,9 @@ for i, row in df_usuarios.iterrows():
             f"Tipo de Diagnóstico disponível para {empresa}",
             ["Diagnóstico Padrão", "Diagnóstico Financeiro", "Diagnóstico Tributário", "Diagnóstico Operacional"],
             index=["Diagnóstico Padrão", "Diagnóstico Financeiro", "Diagnóstico Tributário", "Diagnóstico Operacional"].index(tipo_atual),
-            key=f"tipo_{cnpj}"
+            key=f"tipo_{cnpj}_{i}"
         )
-        if st.button(f"💾 Salvar tipo para {empresa}", key=f"save_tipo_{cnpj}"):
+        if st.button(f"💾 Salvar tipo para {empresa}", key=f"save_tipo_{cnpj}_{i}"):
             df_usuarios.loc[i, "TipoDiagnostico"] = tipo_escolhido
             df_usuarios.to_csv(usuarios_csv, index=False)
             st.success("Tipo de diagnóstico atualizado com sucesso!")
@@ -3220,8 +3220,8 @@ for i, row in df_usuarios.iterrows():
     dias_restantes = (pd.to_datetime(data_fim) - pd.Timestamp.today()).days if data_fim else "Indefinido"
 
     with st.expander(f"{empresa} ({cnpj}) - Acesso até {data_fim} ({dias_restantes} dias restantes)"):
-        dias_adicionais = st.number_input(f"Dias adicionais para {empresa}", min_value=0, step=1, key=f"dias_{cnpj}")
-        if st.button(f"➕ Liberar dias", key=f"btn_{cnpj}"):
+        dias_adicionais = st.number_input(f"Dias adicionais para {empresa}", min_value=0, step=1, key=f"dias_{cnpj}_{i}")
+        if st.button(f"➕ Liberar dias", key=f"btn_{cnpj}_{i}"):
             nova_data = pd.to_datetime(data_fim) + timedelta(days=int(dias_adicionais)) if data_fim else pd.Timestamp.today() + timedelta(days=int(dias_adicionais))
             df_usuarios.loc[i, "DataFimAcesso"] = nova_data.strftime("%Y-%m-%d")
             st.success(f"Prazo estendido até {nova_data.date()} para {empresa}.")
