@@ -3172,7 +3172,7 @@ if aba == "Administrador" and st.session_state.admin_logado:
         else:
             st.info("Nenhum administrador para deletar.")
 
-# ===== MÓDULO FINAL COM ABA ÚNICA DE GERENCIAMENTO =====
+# === BLOCO FINAL DE ADMINISTRAÇÃO E CLIENTE CORRIGIDO ===
 
 # Adicionando tipo de diagnóstico permitido por cliente
 import streamlit as st
